@@ -17,6 +17,8 @@ model Episode {
   title     String
   recording String?
   reviews   Review[]
+  shows     Show[]
+  bangers   Banger[]
 }
 
 model Movie {
@@ -25,6 +27,17 @@ model Movie {
   year    Int      @db.SmallInt
   poster  String?
   reviews Review[]
+  url     String
+}
+
+model Show {
+  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  title     String
+  year      Int      @db.SmallInt
+  poster    String?
+  url       String
+  episodeId String?  @db.UniqueIdentifier
+  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 }
 
 model Rating {
@@ -55,6 +68,15 @@ model Assignment {
   reviews Review[]
   userId  String
   User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Banger {
+  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  title     String
+  artist    String
+  url       String
+  episodeId String?  @db.UniqueIdentifier
+  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 }
 
 // authorization 
