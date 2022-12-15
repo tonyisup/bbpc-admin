@@ -4,15 +4,16 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { trpc } from "../utils/trpc";
-import { useState } from "react";
+import { DispatchWithoutAction, useState } from "react";
 import { Episode } from "@prisma/client";
 import EpisodeModal from "../components/EpisodeModal";
 
 const Home: NextPage = () => {
-  const [episodes, setEpisodes] = useState<Episode[]>([])
-  const {data: episodeData, isLoading } = trpc.episode.getAll.useQuery(undefined, {
-    onSuccess: (episodeList) => {
-      setEpisodes(episodeList)
+  const refresh: DispatchWithoutAction = () => refetchEpisodes()
+  const {data: episodeData, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
+  const {mutate: removeEpisode} = trpc.episode.remove.useMutation({
+    onSuccess: () => {
+      refresh()
     }
   })
   const [modalOpen, setModalOpen] = useState<boolean>(false)
@@ -26,7 +27,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {modalOpen && <EpisodeModal setModalOpen={setModalOpen} setEpisodes={setEpisodes} />}
+      {modalOpen && <EpisodeModal setModalOpen={setModalOpen} refreshEpisodes={refresh} />}
 
       <main className="text-white bg-gradient-to-b from-[#2e026d] to-[#15162c] flex min-h-screen flex-col items-center">
         <header className="flex my-6 px-6 w-full justify-between">
@@ -39,10 +40,15 @@ const Home: NextPage = () => {
           </button>
         </header>
         <ul className="mt-4">
-          {episodes?.map((episode) => (
+          {episodeData?.map((episode) => (
             <li key={episode.id} className="flex justify-between items-center">
               <span>{episode.number}</span>
               <span>{episode.title}</span>
+              <button
+                onClick={() => removeEpisode({ id: episode.id})}
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>

@@ -1,16 +1,16 @@
 import { Episode } from ".prisma/client";
-import { Dispatch, FC, SetStateAction, useState } from "react";
+import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
 import { trpc } from "../utils/trpc";
 
 interface EpisodeModalProps {
   setModalOpen: Dispatch<SetStateAction<boolean>>
-  setEpisodes: Dispatch<SetStateAction<Episode[]>>
+  refreshEpisodes: DispatchWithoutAction
 }
 
-const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, setEpisodes}) => {
+const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshEpisodes}) => {
   const {mutate: addEpisode} = trpc.episode.add.useMutation({
-    onSuccess: (newEpisode) => {
-      setEpisodes((prev) => [...prev, newEpisode])
+    onSuccess: () => {
+      refreshEpisodes()
     }
   });
   const [episodeNumber, setEpisodeNumber] = useState<number>(0);

@@ -14,6 +14,15 @@ export const episodeRouter = router({
         }
       })
     }),
+  remove: publicProcedure
+    .input(z.object({id: z.string()}))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.episode.delete({
+        where: {
+          id: req.input.id
+        }
+      })
+    }),
   hello: publicProcedure
     .input(z.object({ text: z.string().nullish() }).nullish())
     .query(({ input }) => {
@@ -21,7 +30,8 @@ export const episodeRouter = router({
         greeting: `Hello ${input?.text ?? "world"}`,
       };
     }),
-  getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.episode.findMany();
-  }),
+  getAll: publicProcedure
+    .query(({ ctx }) => {
+      return ctx.prisma.episode.findMany();
+    }),
 });
