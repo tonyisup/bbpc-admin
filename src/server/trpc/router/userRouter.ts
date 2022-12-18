@@ -5,41 +5,48 @@ import { router, publicProcedure } from "../trpc";
 
 export const episodeRouter = router({
   add: publicProcedure
-    .input(z.object({number: z.number(), title: z.string()}))
+    .input(z.object({
+      name: z.string(),
+      email: z.string(),
+    }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.create({
+      return await req.ctx.prisma.user.create({
         data: {
-          number: req.input.number,
-          title: req.input.title   
+          name: req.input.name,
+          email: req.input.email,
         }
       })
     }),
   remove: publicProcedure
     .input(z.object({id: z.string()}))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.delete({
+      return await req.ctx.prisma.user.delete({
         where: {
           id: req.input.id
         }
       })
     }),
   update: publicProcedure
-    .input(z.object({id: z.string(), number: z.number(), title: z.string()}))
+    .input(z.object({
+      id: z.string(), 
+      name: z.string(),
+      email: z.string(),
+    }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.update({
+      return await req.ctx.prisma.user.update({
         where: {
           id: req.input.id
         },
         data: {
-          number: req.input.number,
-          title: req.input.title
+          name: req.input.name,
+          email: req.input.email,
         }
       })
     }),
   get: publicProcedure
     .input(z.object({id: z.string()}))
     .query(async (req) => {
-      return await req.ctx.prisma.episode.findUnique({
+      return await req.ctx.prisma.user.findUnique({
         where: {
           id: req.input.id
         }
@@ -47,10 +54,6 @@ export const episodeRouter = router({
     }),
   getAll: publicProcedure
     .query(({ ctx }) => {
-      return ctx.prisma.episode.findMany();
-    }),
-  getSummary: publicProcedure
-    .query(({ ctx }) => {
-      return ctx.prisma.episode.count();
+      return ctx.prisma.user.findMany();
     }),
 });

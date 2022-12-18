@@ -8,9 +8,18 @@ import { DispatchWithoutAction, useState } from "react";
 import { Episode } from "@prisma/client";
 import EpisodeModal from "../components/EpisodeModal";
 import { HiX } from "react-icons/hi";
-import EpisodeSummary from "../components/EpisodeSummary";
 
 const Home: NextPage = () => {
+  const refresh: DispatchWithoutAction = () => refetchEpisodes()
+  const {data: episodes, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
+  const {mutate: removeEpisode} = trpc.episode.remove.useMutation({
+    onSuccess: () => {
+      refresh()
+    }
+  })
+  const [modalOpen, setModalOpen] = useState<boolean>(false)
+
+  if (!episodes || isLoading) return <p>Loading...</p>
   return (
     <>
       <Head>
@@ -19,12 +28,41 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {modalOpen && <EpisodeModal setModalOpen={setModalOpen} refreshEpisodes={refresh} />}
+
       <header className="flex my-6 px-6 w-full justify-between">
-        <h2 className="text-2xl font-semibold">BBPC Admin</h2>
+        <h2 className="text-2xl font-semibold">Episodes</h2>
+        <button
+          type="button" 
+          onClick={() => setModalOpen(true)}
+          className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
+          Add Episode
+        </button>
       </header>
       
-      <main className="flex w-full min-h-screen flex-col items-center">
-        <EpisodeSummary />
+      <main className="flex min-h-screen flex-col items-center">
+        <table className="text-center w-full">
+          <tr>
+            <th className="px-4 py-2">Number</th>
+            <th className="px-4 py-2">Title</th>
+            <th className="px-4 py-2">Actions</th>
+          </tr>
+          {episodes?.map((episode) => (
+            <tr>
+              <td>{episode.number}</td>
+              <td>
+                <Link href={`/episode/${encodeURIComponent(episode.id)}`}>
+                  {episode.title}
+                </Link>
+              </td>
+              <td>
+                <div className="flex justify-center">
+                  <HiX className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </table>
       </main>
     </>
   );
