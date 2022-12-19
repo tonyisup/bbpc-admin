@@ -5,12 +5,12 @@ import { trpc } from "../utils/trpc";
 import EpisodeModal from "./EpisodeModal";
 
 const EpisodeSummary: FC = () => {
-  const { data: itemCount } = trpc.episode.getSummary.useQuery()
+  const { data: itemCount } = trpc.user.getSummary.useQuery()
   return (
     <>
       <span className="text-2xl font-semibold">
-        <Link href="/episodes">
-          Episodes
+        <Link href="/users">
+          Users
         </Link>
       </span>
       <span className="text-2xl font-semibold">({itemCount})</span>

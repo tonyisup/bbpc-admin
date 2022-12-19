@@ -1,9 +1,10 @@
+import { prisma } from "@prisma/client";
 import { Input } from "postcss";
 import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
 
-export const episodeRouter = router({
+export const userRouter = router({
   add: publicProcedure
     .input(z.object({
       name: z.string(),
@@ -43,6 +44,30 @@ export const episodeRouter = router({
         }
       })
     }),
+  addRole: publicProcedure 
+    .input(z.object({
+      userId: z.string(),
+      roleId: z.number(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.userRole.create({
+        data: {
+          userId: req.input.userId,
+          roleId: req.input.roleId,
+        }
+      })
+    }),
+  removeRole: publicProcedure
+    .input(z.object({
+      id: z.string(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.userRole.delete({
+        where: {
+          id: req.input.id
+        }
+      })
+    }),          
   get: publicProcedure
     .input(z.object({id: z.string()}))
     .query(async (req) => {
@@ -52,8 +77,24 @@ export const episodeRouter = router({
         }
       })
     }),
+  getRoles: publicProcedure
+    .input(z.object({id: z.string()}))
+    .query(async (req) => {
+      return await req.ctx.prisma.userRole.findMany({
+        where: {
+          userId: req.input.id
+        },
+        include: {
+          role: true
+        }
+      })
+    }),
   getAll: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.user.findMany();
+    }),
+  getSummary: publicProcedure
+    .query(({ ctx }) => {
+      return ctx.prisma.user.count();
     }),
 });

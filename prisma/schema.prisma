@@ -41,12 +41,13 @@ model Show {
 }
 
 model Rating {
-  id      String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  name    String
-  value   Int      @db.TinyInt
-  sound   String?
-  icon    String?
-  reviews Review[]
+  id       String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  name     String
+  value    Int      @db.TinyInt
+  category String?
+  sound    String?
+  icon     String?
+  reviews  Review[]
 }
 
 model Review {
@@ -77,6 +78,8 @@ model Banger {
   url       String
   episodeId String?  @db.UniqueIdentifier
   Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
 }
 
 // authorization 
@@ -134,6 +137,7 @@ model User {
   roles         UserRole[]
   reviews       Review[]
   assignments   Assignment[]
+  bangers       Banger[]
 }
 
 model VerificationToken {

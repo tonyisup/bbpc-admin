@@ -9,6 +9,7 @@ import { Episode } from "@prisma/client";
 import EpisodeModal from "../components/EpisodeModal";
 import { HiX } from "react-icons/hi";
 import EpisodeSummary from "../components/EpisodeSummary";
+import UserSummary from "../components/UserSummary";
 
 const Home: NextPage = () => {
   return (
@@ -23,8 +24,9 @@ const Home: NextPage = () => {
         <h2 className="text-2xl font-semibold">BBPC Admin</h2>
       </header>
       
-      <main className="flex w-full min-h-screen flex-col items-center">
+      <main className="w-full min-h-screen grid grid-cols-2 justify-items-center">
         <EpisodeSummary />
+        <UserSummary />
       </main>
     </>
   );
