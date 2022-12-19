@@ -10,6 +10,7 @@ import EpisodeModal from "../components/EpisodeModal";
 import { HiX } from "react-icons/hi";
 import EpisodeSummary from "../components/EpisodeSummary";
 import UserSummary from "../components/UserSummary";
+import MovieSummary from "../components/MovieSummary";
 
 const Home: NextPage = () => {
   return (
@@ -27,6 +28,7 @@ const Home: NextPage = () => {
       <main className="w-full min-h-screen grid grid-cols-2 justify-items-center">
         <EpisodeSummary />
         <UserSummary />
+        <MovieSummary />
       </main>
     </>
   );
