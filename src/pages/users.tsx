@@ -28,7 +28,7 @@ const Home: NextPage = () => {
 
       {modalOpen && <UserModal setModalOpen={setModalOpen} refreshItems={refresh} />}
 
-      <header className="flex my-6 px-6 w-full justify-between">
+      <header className="flex p-6 w-full justify-between">
         <h2 className="text-2xl font-semibold">Users</h2>
         <button
           type="button" 
@@ -38,7 +38,7 @@ const Home: NextPage = () => {
         </button>
       </header>
       
-      <main className="flex min-h-screen flex-col items-center">
+      <main className="flex flex-col items-center">
         <table className="text-center w-full">
           <thead>
             <tr>

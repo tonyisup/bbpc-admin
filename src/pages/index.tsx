@@ -1,39 +1,37 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
 
-import { trpc } from "../utils/trpc";
-import { DispatchWithoutAction, useState } from "react";
-import { Episode } from "@prisma/client";
-import EpisodeModal from "../components/EpisodeModal";
-import { HiX } from "react-icons/hi";
 import EpisodeSummary from "../components/EpisodeSummary";
 import UserSummary from "../components/UserSummary";
 import MovieSummary from "../components/MovieSummary";
+import Search from "../components/common/Search";
+import { useState } from "react";
 
 const Home: NextPage = () => {
-  return (
-    <>
-      <Head>
-        <title>Bad Boys Podcast Admin</title>
-        <meta name="description" content="Bad Boys Podcast Administration App" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+	const [search, setSearch] = useState<string>("")
+	
+	return (
+		<>
+			<Head>
+				<title>Bad Boys Podcast Admin</title>
+				<meta name="description" content="Bad Boys Podcast Administration App" />
+				<link rel="icon" href="/favicon.ico" />
+			</Head>
 
-      <header className="flex my-6 px-6 w-full justify-between">
-        <h2 className="text-2xl font-semibold">BBPC Admin</h2>
-      </header>
-      
-      <main className="w-full min-h-screen grid grid-cols-2 justify-items-center">
-        <EpisodeSummary />
-        <UserSummary />
-        <MovieSummary />
-      </main>
-    </>
-  );
-};
+			<header className="flex p-6 w-full justify-between">
+				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
+				<span>searching for {search} ...</span>
+				<Search  setSearch={setSearch}/>
+			</header>
 
+			<main className="w-full grid grid-cols-2 justify-items-center">
+				<EpisodeSummary />
+				<UserSummary />
+				<MovieSummary />
+			</main>
+		</>
+	);
+}
 export default Home;
 
 // const AuthShowcase: React.FC = () => {
