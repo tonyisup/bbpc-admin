@@ -1,11 +1,10 @@
 import { env } from "../../env/server.mjs";
 
 const API_BASE_URL = "https://api.themoviedb.org/3",
-TRENDING_BASE_URL = `${API_BASE_URL}/trending/all/day?api_key=${env.TMDB_API_KEY}`,
 SEARCH_BASE_URL = `${API_BASE_URL}/search/movie?api_key=${env.TMDB_API_KEY}&language=en-US`,
 IMAGE_BASE_URL = "https://image.tmdb.org/t/p"
 
-interface Title {
+export interface Title {
   id: number,
   title: string,
   backdrop_path: string,
@@ -23,11 +22,8 @@ interface MovieSearchResponse {
 }
 export const tmdb = {
   getMovies: async(page: number, searchTerm=""): Promise<MovieSearchResponse> => {
-
-    const resp = await fetch(searchTerm
-      ? `${SEARCH_BASE_URL}&query=${searchTerm}&page=${page}`
-      : `${TRENDING_BASE_URL}&page=${page}`
-    )
+    if (!searchTerm) return { page: 0, titles: [] }
+    const resp = await fetch(`${SEARCH_BASE_URL}&query=${searchTerm}&page=${page}`)
     const res = await resp.json()
     
     const titles = res.results

@@ -7,17 +7,11 @@ import MovieSummary from "../components/MovieSummary";
 import Search from "../components/common/Search";
 import { useState } from "react";
 import { trpc } from "../utils/trpc";
+import MovieSearch from "../components/common/MovieSearch";
+import { Title } from "../server/tmdb/client";
 
 const Home: NextPage = () => {
-	const [search, setSearch] = useState<string>("")
-	const { data: resp } = trpc.movie.search.useQuery({ 
-    page: 1, 
-    searchTerm: search
-  }, {
-    onSuccess: (data) => {
-      console.log(data)
-    }
-  });
+  const [selectTitle, setSelectTitle] = useState<Title | null>(null);
   
 	return (
 		<>
@@ -29,24 +23,14 @@ const Home: NextPage = () => {
 
 			<header className="flex p-6 w-full justify-between">
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
-				<span>searching for {search} ...</span>
-				<Search  setSearch={setSearch}/>
 			</header>
 
 			<main className="w-full grid grid-cols-2 justify-items-center">
-        <ul>
-          {resp?.titles.map((title) => (
-            <li key={title.id}>
-              <figure>
-                <img src={title.poster_path} alt={title.title} />
-                <figcaption>{title.title}</figcaption>                
-              </figure>
-            </li>
-          ))}
-        </ul>
-				<EpisodeSummary />
+        <MovieSearch setTitle={setSelectTitle} />
+        {selectTitle && <div>{selectTitle.title}</div>}
+				{/* <EpisodeSummary />
 				<UserSummary />
-				<MovieSummary />
+				<MovieSummary /> */}
 			</main>
 		</>
 	);
