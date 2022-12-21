@@ -3,6 +3,9 @@ import { Title } from "../../server/tmdb/client";
 import { trpc } from "../../utils/trpc";
 import Search from "./Search";
 
+import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
+import 'pure-react-carousel/dist/react-carousel.es.css';
+
 interface MovieSearchProps {
 	setTitle: Dispatch<SetStateAction<Title | null>>;
 }
@@ -31,24 +34,28 @@ const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
 					</span>
 				</button>}
 			{ modalOpen &&
-				<div className=" text-white absolute inset-0 flex items-center justify-center bg-black/75">
+				<div className=" text-white w-full absolute inset-0 flex items-center justify-center bg-black/75">
 					<div className="p-3 space-y-4 bg-gray-800">
-						<div className="flex">
-							{resp?.titles.map((title) => (
-								<div>
-									<figure>
-										<img src={title.poster_path} alt={title.title} />
-										<figcaption>{title.title}</figcaption>
-									</figure>
-									<button
-										onClick={() => selectTitle(title)}
-										className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
-									>
-										Select
-									</button>
-								</div>
-							))}
-						</div>
+						<CarouselProvider
+							naturalSlideWidth={100}
+							naturalSlideHeight={150}
+							totalSlides={resp?.results.length || 0}
+							visibleSlides={3}
+							isIntrinsicHeight={true}
+						>
+							<Slider>
+								{resp?.results.map((title, index) => (
+									<Slide index={index} key={title.id}>
+										<figure>
+											<img src={title.poster_path} alt={title.title} />
+											<figcaption className="text-center">{title.title}</figcaption>
+										</figure>
+									</Slide>
+								))}
+							</Slider>
+							<ButtonBack>Back</ButtonBack>
+							<ButtonNext>Next</ButtonNext>
+						</CarouselProvider>
 						<Search setSearch={setSearchQuery} />
 					</div>
 				</div>}

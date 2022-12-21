@@ -18,11 +18,11 @@ export interface Title {
 }
 interface MovieSearchResponse {
   page: number,
-  titles: Title[],
+  results: Title[],
 }
 export const tmdb = {
   getMovies: async(page: number, searchTerm=""): Promise<MovieSearchResponse> => {
-    if (!searchTerm) return { page: 0, titles: [] }
+    if (!searchTerm) return { page: 0, results: [] }
     const resp = await fetch(`${SEARCH_BASE_URL}&query=${searchTerm}&page=${page}`)
     const res = await resp.json()
     
@@ -34,7 +34,7 @@ export const tmdb = {
       }))
     return {
       page: res.page,
-      titles: titles,
+      results: titles,
     }
   }
 }
