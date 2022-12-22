@@ -25,7 +25,7 @@ const Home: NextPage = () => {
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
 			</header>
 
-			<main className="w-full grid grid-cols-2 justify-items-center">
+			<main className="w-full flex flex-col justify-center">
         <MovieSearch setTitle={setSelectTitle} />
         {selectTitle && <div>{selectTitle.title}</div>}
 				{/* <EpisodeSummary />

@@ -34,22 +34,25 @@ const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
 					</span>
 				</button>}
 			{ modalOpen &&
-				<div className=" text-white w-full absolute inset-0 flex items-center justify-center bg-black/75">
-					<div className="p-3 space-y-4 bg-gray-800">
+				<div className=" text-white w-full inset-0 flex items-center justify-center bg-black/75">
+					<div className="p-3 w-full bg-gray-800">
 						<CarouselProvider
-							naturalSlideWidth={100}
-							naturalSlideHeight={150}
+							naturalSlideWidth={150}
+							naturalSlideHeight={300}
 							totalSlides={resp?.results.length || 0}
-							visibleSlides={3}
-							isIntrinsicHeight={true}
+							visibleSlides={5}
+							step={5}
+							infinite={true}
 						>
 							<Slider>
 								{resp?.results.map((title, index) => (
 									<Slide index={index} key={title.id}>
-										<figure>
-											<img src={title.poster_path} alt={title.title} />
-											<figcaption className="text-center">{title.title}</figcaption>
-										</figure>
+										<button onClick={() => selectTitle(title)}>
+											<figure>
+												<img src={title.poster_path} alt={title.title} />
+												<figcaption className="text-center">{title.title}</figcaption>
+											</figure>
+										</button>
 									</Slide>
 								))}
 							</Slider>
