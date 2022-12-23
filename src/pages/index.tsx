@@ -9,9 +9,10 @@ import { useState } from "react";
 import { trpc } from "../utils/trpc";
 import MovieSearch from "../components/common/MovieSearch";
 import { Title } from "../server/tmdb/client";
+import MovieSelect from "../components/common/MovieSelect";
 
 const Home: NextPage = () => {
-  const [selectTitle, setSelectTitle] = useState<Title | null>(null);
+  const [selectedTitle, setSelectedTitle] = useState<Title | null>(null);
   
 	return (
 		<>
@@ -25,12 +26,11 @@ const Home: NextPage = () => {
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
 			</header>
 
-			<main className="w-full flex flex-col justify-center">
-        <MovieSearch setTitle={setSelectTitle} />
-        {selectTitle && <div>{selectTitle.title}</div>}
-				{/* <EpisodeSummary />
+			<main className="w-full flex flex-col items-center">
+        <MovieSelect title={selectedTitle} selectTitle={setSelectedTitle} />
+				<EpisodeSummary />
 				<UserSummary />
-				<MovieSummary /> */}
+				<MovieSummary />
 			</main>
 		</>
 	);

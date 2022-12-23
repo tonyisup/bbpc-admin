@@ -7,14 +7,14 @@ import EpisodeModal from "./EpisodeModal";
 const MovieSummary: FC = () => {
   const { data: itemCount } = trpc.movie.getSummary.useQuery()
   return (
-    <>
+    <div>
       <span className="text-2xl font-semibold">
         <Link href="/movies">
           Movies
         </Link>
       </span>
       <span className="text-2xl font-semibold">({itemCount})</span>
-     </>
+    </div>
   )
 }
 

@@ -24,7 +24,7 @@ const Search: FC<SearchProps> = ({ setSearch }) => {
 		setSearchQuery("");
 	}
 	return (
-		<div className="flex items-center justify-center text-white">
+		<div className="relative flex items-center justify-center text-white">
 			<input
 				type="text"
 				value={searchQuery}
