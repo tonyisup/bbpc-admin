@@ -12,22 +12,24 @@ datasource db {
 
 // bbpc - episodes
 model Episode {
-  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  number    Int      @db.SmallInt
-  title     String
-  recording String?
-  reviews   Review[]
-  shows     Show[]
-  bangers   Banger[]
+  id          String       @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  number      Int          @db.SmallInt
+  title       String
+  recording   String?
+  reviews     Review[]
+  shows       Show[]
+  bangers     Banger[]
+  assignments Assignment[]
 }
 
 model Movie {
-  id      String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  title   String
-  year    Int      @db.SmallInt
-  poster  String?
-  reviews Review[]
-  url     String
+  id          String       @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  title       String
+  year        Int          @db.SmallInt
+  poster      String?
+  reviews     Review[]
+  url         String
+  assignments Assignment[]
 }
 
 model Show {
@@ -65,10 +67,14 @@ model Review {
 }
 
 model Assignment {
-  id      String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  reviews Review[]
-  userId  String
-  User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  reviews   Review[]
+  userId    String
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Movie     Movie?   @relation(fields: [movieId], references: [id])
+  movieId   String?  @db.UniqueIdentifier
+  Episode   Episode? @relation(fields: [episodeId], references: [id])
+  episodeId String?  @db.UniqueIdentifier
 }
 
 model Banger {

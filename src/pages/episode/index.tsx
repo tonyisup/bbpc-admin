@@ -3,10 +3,10 @@ import Head from "next/head";
 import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-import { trpc } from "../utils/trpc";
+import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useState } from "react";
 import { Episode } from "@prisma/client";
-import EpisodeModal from "../components/EpisodeModal";
+import EpisodeModal from "../../components/EpisodeModal";
 import { HiX } from "react-icons/hi";
 
 const Home: NextPage = () => {
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
           </thead>
           <tbody>
             {episodes?.map((episode) => (
-              <tr>
+              <tr key={episode.id}>
                 <td>{episode.number}</td>
                 <td>
                   <Link href={`/episode/${encodeURIComponent(episode.id)}`}>

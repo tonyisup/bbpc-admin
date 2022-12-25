@@ -2,10 +2,10 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 
-import { trpc } from "../utils/trpc";
+import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useState } from "react";
 import { HiX } from "react-icons/hi";
-import UserModal from "../components/UserModal";
+import UserModal from "../../components/UserModal";
 
 const Home: NextPage = () => {
   const refresh: DispatchWithoutAction = () => refetchItems()
