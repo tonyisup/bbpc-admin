@@ -5,6 +5,19 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 
 export const movieRouter = router({
+  find: publicProcedure
+    .input(z.object({
+      searchTerm: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.prisma.movie.findMany({
+        where: {
+          title: {
+            contains: input.searchTerm,            
+          }
+        }
+      })
+    }),
   search: publicProcedure
     .input(z.object({ 
       searchTerm: z.string(),

@@ -6,20 +6,21 @@ import Search from "./common/Search";
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
 import 'pure-react-carousel/dist/react-carousel.es.css';
 import TitleCard from "./TitleCard";
+import { Movie } from "@prisma/client";
+import MovieCard from "./MovieCard";
 
 interface MovieSearchProps {
-	setTitle: Dispatch<SetStateAction<Title | null>>;
+	setMovie: Dispatch<SetStateAction<Movie | null>>;
 }
 
-const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
-	const [modalOpen, setModalOpen] = useState<boolean>(false);
-	const [searchQuery, setSearchQuery] = useState<string>("");
-	const { data: resp } = trpc.movie.search.useQuery({
-		page: 1,
+const MovieSearch: FC<MovieSearchProps> = ({ setMovie: setMovie }) => {
+	const [ modalOpen, setModalOpen ] = useState<boolean>(false);
+	const [ searchQuery, setSearchQuery ] = useState<string>("");
+	const { data: movies } = trpc.movie.find.useQuery({
 		searchTerm: searchQuery,
-	});
-	const selectTitle = function(title: Title) {
-		setTitle(title);
+	})
+	const selectMovie = function(movie: Movie) {
+		setMovie(movie);
 		setSearchQuery("");
 		setModalOpen(false);
 	}
@@ -58,7 +59,7 @@ const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
 							<CarouselProvider
 								naturalSlideWidth={150}
 								naturalSlideHeight={300}
-								totalSlides={resp?.results.length || 0}
+								totalSlides={movies?.length || 0}
 								visibleSlides={5}
 								step={5}
 								infinite={true}
@@ -68,10 +69,10 @@ const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
 									<ButtonNext>Next</ButtonNext>
 								</div>
 								<Slider>
-									{resp?.results.map((title, index) => (
-										<Slide index={index} key={title.id}>
-											<button onClick={() => selectTitle(title)}>
-												<TitleCard title={title} />
+									{movies?.map((movie, index) => (
+										<Slide index={index} key={movie.id}>
+											<button onClick={() => selectMovie(movie)}>
+												<MovieCard movie={movie} />
 											</button>
 										</Slide>
 									))}

@@ -73,7 +73,7 @@ const MovieSelect: FC<MovieSelectProps> = ({
           </>
         }
       </div>
-      <MovieSearch setTitle={setTitle} />
+      <MovieSearch setMovie={setSelectedMovie} />
     </div>
 )}
 export default MovieSelect
