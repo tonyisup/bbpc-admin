@@ -1,19 +1,7 @@
 import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
 import { trpc } from "../utils/trpc";
+import RoleSelect from "./RoleSelect";
 
-interface RoleSelectProps {
-  setRoleId: Dispatch<SetStateAction<number>> 
-}
-const RoleSelect: FC<RoleSelectProps> = ({
-  setRoleId: setRoleId,
-}) => {
-  const { data: roles } = trpc.role.getAll.useQuery()
-  return <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-    onChange={(e) => setRoleId(Number(e.target.value))}        
-  >
-    {roles?.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
-  </select>
-}
 interface UserRoleModalProps {
   userId: string,
   setModalOpen: Dispatch<SetStateAction<boolean>>

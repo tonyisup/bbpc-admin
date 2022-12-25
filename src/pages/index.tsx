@@ -7,13 +7,14 @@ import MovieSummary from "../components/MovieSummary";
 import Search from "../components/common/Search";
 import { useState } from "react";
 import { trpc } from "../utils/trpc";
-import MovieSearch from "../components/common/MovieSearch";
+import MovieSearch from "../components/MovieSearch";
 import { Title } from "../server/tmdb/client";
-import MovieSelect from "../components/common/MovieSelect";
+import { Movie, User } from ".prisma/client";
+import UserSelect from "../components/UserSelect";
+import MovieSelect from "../components/MovieSelect";
 
 const Home: NextPage = () => {
-  const [selectedTitle, setSelectedTitle] = useState<Title | null>(null);
-  
+  const [movie, setMovie] = useState<Movie | null>(null)
 	return (
 		<>
 			<Head>
@@ -27,10 +28,11 @@ const Home: NextPage = () => {
 			</header>
 
 			<main className="w-full flex flex-col items-center">
-        <MovieSelect title={selectedTitle} selectTitle={setSelectedTitle} />
+        <MovieSelect selectMovie={setMovie} />
+        {/* 
 				<EpisodeSummary />
 				<UserSummary />
-				<MovieSummary />
+				<MovieSummary /> */}
 			</main>
 		</>
 	);

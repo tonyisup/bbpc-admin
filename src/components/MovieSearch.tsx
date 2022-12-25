@@ -1,7 +1,7 @@
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
-import { Title } from "../../server/tmdb/client";
-import { trpc } from "../../utils/trpc";
-import Search from "./Search";
+import { Title } from "../server/tmdb/client";
+import { trpc } from "../utils/trpc";
+import Search from "./common/Search";
 
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
 import 'pure-react-carousel/dist/react-carousel.es.css';
