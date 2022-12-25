@@ -13,19 +13,45 @@ export const movieRouter = router({
     .query(({ ctx, input }) => {
       return ctx.tmdb.getMovies(input.page, input.searchTerm)
     }),
+  getTitle: publicProcedure
+    .input(z.object({
+      id: z.number(),
+    }))
+    .query(({ ctx, input }) => {
+      return ctx.tmdb.getMovie(input.id)
+    }),
   add: publicProcedure
     .input(z.object({
       title: z.string(),
       year: z.number(),
       poster: z.string(),
+      url: z.string(),
     }))
     .mutation(async (req) => {
+      const exists = await req.ctx.prisma.movie.findFirst({
+        where: {
+          url: req.input.url
+        }
+      })
+      if (exists) {
+        return await req.ctx.prisma.movie.update({
+          where: {
+            id: exists.id
+          },
+          data: {
+            title: req.input.title,
+            year: req.input.year,
+            poster: req.input.poster,
+            url: req.input.url,
+          }
+        })
+      }
       return await req.ctx.prisma.movie.create({
         data: {          
           title: req.input.title,
           year: req.input.year,
           poster: req.input.poster,
-          url: ""
+          url: req.input.url,
         }
       })
     }),

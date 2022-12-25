@@ -5,6 +5,7 @@ import Search from "./common/Search";
 
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
 import 'pure-react-carousel/dist/react-carousel.es.css';
+import TitleCard from "./TitleCard";
 
 interface MovieSearchProps {
 	setTitle: Dispatch<SetStateAction<Title | null>>;
@@ -70,10 +71,7 @@ const MovieSearch: FC<MovieSearchProps> = ({ setTitle: setTitle }) => {
 									{resp?.results.map((title, index) => (
 										<Slide index={index} key={title.id}>
 											<button onClick={() => selectTitle(title)}>
-												<figure>
-													<img src={title.poster_path} alt={title.title} />
-													<figcaption className="text-center">{title.title}</figcaption>
-												</figure>
+												<TitleCard title={title} />
 											</button>
 										</Slide>
 									))}
