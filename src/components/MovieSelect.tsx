@@ -5,6 +5,7 @@ import { trpc } from "../utils/trpc";
 import MovieCard from "./MovieCard";
 import MovieSearch from "./MovieSearch";
 import TitleCard from "./TitleCard";
+import TitleSearch from "./TitleSearch";
 
 interface MovieSelectProps {
   selectMovie: Dispatch<SetStateAction<Movie | null>>;
@@ -73,7 +74,7 @@ const MovieSelect: FC<MovieSelectProps> = ({
           </>
         }
       </div>
-      <MovieSearch setMovie={setSelectedMovie} />
+      <TitleSearch setTitle={setTitle} />
     </div>
 )}
 export default MovieSelect

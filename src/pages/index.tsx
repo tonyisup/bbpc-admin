@@ -12,6 +12,7 @@ import { Title } from "../server/tmdb/client";
 import { Movie, User } from ".prisma/client";
 import UserSelect from "../components/UserSelect";
 import MovieSelect from "../components/MovieSelect";
+import MovieFind from "../components/MovieFind";
 
 const Home: NextPage = () => {
   const [movie, setMovie] = useState<Movie | null>(null)
@@ -25,10 +26,11 @@ const Home: NextPage = () => {
 
 			<header className="flex p-6 w-full justify-between">
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
+        {movie && <span>{movie.title}</span>}
 			</header>
 
 			<main className="w-full flex flex-col items-center">
-        <MovieSelect selectMovie={setMovie} />
+        <MovieFind selectMovie={setMovie} />
         {/* 
 				<EpisodeSummary />
 				<UserSummary />
