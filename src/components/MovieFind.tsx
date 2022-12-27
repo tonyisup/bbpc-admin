@@ -39,13 +39,11 @@ const MovieFind: FC<MovieFindProps> = ({
       selectMovie(result)
     }
   })
-  return (    
-    <div className="w-full grid grid-cols-2">
-      <div className="w-full flex justify-center">
-        {selectedMovie && <MovieCard movie={selectedMovie} />}
-        {!selectedMovie && title && <TitleCard title={title} />}
-        {!selectedMovie && !title && <div className="col-span-2">No movie selected</div>}
-      </div>
+  return (
+    <div className="w-full flex flex-col justify-center">
+      {selectedMovie && <MovieCard movie={selectedMovie} />}
+      {!selectedMovie && title && <TitleCard title={title} />}
+      {!selectedMovie && !title && <div className="col-span-2">No movie selected</div>}
       <TitleSearch setTitle={setTitle} />
     </div>
 )}
