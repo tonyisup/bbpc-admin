@@ -1,11 +1,7 @@
-import { Assignment } from "@prisma/client";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { HiX } from "react-icons/hi";
-import AssignmentModal from "../../components/Assignment/AssignmentModal";
 import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
-import MovieCard from "../../components/MovieCard";
 import { trpc } from "../../utils/trpc";
 
 const Episode: NextPage = () => {

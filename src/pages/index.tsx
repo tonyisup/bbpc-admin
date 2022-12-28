@@ -13,9 +13,10 @@ import { Movie, User } from ".prisma/client";
 import UserSelect from "../components/UserSelect";
 import MovieSelect from "../components/MovieSelect";
 import MovieFind from "../components/MovieFind";
+import Modal from "../components/common/Modal";
+import AddEpisodeModal from "../components/Episode/AddEpisodeModal";
 
 const Home: NextPage = () => {
-  const [movie, setMovie] = useState<Movie | null>(null)
 	return (
 		<>
 			<Head>
@@ -26,15 +27,10 @@ const Home: NextPage = () => {
 
 			<header className="flex p-6 w-full justify-between">
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
-        {movie && <span>{movie.title}</span>}
 			</header>
 
 			<main className="w-full flex flex-col items-center">
-        <MovieFind selectMovie={setMovie} />
-        {/* 
-				<EpisodeSummary />
-				<UserSummary />
-				<MovieSummary /> */}
+				<AddEpisodeModal refreshItems={() => {}} />
 			</main>
 		</>
 	);

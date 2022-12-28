@@ -5,7 +5,7 @@ import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi"
 import episode from "../../pages/episode"
 import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
-import AssignmentModal from "./AssignmentModal"
+import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
 
 interface EpisodeAssignmentsProps {
 	episode: Episode
@@ -26,7 +26,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 				<h2 className="text-xl font-semibold">Assignments ({assignments?.length ?? 0})</h2>
 				{showAssignments && <button onClick={() => setShowAssignments(false)}><HiChevronUp /></button>}
 				{!showAssignments && <button onClick={() => setShowAssignments(true)}><HiChevronDown /></button>}
-				{episode && <AssignmentModal episode={episode} refreshItems={refreshAssignments} />}
+				{episode && <AddEpisodeAssignmentModal episode={episode} refreshItems={refreshAssignments} />}
 			</div>
 			{showAssignments && <div className="grid grid-cols-3 w-full">
 				{assignments?.map((assignment) => (

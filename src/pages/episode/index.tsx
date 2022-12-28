@@ -4,10 +4,9 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { trpc } from "../../utils/trpc";
-import { DispatchWithoutAction, useState } from "react";
-import { Episode } from "@prisma/client";
-import EpisodeModal from "../../components/EpisodeModal";
+import { DispatchWithoutAction } from "react";
 import { HiX } from "react-icons/hi";
+import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
 
 const Home: NextPage = () => {
   const refresh: DispatchWithoutAction = () => refetchEpisodes()
@@ -17,7 +16,6 @@ const Home: NextPage = () => {
       refresh()
     }
   })
-  const [modalOpen, setModalOpen] = useState<boolean>(false)
 
   if (!episodes || isLoading) return <p>Loading...</p>
   return (
@@ -28,16 +26,9 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {modalOpen && <EpisodeModal setModalOpen={setModalOpen} refreshItems={refresh} />}
-
       <header className="flex p-6 w-full justify-between">
         <h2 className="text-2xl font-semibold">Episodes</h2>
-        <button
-          type="button" 
-          onClick={() => setModalOpen(true)}
-          className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
-          Add Episode
-        </button>
+				<AddEpisodeModal refreshItems={refresh} />
       </header>
       
       <main className="flex flex-col items-center">

@@ -24,6 +24,7 @@ const UserSelect: FC<UserSelectProps> = ({
       <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
         onChange={handleChange}        
       >
+				<option value="">Select a user</option>
         {users?.map((user) => <option key={user.id} value={user.id}>{user.name} - {user.email}</option>)}
       </select>
     </div>
