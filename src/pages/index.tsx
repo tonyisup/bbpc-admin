@@ -1,20 +1,6 @@
-import { type NextPage } from "next";
+import { NextPage } from "next";
 import Head from "next/head";
-
-import EpisodeSummary from "../components/EpisodeSummary";
-import UserSummary from "../components/UserSummary";
-import MovieSummary from "../components/MovieSummary";
-import Search from "../components/common/Search";
-import { useState } from "react";
-import { trpc } from "../utils/trpc";
-import MovieSearch from "../components/MovieSearch";
-import { Title } from "../server/tmdb/client";
-import { Movie, User } from ".prisma/client";
-import UserSelect from "../components/UserSelect";
-import MovieSelect from "../components/MovieSelect";
-import MovieFind from "../components/MovieFind";
-import Modal from "../components/common/Modal";
-import AddEpisodeModal from "../components/Episode/AddEpisodeModal";
+import Link from "next/link";
 
 const Home: NextPage = () => {
 	return (
@@ -25,12 +11,16 @@ const Home: NextPage = () => {
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
-			<header className="flex p-6 w-full justify-between">
+			<header className="flex p-6 w-full justify-start items-center">
 				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
+				<nav className="flex gap-2 w-full justify-around">
+					<Link href="episode">Episodes</Link>
+					<Link href="user">Users</Link>
+					<Link href="about">About</Link>
+				</nav>
 			</header>
 
 			<main className="w-full flex flex-col items-center">
-				<AddEpisodeModal refreshItems={() => {}} />
 			</main>
 		</>
 	);

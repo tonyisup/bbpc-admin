@@ -31,33 +31,34 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
     }
 	}
   const closeModal = function() {
+		setAssigner(null)
+		setMovie(null)
     setModalOpen(false)
   }
 
-	return <>
-		<Modal isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Assignment" titleText="New Assignment">
-			<div className="p-3 space-y-4 bg-gray-800">
-					<div className="grid grid-cols-2 gap-2">
-						<label htmlFor="user">Assigner</label>
-						<UserSelect selectUser={setAssigner} />
-						<label htmlFor="movie">Movie</label>
-						<MovieFind selectMovie={setMovie} />
-						<button
-							onClick={closeModal}
-							className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
-						>
-							Cancel
-						</button>
-						<button
-							onClick={handleAddAssignment}
-							className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
-						>
-							Add Assignment
-						</button>
-					</div>
-				</div>
-		</Modal>
-	</>
+	return <Modal isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Assignment" titleText="New Assignment">
+		<div className="p-3 space-y-4 bg-gray-800">
+			<div className="grid grid-cols-2 gap-2">
+				<label htmlFor="user">Assigner</label>
+				<UserSelect selectUser={setAssigner} />
+				<label htmlFor="movie">Movie</label>
+				<MovieFind selectMovie={setMovie} />
+				<button
+					onClick={closeModal}
+					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+				>
+					Cancel
+				</button>
+				<button
+					onClick={handleAddAssignment}
+					disabled={!assigner || !movie}
+					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600 disabled:bg-gray-600 disabled:text-gray-400"
+				>
+					Add Assignment
+				</button>
+			</div>
+		</div>
+	</Modal>
 }
 
 export default AddEpisodeAssignmentModal;

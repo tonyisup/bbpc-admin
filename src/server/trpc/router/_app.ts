@@ -3,11 +3,13 @@ import { assignmentRouter } from "./assignmentRouter";
 import { authRouter } from "./auth";
 import { episodeRouter } from "./episodeRouter";
 import { movieRouter } from "./movieRouter";
+import { reviewRouter } from "./reviewRouter";
 import { roleRouter } from "./roleRouter";
 import { userRouter } from "./userRouter";
 
 
 export const appRouter = router({
+	review: reviewRouter,
   assignment: assignmentRouter,
   episode: episodeRouter,
   user: userRouter,

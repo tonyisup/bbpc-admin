@@ -17,9 +17,6 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
   const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
     onSuccess: () => refreshAssignments(),
   });
-  const handleRemoveAssignment = function(assignment: Assignment) {
-    removeAssignment({ id: assignment.id })
-  }
 	return (
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
@@ -35,7 +32,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 						{assignment.User && <span>{assignment.User.name}</span>}
 						<HiX 
 							className="text-red-500 cursor-pointer"
-							onClick={() => handleRemoveAssignment(assignment)}
+							onClick={() => removeAssignment({ id: assignment.id })}
 						/>
 					</>
 				))}
