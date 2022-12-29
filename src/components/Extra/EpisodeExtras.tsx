@@ -1,4 +1,5 @@
 import { Episode } from ".prisma/client";
+import { CarouselProvider, ButtonBack, ButtonNext, Slider, Slide } from "pure-react-carousel";
 import { FC, useState } from "react";
 import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";
@@ -30,14 +31,18 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 				{episode && <AddEpisodeExtraModal episode={episode} refreshItems={refreshExtras} />}
 			</div>
 			{isExtrasVisible && <div className="grid grid-cols-3 w-full">
-				{extras?.map((extra) => <>
-					{extra.movie && <MovieCard movie={extra.movie} />}
-					{extra.User && <span>{extra.User.name}</span>}
-					<HiX
-						className="text-red-500 cursor-pointer"
-						onClick={() => removeExtra({id: extra.id})}
-					/>
-				</>)}
+						{extras?.map((extra, index) => (
+							extra.movie && <div className="flex">
+									<MovieCard movie={extra.movie}  />
+									<div className="flex flex-col justify-between">
+										<HiX
+											className="text-red-500 cursor-pointer"
+											onClick={() => removeExtra({id: extra.id})}
+										/>
+										{extra.User && <div className="w-full">{extra.User.name}</div>}
+									</div>
+								</div>
+						))}
 			</div>}
 		</section>
 	)

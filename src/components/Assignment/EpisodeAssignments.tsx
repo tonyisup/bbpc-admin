@@ -27,14 +27,16 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 			</div>
 			{showAssignments && <div className="grid grid-cols-3 w-full">
 				{assignments?.map((assignment) => (
-					<>
-						{assignment.Movie && <MovieCard movie={assignment.Movie}/>}
-						{assignment.User && <span>{assignment.User.name}</span>}
-						<HiX 
+					assignment.Movie && <div className="flex">
+					<MovieCard movie={assignment.Movie}  />
+					<div className="flex flex-col justify-between">
+						<HiX
 							className="text-red-500 cursor-pointer"
-							onClick={() => removeAssignment({ id: assignment.id })}
+							onClick={() => removeAssignment({id: assignment.id})}
 						/>
-					</>
+						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
+					</div>
+				</div>
 				))}
 			</div>}
 		</section>

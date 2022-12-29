@@ -17,6 +17,8 @@ const Home: NextPage = () => {
 					<Link href="episode">Episodes</Link>
 					<Link href="user">Users</Link>
 					<Link href="about">About</Link>
+					<Link href="test">Test</Link>
+					
 				</nav>
 			</header>
 
