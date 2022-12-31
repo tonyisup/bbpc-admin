@@ -32,7 +32,12 @@ export const episodeRouter = router({
       })
     }),
   update: publicProcedure
-    .input(z.object({id: z.string(), number: z.number(), title: z.string()}))
+    .input(z.object({
+      id: z.string(), 
+      number: z.number(), 
+      title: z.string(),
+      date: z.date().optional()
+    }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
         where: {
@@ -40,7 +45,8 @@ export const episodeRouter = router({
         },
         data: {
           number: req.input.number,
-          title: req.input.title
+          title: req.input.title,
+          date: req.input.date
         }
       })
     }),

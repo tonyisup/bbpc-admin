@@ -37,6 +37,7 @@ const Home: NextPage = () => {
             <tr>
               <th className="px-4 py-2">Number</th>
               <th className="px-4 py-2">Title</th>
+              <th>Date</th>
               <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
@@ -49,6 +50,7 @@ const Home: NextPage = () => {
                     {episode.title}
                   </Link>
                 </td>
+                <td>{episode.date?.toDateString()}</td>
                 <td>
                   <div className="flex justify-center">
                     <HiX className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />

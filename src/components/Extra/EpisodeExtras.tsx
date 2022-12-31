@@ -32,7 +32,7 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 			</div>
 			{isExtrasVisible && <div className="grid grid-cols-3 w-full">
 						{extras?.map((extra, index) => (
-							extra.movie && <div className="flex">
+							extra.movie && <div key={extra.movieId} className="flex">
 									<MovieCard movie={extra.movie}  />
 									<div className="flex flex-col justify-between">
 										<HiX

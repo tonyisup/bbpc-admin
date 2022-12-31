@@ -15,6 +15,7 @@ model Episode {
   id          String       @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   number      Int          @db.SmallInt
   title       String
+  date        DateTime?    @db.Date
   recording   String?
   reviews     Review[]
   shows       Show[]

@@ -27,7 +27,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 			</div>
 			{showAssignments && <div className="grid grid-cols-3 w-full">
 				{assignments?.map((assignment) => (
-					assignment.Movie && <div className="flex">
+					assignment.Movie && <div key={assignment.movieId} className="flex">
 					<MovieCard movie={assignment.Movie}  />
 					<div className="flex flex-col justify-between">
 						<HiX
