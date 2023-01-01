@@ -2,11 +2,27 @@ import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 
 export const assignmentRouter = router({
+  setHomework: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      homework: z.boolean()
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.assignment.update({
+        where: {
+          id: req.input.id
+        },
+        data: {
+          homework: req.input.homework
+        }
+      })
+    }),
   add: publicProcedure
     .input(z.object({
       episodeId: z.string(),
       movieId: z.string(),
       userId: z.string(),
+      homework: z.boolean()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.create({
@@ -14,6 +30,7 @@ export const assignmentRouter = router({
           episodeId: req.input.episodeId,
           movieId: req.input.movieId,
           userId: req.input.userId,
+          homework: req.input.homework
         }
       })
     }),

@@ -1,7 +1,7 @@
 
 import { Assignment, Episode } from "@prisma/client"
 import { FC, useState } from "react"
-import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi"
+import { HiBookOpen, HiChevronDown, HiChevronUp, HiX } from "react-icons/hi"
 import episode from "../../pages/episode"
 import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
@@ -17,6 +17,12 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
   const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
     onSuccess: () => refreshAssignments(),
   });
+	const { mutate: updateHomework } = trpc.assignment.setHomework.useMutation({
+		onSuccess: () => refreshAssignments(),
+	})
+	const toggleHomework = function(assignment: Assignment) {
+		updateHomework({ id: assignment.id, homework: !assignment.homework })
+	}
 	return (
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
@@ -34,6 +40,12 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 							className="text-red-500 cursor-pointer"
 							onClick={() => removeAssignment({id: assignment.id})}
 						/>
+						<button
+							onClick={() => toggleHomework(assignment)}
+						>
+							{assignment.homework && <HiBookOpen className="text-green-500" />}
+							{!assignment.homework && <HiBookOpen className="text-gray-700" />}
+						</button>
 						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
 					</div>
 				</div>

@@ -1,5 +1,5 @@
 import { Episode, Movie, User } from "@prisma/client";
-import { DispatchWithoutAction, FC, useState } from "react"
+import React, { DispatchWithoutAction, FC, ReactEventHandler, useState } from "react"
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
@@ -15,19 +15,24 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ assigner, setAssigner ] = useState<User | null>(null);
 	const [ movie, setMovie ] = useState<Movie | null>(null);
+	const [ homework, setHomework ] = useState(false)
 	const { mutate: addAssignment } = trpc.assignment.add.useMutation({
 		onSuccess: () => {
 			refreshItems();
 			closeModal();
 		}
 	});
-
+	const handleHomeworkChange = function() {
+		setHomework(!homework)
+	}
 	const handleAddAssignment = function() {
     if (assigner && movie) {
       addAssignment({ 
         episodeId: episode.id, 
         userId: assigner.id, 
-        movieId: movie.id })
+        movieId: movie.id,
+				homework: homework
+			})
     }
 	}
   const closeModal = function() {
@@ -43,6 +48,15 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 				<UserSelect selectUser={setAssigner} />
 				<label htmlFor="movie">Movie</label>
 				<MovieFind selectMovie={setMovie} />
+				<div>
+					<label>Homework</label>
+					<input
+						type="checkbox"
+						className="rounded-md ml-2"
+						checked={homework}
+						onChange={handleHomeworkChange}
+					/>
+				</div>
 				<button
 					onClick={closeModal}
 					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
