@@ -22,6 +22,7 @@ const Episode: NextPage = () => {
   const [ number, setNumber ] = useState<number>(episode?.number ?? 0);
   const [ title, setTitle ] = useState<string>(episode?.title ?? "");
   const [ date, setDate ] = useState<Date>(episode?.date ?? new Date());
+  const [ recording, setRecording ] = useState<string>(episode?.recording ?? "");
   const { mutate: updateEpisode } = trpc.episode.update.useMutation({
     onSuccess: () => {
       refetch();
@@ -36,6 +37,9 @@ const Episode: NextPage = () => {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDate(e.target.valueAsDate ?? new Date())
   }
+  const handleRecordingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecording(e.target.value)
+  }
   const handleSave = () => {
     if (!id) return;
 
@@ -44,6 +48,7 @@ const Episode: NextPage = () => {
       number,
       title,
       date,
+      recording
     })
   }
   return (
@@ -91,6 +96,16 @@ const Episode: NextPage = () => {
                 type="date"
                 value={date?.toISOString().slice(0, 10) ?? undefined}
                 onChange={handleDateChange}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="url">Recording Url</label>
+              <input
+                className="bg-gray-800 text-gray-300"
+                id="url"
+                type="text"
+                value={recording}
+                onChange={handleRecordingChange}
               />
             </div>
             <button

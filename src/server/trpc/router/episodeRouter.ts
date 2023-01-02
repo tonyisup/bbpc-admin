@@ -36,7 +36,8 @@ export const episodeRouter = router({
       id: z.string(), 
       number: z.number(), 
       title: z.string(),
-      date: z.date().optional()
+      date: z.date().optional(),
+      recording: z.string().optional()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
@@ -46,7 +47,8 @@ export const episodeRouter = router({
         data: {
           number: req.input.number,
           title: req.input.title,
-          date: req.input.date
+          date: req.input.date,
+          recording: req.input.recording
         }
       })
     }),
