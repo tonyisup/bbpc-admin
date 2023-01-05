@@ -90,6 +90,7 @@ model Role {
   id          Int        @id @default(autoincrement()) @db.TinyInt
   name        String
   description String
+  admin       Boolean    @default(false)
   users       UserRole[]
 }
 

@@ -22,7 +22,7 @@ const User: NextPage = () => {
         <title>User {user?.name} - Bad Boys Podcast Admin</title>
       </Head>
 
-      {modalOpen && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
+      {modalOpen && user?.id && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
 
       <main className="flex w-full min-h-screen flex-col items-center">
         <header className="flex my-6 px-6 w-full justify-center">

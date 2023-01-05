@@ -14,6 +14,7 @@ const RoleSelect: FC<RoleSelectProps> = ({
   return <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
     onChange={handleChange}        
   >
+    <option value={0}>Select a role</option>
     {roles?.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
   </select>
 }
