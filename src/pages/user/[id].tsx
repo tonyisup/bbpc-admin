@@ -16,6 +16,10 @@ const User: NextPage = () => {
   });
   const [modalOpen, setModalOpen] = useState<boolean>(false)
   const refresh = () => refetchRoles()
+  
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
+  const router = useRouter();
+  if (!isAdmin) router.push('/');
   return (
     <>
       <Head>

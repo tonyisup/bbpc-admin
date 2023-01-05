@@ -6,8 +6,11 @@ import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useState } from "react";
 import { HiX } from "react-icons/hi";
 import UserModal from "../../components/UserModal";
+import { useRouter } from "next/router";
 
 const Home: NextPage = () => {
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
+  const router = useRouter();
   const refresh: DispatchWithoutAction = () => refetchItems()
   const {data: items, isLoading, refetch: refetchItems } = trpc.user.getAll.useQuery()
   const {mutate: removeItem} = trpc.user.remove.useMutation({
@@ -18,6 +21,8 @@ const Home: NextPage = () => {
   const [modalOpen, setModalOpen] = useState<boolean>(false)
 
   if (!items || isLoading) return <p>Loading...</p>
+  
+  if (!isAdmin) router.push('/');
   return (
     <>
       <Head>

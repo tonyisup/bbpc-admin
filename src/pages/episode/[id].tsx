@@ -8,8 +8,14 @@ import EpisodeExtras from "../../components/Extra/EpisodeExtras";
 import { trpc } from "../../utils/trpc";
 
 const Episode: NextPage = () => {
+  
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
+  const router = useRouter();
+  if (!isAdmin) router.push('/');
+
   const { query } = useRouter();
   const id = query.id as string;	
+
   const { data: episode, refetch } = trpc.episode.get.useQuery({ 
     id
    }, {

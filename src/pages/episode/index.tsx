@@ -7,8 +7,11 @@ import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction } from "react";
 import { HiX } from "react-icons/hi";
 import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
+import { useRouter } from "next/router";
 
 const Home: NextPage = () => {
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
+  const router = useRouter();
   const refresh: DispatchWithoutAction = () => refetchEpisodes()
   const {data: episodes, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
   const {mutate: removeEpisode} = trpc.episode.remove.useMutation({
@@ -18,6 +21,8 @@ const Home: NextPage = () => {
   })
 
   if (!episodes || isLoading) return <p>Loading...</p>
+  
+  if (!isAdmin) router.push('/');
   return (
     <>
       <Head>
