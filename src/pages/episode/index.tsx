@@ -55,7 +55,7 @@ const Home: NextPage = () => {
                     {episode.title}
                   </Link>
                 </td>
-                <td>{episode.date?.toDateString()}</td>
+                <td>{episode.date?.toUTCString()}</td>
                 <td>
                   <div className="flex justify-center">
                     <HiX className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />

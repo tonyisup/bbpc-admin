@@ -36,6 +36,7 @@ export const episodeRouter = router({
       id: z.string(), 
       number: z.number(), 
       title: z.string(),
+      description: z.string(),
       date: z.date().optional(),
       recording: z.string().optional()
     }))
@@ -47,6 +48,7 @@ export const episodeRouter = router({
         data: {
           number: req.input.number,
           title: req.input.title,
+          description: req.input.description,
           date: req.input.date,
           recording: req.input.recording
         }

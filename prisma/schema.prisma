@@ -13,6 +13,7 @@ model Episode {
   title       String
   recording   String?
   date        DateTime?    @db.Date
+  description String?
   assignments Assignment[]
   bangers     Banger[]
   reviews     Review[]

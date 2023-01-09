@@ -2,19 +2,23 @@ import { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
 import EpisodeExtras from "../../components/Extra/EpisodeExtras";
 import { trpc } from "../../utils/trpc";
 
 const Episode: NextPage = () => {
   
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
   const router = useRouter();
-  if (!isAdmin) router.push('/');
-
   const { query } = useRouter();
   const id = query.id as string;	
+  
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
+
+  useEffect(() => {
+    if (!isAdmin) router.push('/');
+  })
+
 
   const { data: episode, refetch } = trpc.episode.get.useQuery({ 
     id
@@ -27,6 +31,7 @@ const Episode: NextPage = () => {
    });
   const [ number, setNumber ] = useState<number>(episode?.number ?? 0);
   const [ title, setTitle ] = useState<string>(episode?.title ?? "");
+  const [ description, setDescription ] = useState<string>(episode?.description ?? "")
   const [ date, setDate ] = useState<Date>(episode?.date ?? new Date());
   const [ recording, setRecording ] = useState<string>(episode?.recording ?? "");
   const { mutate: updateEpisode } = trpc.episode.update.useMutation({
@@ -39,6 +44,9 @@ const Episode: NextPage = () => {
   }
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
+  }
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDescription(e.target.value)
   }
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDate(e.target.valueAsDate ?? new Date())
@@ -53,6 +61,7 @@ const Episode: NextPage = () => {
       id,
       number,
       title,
+      description,
       date,
       recording
     })
@@ -92,6 +101,16 @@ const Episode: NextPage = () => {
                 type="text"
                 value={title}
                 onChange={handleTitleChange}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="desc">Description</label>
+              <input
+                className="bg-gray-800 text-gray-300" 
+                id="title"
+                type="text"
+                value={description}
+                onChange={handleDescriptionChange}
               />
             </div>
             <div className="flex flex-col gap-2">
