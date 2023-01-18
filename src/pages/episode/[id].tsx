@@ -9,12 +9,11 @@ import { trpc } from "../../utils/trpc";
 
 const Episode: NextPage = () => {
   
-  const router = useRouter();
   const { query } = useRouter();
   const id = query.id as string;	
   
 	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-
+	const router = useRouter();
   useEffect(() => {
     if (!isAdmin) router.push('/');
   })
