@@ -65,7 +65,11 @@ export const episodeRouter = router({
     }),
   getAll: publicProcedure
     .query(({ ctx }) => {
-      return ctx.prisma.episode.findMany();
+      return ctx.prisma.episode.findMany({
+				orderBy: {
+					number: 'desc'
+				}
+			});
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {
