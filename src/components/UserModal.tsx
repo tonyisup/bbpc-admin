@@ -20,6 +20,7 @@ const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refres
       <div>
         <label htmlFor="number">Name</label>
         <input
+          title="name"
           type="text"
           name="name"
           value={userName}
@@ -30,6 +31,7 @@ const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refres
       <div>
         <label htmlFor="email">Email</label>
         <input
+          title="email"
           type="email"
           name="email"
           value={userEmail}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import { trpc } from "../../utils/trpc";
-import { DispatchWithoutAction, useEffect } from "react";
+import { type DispatchWithoutAction, useEffect } from "react";
 import { HiX } from "react-icons/hi";
 import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
 import { useRouter } from "next/router";
@@ -14,7 +14,7 @@ const Home: NextPage = () => {
   const router = useRouter();
 	useEffect(() => {
 		if (!isAdmin) router.push('/');
-	}, [isAdmin]);
+	}, [router, isAdmin]);
   const refresh: DispatchWithoutAction = () => refetchEpisodes()
   const {data: episodes, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
   const {mutate: removeEpisode} = trpc.episode.remove.useMutation({
@@ -63,6 +63,11 @@ const Home: NextPage = () => {
                   <div className="flex justify-center">
                     <HiX className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />
                   </div>
+                </td>
+                <td>
+                  <Link href={`/episode/plain/${encodeURIComponent(episode.id)}`}>
+                    View
+                  </Link>
                 </td>
               </tr>
             ))}

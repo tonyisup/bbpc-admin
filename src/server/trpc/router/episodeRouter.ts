@@ -63,6 +63,52 @@ export const episodeRouter = router({
         }
       })
     }),
+    full: publicProcedure
+      .input(z.object({id: z.string()}))
+      .query(async (req) => {
+        return await req.ctx.prisma.episode.findUnique({
+          where: {
+            id: req.input.id
+          },
+          include: {
+            assignments: {
+              include: {
+                User: true,
+                Movie: true
+              }
+            },
+            reviews: {
+              include: {
+                movie: true,
+                User: true,
+              }
+            }
+          }
+        })
+      }),
+  fullByNumber: publicProcedure
+    .input(z.object({number: z.number()}))
+    .query(async (req) => {
+      return await req.ctx.prisma.episode.findFirst({
+        where: {
+          number: req.input.number
+        },
+        include: {
+          assignments: {
+            include: {
+              User: true,
+              Movie: true
+            }
+          },
+          reviews: {
+            include: {
+              movie: true,
+              User: true,
+            }
+          }
+        }
+      })
+    }),
   getAll: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.episode.findMany({

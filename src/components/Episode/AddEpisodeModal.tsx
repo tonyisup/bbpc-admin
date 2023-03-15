@@ -1,4 +1,4 @@
-import { DispatchWithoutAction, FC, useState } from "react";
+import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 
@@ -37,6 +37,7 @@ const AddEpisodeModal: FC<AddEpisodeModalProps> = ({refreshItems: refreshItems})
 				<div>
 					<label htmlFor="number">Number</label>
 					<input
+						title="number"
 						type="number"
 						name="number"
 						value={episodeNumber}
@@ -47,6 +48,7 @@ const AddEpisodeModal: FC<AddEpisodeModalProps> = ({refreshItems: refreshItems})
 				<div>
 					<label htmlFor="title">Title</label>
 					<input
+						title="title"
 						type="text"
 						name="title"
 						value={episodeTitle}

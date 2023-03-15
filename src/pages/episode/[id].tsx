@@ -106,7 +106,7 @@ const Episode: NextPage = () => {
               <label htmlFor="desc">Description</label>
               <input
                 className="bg-gray-800 text-gray-300" 
-                id="title"
+                id="desc"
                 type="text"
                 value={description}
                 onChange={handleDescriptionChange}

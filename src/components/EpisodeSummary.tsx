@@ -1,6 +1,5 @@
-import { Episode } from ".prisma/client";
 import Link from "next/link";
-import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import type { FC } from "react";
 import { trpc } from "../utils/trpc";
 const EpisodeSummary: FC = () => {
   const { data: itemCount } = trpc.episode.getSummary.useQuery()
