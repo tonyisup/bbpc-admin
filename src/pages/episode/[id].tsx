@@ -71,13 +71,18 @@ const Episode: NextPage = () => {
         <title>{`Episode ${episode?.number} - Bad Boys Podcast Admin`}</title>
       </Head>
       <main className="flex w-full min-h-screen flex-col items-center gap-2">
-        <header className="grid grid-cols-3 w-full">
+        <header className="grid grid-cols-3 items-center justify-items-center w-full">
           <Link className="p-4" href="/episode">
             Episodes
           </Link>
+
           <h1 className="text-2xl font-semibold">
             Episode {episode?.number} - {episode?.title}
           </h1>
+
+					{episode?.id && <Link href={`/episode/plain/${encodeURIComponent(episode?.id)}`}>
+						View
+					</Link>}
         </header>
         {episode &&<section>
           <h2 className="text-xl font-semibold">Episode Details</h2>
