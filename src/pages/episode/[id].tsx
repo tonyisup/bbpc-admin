@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
 import EpisodeExtras from "../../components/Extra/EpisodeExtras";
 import { trpc } from "../../utils/trpc";
+import EpisodeLinks from "../../components/Link/EpisodeLinks";
 
 const Episode: NextPage = () => {
   
@@ -147,6 +148,7 @@ const Episode: NextPage = () => {
         </section>}
 				{episode && <EpisodeAssignments episode={episode} />}
 				{episode && <EpisodeExtras episode={episode} />}
+				{episode && <EpisodeLinks episode={episode} />}
       </main>
     </>
   );

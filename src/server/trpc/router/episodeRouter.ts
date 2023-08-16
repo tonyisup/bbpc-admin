@@ -3,6 +3,33 @@ import { z } from "zod";
 import { router, publicProcedure } from "../trpc";
 
 export const episodeRouter = router({
+	getLinks: publicProcedure
+		.input(z.object({id: z.string()}))
+		.query(async (req) => {
+			return await req.ctx.prisma.episode.findUnique({
+				where: {
+					id: req.input.id
+				},
+				select: {
+					links: true
+				}
+			})
+		}),
+	addLink: publicProcedure
+		.input(z.object({episodeId: z.string(), url: z.string(), text: z.string()}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.link.create({
+				data: {
+					Episode: {
+						connect: {
+							id: req.input.episodeId
+						}
+					},
+					url: req.input.url,
+					text: req.input.text
+				}
+			})
+		}),
   getAssigments: publicProcedure
     .input(z.object({id: z.string()}))
     .query(async (req) => {
