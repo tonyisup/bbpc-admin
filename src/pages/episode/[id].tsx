@@ -1,4 +1,4 @@
-import { NextPage } from "next";
+import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -7,18 +7,34 @@ import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
 import EpisodeExtras from "../../components/Extra/EpisodeExtras";
 import { trpc } from "../../utils/trpc";
 import EpisodeLinks from "../../components/Link/EpisodeLinks";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]";
+import { ssr } from "../../server/db/ssr";
 
-const Episode: NextPage = () => {
+export async function getServerSideProps(context: any) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+	
+	if (!session || !isAdmin) {
+		return {
+			redirect: {
+				destionation: '/',
+				permanent: false,
+			}
+		}
+	}
+
+	return {
+		props: {
+			session
+		}
+	}
+}
+const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   
   const { query } = useRouter();
-  const id = query.id as string;	
-  
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-	const router = useRouter();
-  useEffect(() => {
-    if (!isAdmin) router.push('/');
-  })
-
+  const id = query.id as string;
 
   const { data: episode, refetch } = trpc.episode.get.useQuery({ 
     id

@@ -1,21 +1,39 @@
-import type { NextPage } from "next";
+import type { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { trpc } from "../../../utils/trpc";
+import { getServerSession } from "next-auth";
+import { ssr } from "../../../server/db/ssr";
+import { authOptions } from "../../api/auth/[...nextauth]";
 
-const Plain: NextPage = () => {
+export async function getServerSideProps(context: any) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+	
+	if (!session || !isAdmin) {
+		return {
+			redirect: {
+				destionation: '/',
+				permanent: false,
+			}
+		}
+	}
+
+	return {
+		props: {
+			session
+		}
+	}
+}
+
+const Plain: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   
   const { query } = useRouter();
   const id = query.id as string;	
   
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-	const router = useRouter();
-  useEffect(() => {
-    if (!isAdmin) router.push('/');
-  }, [router, isAdmin])
-
 
   const { data: episode } = trpc.episode.full.useQuery({id});
   const { data: next } = trpc.episode.fullByNumber.useQuery({number: 1 + (episode?.number ?? 0)})

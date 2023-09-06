@@ -1,4 +1,4 @@
-import { NextPage } from "next";
+import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -8,13 +8,32 @@ import { type DispatchWithoutAction, useEffect } from "react";
 import { HiX } from "react-icons/hi";
 import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
 import { useRouter } from "next/router";
+import { getServerSession } from "next-auth";
+import { ssr } from "../../server/db/ssr";
+import { authOptions } from "../api/auth/[...nextauth]";
 
-const Home: NextPage = () => {
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-  const router = useRouter();
-	useEffect(() => {
-		if (!isAdmin) router.push('/');
-	}, [router, isAdmin]);
+export async function getServerSideProps(context: any) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+	
+	if (!session || !isAdmin) {
+		return {
+			redirect: {
+				destionation: '/',
+				permanent: false,
+			}
+		}
+	}
+
+	return {
+		props: {
+			session
+		}
+	}
+}
+
+const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   const refresh: DispatchWithoutAction = () => refetchEpisodes()
   const {data: episodes, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
   const {mutate: removeEpisode} = trpc.episode.remove.useMutation({

@@ -1,13 +1,36 @@
-import { type NextPage } from "next";
+import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiX } from "react-icons/hi";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
+import { getServerSession } from "next-auth";
+import { ssr } from "../../server/db/ssr";
+import { authOptions } from "../api/auth/[...nextauth]";
 
-const User: NextPage = () => {
-	const router = useRouter();
+export async function getServerSideProps(context: any) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+	console.log("session", session);
+	console.log("isAdmin", isAdmin);
+	if (!session || !isAdmin) {
+		return {
+			redirect: {
+				destionation: '/',
+				permanent: false,
+			}
+		}
+	}
+
+	return {
+		props: {
+			session
+		}
+	}
+}
+const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   const { query } = useRouter();
   const id = query.id as string;
   const { data: user } = trpc.user.get.useQuery({ id });
@@ -18,11 +41,6 @@ const User: NextPage = () => {
   const [modalOpen, setModalOpen] = useState<boolean>(false)
   const refresh = () => refetchRoles()
   
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-
-	useEffect(() => {
-		if (!isAdmin) router.push('/');
-	}, [isAdmin]);
 
   return (
     <>
