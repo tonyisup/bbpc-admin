@@ -4,21 +4,46 @@ import { publicProcedure, router } from "../trpc";
 export const reviewRouter = router({
 	add: publicProcedure
 		.input(z.object({
-			episodeId: z.string(),
+			userId: z.string(),
 			movieId: z.string(),
-			userId: z.string()
+			ratingId: z.string(),
 		}))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.create({
 				data: {
-					episodeId: req.input.episodeId,
+					userId: req.input.userId,
 					movieId: req.input.movieId,
-					userId: req.input.userId
+					ratingId: req.input.ratingId,
 				}
 			})
 		}),
+	addToAssignment: publicProcedure
+		.input(z.object({
+			assignmentId: z.string(),
+			userId: z.string(),
+			movieId: z.string(),
+			ratingId: z.string(),
+		}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.review.create({
+				include: {
+					assignmentReviews: true
+				},
+				data: {
+					userId: req.input.userId,
+					movieId: req.input.movieId,
+					ratingId: req.input.ratingId,
+					assignmentReviews: {
+						create: {
+							assignmentId: req.input.assignmentId
+						}
+					}
+				}
+			})
+		}),
+
 	remove: publicProcedure
-		.input(z.object({id: z.string()}))
+		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.delete({
 				where: {
@@ -30,13 +55,50 @@ export const reviewRouter = router({
 		.input(z.object({episodeId: z.string()}))
 		.query(async (req) => {
 			return await req.ctx.prisma.review.findMany({
+				include: {
+					movie: true,
+					User: true,
+					extraReviews: {
+						where: {
+							episodeId: req.input.episodeId
+						},
+					},
+					assignmentReviews: {
+						where: {
+							Assignment: {
+								is: {
+									Episode: {
+										is: {
+											id: req.input.episodeId
+										}
+									}
+								}
+							}
+						},
+					}
+				}
+			})
+		}),
+	getForAssignment: publicProcedure
+		.input(z.object({assignmentId: z.string()}))
+		.query(async (req) => {
+			return await req.ctx.prisma.review.findMany({
 				where: {
-					episodeId: req.input.episodeId
+					assignmentReviews: {
+						some: {
+							assignmentId: req.input.assignmentId
+						}
+					}
 				},
 				include: {
 					movie: true,
-					User: true
+					User: true,
+					Rating: true,
 				}
 			})
+		}),
+	getRatings: publicProcedure
+		.query(async (req) => {
+			return await req.ctx.prisma.rating.findMany()
 		}),
 })

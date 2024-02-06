@@ -1,17 +1,19 @@
 
 import { Assignment, Episode } from "@prisma/client"
 import { FC, useState } from "react"
-import { HiBookOpen, HiChevronDown, HiChevronUp, HiX } from "react-icons/hi"
+import { HiBookOpen, HiChevronDown, HiChevronUp, HiX, HiPencil } from "react-icons/hi"
 import episode from "../../pages/episode"
 import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
 import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
+import Link from "next/link"
 
 interface EpisodeAssignmentsProps {
 	episode: Episode
 }
 
 const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
+	
 	const [ showAssignments, setShowAssignments ] = useState<boolean>(false)
   const { data: assignments, refetch: refreshAssignments } = trpc.assignment.getForEpisode.useQuery({ episodeId: episode.id})
   const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
@@ -27,11 +29,9 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
 				<h2 className="text-xl font-semibold">Assignments ({assignments?.length ?? 0})</h2>
-				{showAssignments && <button onClick={() => setShowAssignments(false)}><HiChevronUp /></button>}
-				{!showAssignments && <button onClick={() => setShowAssignments(true)}><HiChevronDown /></button>}
 				{episode && <AddEpisodeAssignmentModal episode={episode} refreshItems={refreshAssignments} />}
 			</div>
-			{showAssignments && <div className="grid grid-cols-3 w-full">
+			<div className="grid grid-cols-3 w-full">
 				{assignments?.map((assignment) => (
 					assignment.Movie && <div key={assignment.movieId} className="flex">
 					<MovieCard movie={assignment.Movie}  />
@@ -47,10 +47,13 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 							{!assignment.homework && <HiBookOpen className="text-gray-700" />}
 						</button>
 						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
+						<Link href={`/assignment/${encodeURIComponent(assignment.id)}`}>
+							<HiPencil />
+						</Link>
 					</div>
 				</div>
 				))}
-			</div>}
+			</div>
 		</section>
 	)
 }

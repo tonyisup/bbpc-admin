@@ -19,17 +19,17 @@ export const assignmentRouter = router({
     }),
   add: publicProcedure
     .input(z.object({
-      episodeId: z.string(),
-      movieId: z.string(),
       userId: z.string(),
+      movieId: z.string(),
+      episodeId: z.string(),
       homework: z.boolean()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.create({
         data: {
-          episodeId: req.input.episodeId,
-          movieId: req.input.movieId,
           userId: req.input.userId,
+          movieId: req.input.movieId,
+          episodeId: req.input.episodeId,
           homework: req.input.homework
         }
       })
@@ -60,7 +60,7 @@ export const assignmentRouter = router({
           episodeId: req.input.episodeId
         }, 
         include: {
-          reviews: true,
+          assignmentReviews: true,
           Movie: true,
           User: true
         }
