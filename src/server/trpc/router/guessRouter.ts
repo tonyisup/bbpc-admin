@@ -8,7 +8,7 @@ export const guessRouter = router({
       userId: z.string(),
       assignmentReviewId: z.string(),
 			ratingId: z.string(),
-			gameId: z.string()
+			seasonId: z.string()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.guess.create({
@@ -18,7 +18,7 @@ export const guessRouter = router({
           userId: req.input.userId,
           assignmntReviewId: req.input.assignmentReviewId,
 					ratingId: req.input.ratingId,
-					gameId: req.input.gameId
+					seasonId: req.input.seasonId
         }
       })
     }),
@@ -87,4 +87,8 @@ export const guessRouter = router({
     .query(async (req) => {
       return await req.ctx.prisma.guess.findMany();
     }),
+	seasons: publicProcedure
+		.query(async (req) => {
+			return await req.ctx.prisma.season.findMany()
+		}),
 })

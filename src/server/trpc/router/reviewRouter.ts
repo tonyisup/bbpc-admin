@@ -2,6 +2,20 @@ import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 
 export const reviewRouter = router({
+	get: publicProcedure
+		.input(z.object({ id: z.string() }))
+		.query(async (req) => {
+			return await req.ctx.prisma.review.findUnique({
+				where: {
+					id: req.input.id
+				},
+				include: {
+					Movie: true,
+					User: true,
+					Rating: true,
+				}
+			})
+		}),
 	add: publicProcedure
 		.input(z.object({
 			userId: z.string(),
@@ -82,18 +96,24 @@ export const reviewRouter = router({
 	getForAssignment: publicProcedure
 		.input(z.object({assignmentId: z.string()}))
 		.query(async (req) => {
-			return await req.ctx.prisma.review.findMany({
+			return await req.ctx.prisma.assignmentReview.findMany({
 				where: {
-					assignmentReviews: {
-						some: {
-							assignmentId: req.input.assignmentId
+						assignmentId: req.input.assignmentId
+					},
+				include: {
+					Review: {
+						include: {
+							Movie: true,
+							User: true,
+							Rating: true,
+						}
+					},
+					guesses: {
+						include: {
+							User: true,
+							Rating: true,
 						}
 					}
-				},
-				include: {
-					Movie: true,
-					User: true,
-					Rating: true,
 				}
 			})
 		}),

@@ -179,23 +179,20 @@ model User {
 
 model Guess {
   id                String           @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  ratingId          String           @db.UniqueIdentifier
   created           DateTime         @db.DateTime
-  gameId            String           @db.UniqueIdentifier
   points            Int
-  userId            String
   assignmntReviewId String           @db.UniqueIdentifier
   AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction)
-  Game              Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  ratingId          String           @db.UniqueIdentifier
   Rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction)
+  userId            String
   User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId          String           @db.UniqueIdentifier
+  Season            Season           @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 }
 
 model Game {
-  id       String  @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  seasonId String  @db.UniqueIdentifier
-  Season   Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  guesses  Guess[]
+  id String @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
 }
 
 model Season {
@@ -203,8 +200,8 @@ model Season {
   title       String
   description String?
   gameTypeId  Int      @db.TinyInt
-  games       Game[]
   gameType    GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  guesses     Guess[]
 }
 
 model GameType {
