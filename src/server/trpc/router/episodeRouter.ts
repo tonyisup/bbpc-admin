@@ -104,10 +104,14 @@ export const episodeRouter = router({
                 Movie: true
               }
             },
-            reviews: {
+            extras: {
               include: {
-                movie: true,
-                User: true,
+								Review: {
+									include: {
+										User: true,
+										Movie: true
+									}
+								}
               }
             }
           }
@@ -127,12 +131,16 @@ export const episodeRouter = router({
               Movie: true
             }
           },
-          reviews: {
-            include: {
-              movie: true,
-              User: true,
-            }
-          }
+					extras: {
+						include: {
+							Review: {
+								include: {
+									User: true,
+									Movie: true
+								}
+							}
+						}
+					}
         }
       })
     }),

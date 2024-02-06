@@ -12,7 +12,7 @@ interface EpsideExtrasProps {
 
 const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 	const [isExtrasVisible, setIsExtrasVisible] = useState(false)
-	const {data: extras, refetch: refreshExtras} = trpc.review.getForEpisode.useQuery({ episodeId: episode.id})
+	const {data: extras, refetch: refreshExtras} = trpc.review.getExtrasForEpisode.useQuery({ episodeId: episode.id})
 	const {mutate: removeExtra} = trpc.review.remove.useMutation({
 		onSuccess: () => refreshExtras()
 	})
@@ -31,9 +31,9 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 				{episode && <AddEpisodeExtraModal episode={episode} refreshItems={refreshExtras} />}
 			</div>
 			{isExtrasVisible && <div className="grid grid-cols-3 w-full">
-						{extras?.map((extra, index) => (
-							extra.movie && <div key={extra.movieId} className="flex">
-									<MovieCard movie={extra.movie}  />
+						{extras?.map((extra) => (
+							extra.Movie && <div key={extra.movieId} className="flex">
+									<MovieCard movie={extra.Movie}  />
 									<div className="flex flex-col justify-between">
 										<HiX
 											className="text-red-500 cursor-pointer"

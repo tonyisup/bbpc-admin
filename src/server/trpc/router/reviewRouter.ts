@@ -6,7 +6,8 @@ export const reviewRouter = router({
 		.input(z.object({
 			userId: z.string(),
 			movieId: z.string(),
-			ratingId: z.string(),
+			episodeId: z.string(),
+			ratingId: z.string().optional(),
 		}))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.create({
@@ -14,6 +15,11 @@ export const reviewRouter = router({
 					userId: req.input.userId,
 					movieId: req.input.movieId,
 					ratingId: req.input.ratingId,
+					extraReviews: {
+						create: {
+							episodeId: req.input.episodeId
+						}
+					}
 				}
 			})
 		}),
@@ -51,31 +57,25 @@ export const reviewRouter = router({
 				}
 			})
 		}),
-	getForEpisode: publicProcedure
+	getExtrasForEpisode: publicProcedure
 		.input(z.object({episodeId: z.string()}))
 		.query(async (req) => {
 			return await req.ctx.prisma.review.findMany({
+				where: {
+					extraReviews: {
+						some: {
+							episodeId: req.input.episodeId
+						}
+					}
+				},
 				include: {
-					movie: true,
+					Movie: true,
 					User: true,
 					extraReviews: {
 						where: {
 							episodeId: req.input.episodeId
 						},
 					},
-					assignmentReviews: {
-						where: {
-							Assignment: {
-								is: {
-									Episode: {
-										is: {
-											id: req.input.episodeId
-										}
-									}
-								}
-							}
-						},
-					}
 				}
 			})
 		}),
@@ -91,7 +91,7 @@ export const reviewRouter = router({
 					}
 				},
 				include: {
-					movie: true,
+					Movie: true,
 					User: true,
 					Rating: true,
 				}

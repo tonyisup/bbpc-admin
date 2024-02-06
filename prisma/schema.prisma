@@ -16,9 +16,9 @@ model Episode {
   description String?
   assignments Assignment[]
   bangers     Banger[]
-  shows       Show[]
-  links       Link[]
   extras      ExtraReview[]
+  links       Link[]
+  shows       Show[]
 }
 
 model Link {
@@ -56,35 +56,35 @@ model Rating {
   sound    String?
   icon     String?
   category String?
-  reviews  Review[]
   guesses  Guess[]
+  reviews  Review[]
 }
 
 model Review {
   id                String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId            String
-  User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   movieId           String             @db.UniqueIdentifier
-  movie             Movie              @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  ratingId          String             @db.UniqueIdentifier
-  Rating            Rating             @relation(fields: [ratingId], references: [id])
+  ratingId          String?            @db.UniqueIdentifier
   assignmentReviews AssignmentReview[]
   extraReviews      ExtraReview[]
+  Movie             Movie              @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  Rating            Rating?            @relation(fields: [ratingId], references: [id])
+  User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ExtraReview {
   id        String  @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   reviewId  String  @db.UniqueIdentifier
-  Review    Review  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   episodeId String  @db.UniqueIdentifier
   Episode   Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  Review    Review  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 }
 
 model AssignmentReview {
   id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   assignmentId String     @db.UniqueIdentifier
-  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   reviewId     String     @db.UniqueIdentifier
+  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction)
   Review       Review     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   guesses      Guess[]
 }
@@ -92,12 +92,12 @@ model AssignmentReview {
 model Assignment {
   id                String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId            String
-  User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   episodeId         String             @db.UniqueIdentifier
-  Episode           Episode            @relation(fields: [episodeId], references: [id])
   movieId           String             @db.UniqueIdentifier
-  Movie             Movie              @relation(fields: [movieId], references: [id])
   homework          Boolean
+  Episode           Episode            @relation(fields: [episodeId], references: [id])
+  Movie             Movie              @relation(fields: [movieId], references: [id])
+  User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignmentReviews AssignmentReview[]
 }
 
@@ -171,39 +171,39 @@ model User {
   accounts      Account[]
   assignments   Assignment[]
   bangers       Banger[]
+  guesses       Guess[]
   reviews       Review[]
   sessions      Session[]
   roles         UserRole[]
-  guesses       Guess[]
 }
 
 model Guess {
   id                String           @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  points            Int
-  created           DateTime         @db.DateTime
-  userId            String
-  User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignmntReviewId String           @db.UniqueIdentifier
-  AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ratingId          String           @db.UniqueIdentifier
-  Rating            Rating           @relation(fields: [ratingId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created           DateTime         @db.DateTime
   gameId            String           @db.UniqueIdentifier
+  points            Int
+  userId            String
+  assignmntReviewId String           @db.UniqueIdentifier
+  AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction)
   Game              Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  Rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction)
+  User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Game {
   id       String  @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  guesses  Guess[]
   seasonId String  @db.UniqueIdentifier
   Season   Season  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  guesses  Guess[]
 }
 
 model Season {
   id          String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   title       String
   description String?
-  games       Game[]
   gameTypeId  Int      @db.TinyInt
+  games       Game[]
   gameType    GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
 }
 

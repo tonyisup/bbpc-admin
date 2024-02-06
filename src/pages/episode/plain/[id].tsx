@@ -60,9 +60,9 @@ const Plain: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
               </div>
             })} <br/>
             Extras: <br/>
-            {episode.reviews.map(review => {
-              return <div key={review.id}>
-                [{review.User.name}] {review.movie?.title} ({review.movie?.year})
+            {episode.extras.map(extra => {
+              return <div key={extra.id}>
+                [{extra.Review.User.name}] {extra.Review.Movie?.title} ({extra.Review.Movie?.year})
               </div>
             })} <br/>
             {next?.title}:<br/>
