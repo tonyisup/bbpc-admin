@@ -18,7 +18,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId })
 	const { data: episode } = trpc.episode.get.useQuery({ id: assignment.episodeId })
 	const { data: assignmentReviews, refetch: refreshAssignmentReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id })
-	const { mutate: removeReview } = trpc.review.remove.useMutation({
+	const { mutate: removeAssignmentReview } = trpc.review.removeAssignment.useMutation({
 		onSuccess: () => refreshAssignmentReviews()
 	})
 	const { mutate: removeGuess } = trpc.guess.remove.useMutation({
@@ -31,7 +31,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 		updateHomework({ id: assignment.id, homework: !assignment.homework })
 	}
 	const deleteReview = function(id: string) {
-		removeReview({ id })
+		removeAssignmentReview({ id })
 	}
 	const deleteGuess = function(id: string) {
 		removeGuess({ id })

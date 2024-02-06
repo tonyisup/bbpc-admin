@@ -71,6 +71,19 @@ export const reviewRouter = router({
 				}
 			})
 		}),
+	removeAssignment: publicProcedure
+		.input(z.object({ id: z.string() }))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.assignmentReview.delete({
+				where: {
+					id: req.input.id
+				},
+				include: {
+					Review: true,
+					guesses: true
+				}
+			})
+		}),
 	getExtrasForEpisode: publicProcedure
 		.input(z.object({episodeId: z.string()}))
 		.query(async (req) => {
