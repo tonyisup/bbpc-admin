@@ -18,7 +18,7 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
   const [ ratingId, setRatingId ] = useState<string | null>(null);
 	const [ reviewer, setReviewer ] = useState<User | null>(null);
 
-  const { mutate: AddReview } = trpc.review.addToAssignment.useMutation({
+  const { mutate: AddAssignmentReview } = trpc.review.addToAssignment.useMutation({
 		onSuccess: (m) => {
 			console.log(m);
 		}
@@ -28,16 +28,15 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
     setModalOpen(false)
   }
   const handleSubmit = (e: React.FormEvent) => {
-		if (!ratingId) return;
 		if (!reviewer) return;
 		if (!movie) return;
 		if (!episode) return;
 
     e.preventDefault();
-    AddReview({
+    AddAssignmentReview({
 			assignmentId: assignment.id,
       userId: reviewer.id,
-			ratingId: ratingId,
+			ratingId: ratingId ?? undefined,
       movieId: movie.id,
     }, {
       onSuccess: () => {

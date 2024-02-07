@@ -42,7 +42,7 @@ export const reviewRouter = router({
 			assignmentId: z.string(),
 			userId: z.string(),
 			movieId: z.string(),
-			ratingId: z.string(),
+			ratingId: z.string().optional(),
 		}))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.create({
