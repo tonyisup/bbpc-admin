@@ -2,6 +2,18 @@ import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 
 export const guessRouter = router({
+	setPointsForGuess: publicProcedure
+		.input(z.object({id: z.string(), points: z.number()}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.guess.update({
+				where: {
+					id: req.input.id
+				},
+				data: {
+					points: req.input.points
+				}
+			})
+		}),
   add: publicProcedure
     .input(z.object({
 			points: z.number(),

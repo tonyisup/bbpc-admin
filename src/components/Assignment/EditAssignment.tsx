@@ -1,8 +1,8 @@
-import { Assignment } from "@prisma/client";
+import { Assignment, Guess } from "@prisma/client";
 import { FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
-import { HiBookOpen, HiX } from "react-icons/hi";
+import { HiBookOpen, HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
 import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
 import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
 
@@ -27,6 +27,9 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	const { mutate: updateHomework } = trpc.assignment.setHomework.useMutation({
 		onSuccess: () => refreshAssignment(),
 	})
+	const { mutate: setPointsForGuess } = trpc.guess.setPointsForGuess.useMutation({
+		onSuccess: () => refreshAssignmentReviews()
+	})
 	const toggleHomework = function(assignment: Assignment) {
 		updateHomework({ id: assignment.id, homework: !assignment.homework })
 	}
@@ -35,6 +38,16 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	}
 	const deleteGuess = function(id: string) {
 		removeGuess({ id })
+	}
+	const handleAddPointToGuess = function(guess: Guess) {
+		return function() {
+			setPointsForGuess({ id: guess.id, points: guess.points + 1 })
+		}
+	}
+	const handleRemovePointFromGuess = function(guess: Guess) {
+		return function() {
+			setPointsForGuess({ id: guess.id, points: guess.points - 1 })
+		}
 	}
 	return (
 		<section>
@@ -71,7 +84,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 						<span>Guesses</span>
 						<ul className="p-2">
 							{assignmentReview.guesses?.map((guess) => (
-								<li key={guess.id} className="flex gap-2 bg-gray-800 p-2">
+								<li key={guess.id} className="flex gap-2 bg-gray-800 p-2 items-center">
 									<HiX
 										className="text-red-500 cursor-pointer m-2"
 										onClick={() => deleteGuess(guess.id)}
@@ -79,6 +92,12 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 									<span>{guess.User.name}</span>
 									<span className="color-yellow-200">{guess.Rating?.name}</span>
 									<span>{guess.points}</span>
+									<button className="text-green-500" onClick={handleAddPointToGuess(guess)}>
+										<HiPlusCircle />
+									</button>
+									<button className="text-red-500" onClick={handleRemovePointFromGuess(guess)}>
+										<HiMinusCircle />
+									</button>
 								</li>
 							))}
 						</ul>
