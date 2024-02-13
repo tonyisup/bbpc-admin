@@ -1,4 +1,4 @@
-import { NextPage, InferGetServerSidePropsType, GetServerSidePropsContext } from "next";
+import type { NextPage, InferGetServerSidePropsType } from "next";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";

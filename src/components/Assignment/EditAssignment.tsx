@@ -1,5 +1,5 @@
-import { Assignment, Guess } from "@prisma/client";
-import { FC } from "react";
+import type { Assignment, Guess } from "@prisma/client";
+import type { FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
 import { HiBookOpen, HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
@@ -89,15 +89,15 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 										className="text-red-500 cursor-pointer m-2"
 										onClick={() => deleteGuess(guess.id)}
 									/>
-									<span>{guess.User.name}</span>
+									<span>{guess.User.name ?? guess.User.email}</span>
 									<span className="color-yellow-200">{guess.Rating?.name}</span>
 									<span>{guess.points}</span>
-									<button className="text-green-500" onClick={handleAddPointToGuess(guess)}>
+									<div className="text-green-500" onClick={handleAddPointToGuess(guess)}>
 										<HiPlusCircle />
-									</button>
-									<button className="text-red-500" onClick={handleRemovePointFromGuess(guess)}>
+									</div>
+									<div className="text-red-500" onClick={handleRemovePointFromGuess(guess)}>
 										<HiMinusCircle />
-									</button>
+									</div>
 								</li>
 							))}
 						</ul>
