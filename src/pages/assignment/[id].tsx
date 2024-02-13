@@ -5,6 +5,7 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { trpc } from "../../utils/trpc";
 import EditAssignment from "../../components/Assignment/EditAssignment";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -27,13 +28,15 @@ export async function getServerSideProps(context: any) {
 	}
 }
 const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
-	
   const { query } = useRouter();
   const id = query.id as string;
 	const { data: assignment } = trpc.assignment.get.useQuery({ id })
 	return (
 		<div>
-			Assignment {assignment?.id}
+			<div className="flex justify-around">
+				<Link href={"/episode/" + assignment?.episodeId}>Back</Link>
+				<span className="text-2xl font-semibold">Assignment {assignment?.id}</span>
+			</div>
 			{assignment && <EditAssignment assignment={assignment} />}
 		</div>
 	)

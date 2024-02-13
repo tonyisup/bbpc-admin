@@ -45,7 +45,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   return (
     <>
       <Head>
-        <title>User {user?.name} - Bad Boys Podcast Admin</title>
+        <title>User {user?.name ?? user?.email} - Bad Boys Podcast Admin</title>
       </Head>
 
       {modalOpen && user?.id && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
