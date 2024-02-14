@@ -134,4 +134,16 @@ export const reviewRouter = router({
 		.query(async (req) => {
 			return await req.ctx.prisma.rating.findMany()
 		}),
+	setReviewRating: publicProcedure
+		.input(z.object({reviewId: z.string(), ratingId: z.string().nullish()}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.review.update({
+				where: {
+					id: req.input.reviewId
+				},
+				data: {
+					ratingId: req.input.ratingId
+				}
+			})
+		}),
 })

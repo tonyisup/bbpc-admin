@@ -85,7 +85,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
   return (
     <>
       <Head>
-        <title>{`Episode ${episode?.number} - Bad Boys Podcast Admin`}</title>
+          <title>{`Episode ${episode?.number} - Bad Boys Podcast Admin`}</title>
       </Head>
       <main className="flex w-full min-h-screen flex-col items-center gap-2">
         <header className="grid grid-cols-3 items-center justify-items-center w-full">

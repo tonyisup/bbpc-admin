@@ -54,6 +54,7 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
       </Head>
 
       <header className="flex p-6 w-full justify-between">
+        <Link href="/">Home</Link>
         <h2 className="text-2xl font-semibold">Episodes</h2>
 				<AddEpisodeModal refreshItems={refresh} />
       </header>

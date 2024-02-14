@@ -1,10 +1,13 @@
-import type { Assignment, Guess } from "@prisma/client";
-import type { FC } from "react";
+import type { Assignment, Guess, Rating, Review, User } from "@prisma/client";
+import { useState, type Dispatch, type FC, type SetStateAction } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
 import { HiBookOpen, HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
 import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
 import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
+import Link from "next/link";
+import RatingIcon from "../Review/RatingIcon";
+import RatingSelect from "../Review/RatingSelect";
 
 interface EditAssignmentProps {
 	assignment: Assignment
@@ -79,8 +82,12 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 							className="text-red-500 cursor-pointer m-2"
 							onClick={() => deleteReview(assignmentReview.id)}
 						/>
-						<span className="px-2">{assignmentReview.Review.User.name}</span>
-						<span className="px-2">{assignmentReview.Review.Rating?.name}</span>
+						<div className="flex justify-around items-center">
+							<Link href={"/user/" + assignmentReview.Review.User.id}> 
+								{assignmentReview.Review.User.name ?? assignmentReview.Review.User.email}
+							</Link>
+							<ReviewRating review={assignmentReview.Review} refetch={() => refreshAssignmentReviews()} />	
+						</div>
 						<span>Guesses</span>
 						<ul className="p-2">
 							{assignmentReview.guesses?.map((guess) => (
@@ -89,8 +96,12 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 										className="text-red-500 cursor-pointer m-2"
 										onClick={() => deleteGuess(guess.id)}
 									/>
-									<span>{guess.User.name ?? guess.User.email}</span>
-									<span className="color-yellow-200">{guess.Rating?.name}</span>
+									<Link href={"/user/" + guess.User.id}> 
+										{guess.User.name ?? guess.User.email}
+									</Link>
+									<span className="color-yellow-200" title={guess.Rating?.name}>
+										<RatingIcon value={guess.Rating?.value} />
+									</span>
 									<span>{guess.points}</span>
 									<div className="text-green-500" onClick={handleAddPointToGuess(guess)}>
 										<HiPlusCircle />
@@ -112,4 +123,79 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	)
 }
 
+interface ReviewRatingProps {
+	review: null | (Review & {
+		Rating: Rating | null
+ 	}),
+	refetch: Dispatch<void>
+}
+const ReviewRating: FC<ReviewRatingProps> = ({ review, refetch }) => {
+	const { mutate: setReviewRating } = trpc.review.setReviewRating.useMutation()
+	const handleRatingSelect: Dispatch<Rating> = function(rating) {
+		if (!review) return
+		if (!rating) return
+		setReviewRating({ reviewId: review.id, ratingId: rating.id }, { onSuccess: () => { refetch() }})
+	}
+	const handleResetRating = function() {
+		if (!review) return
+		setReviewRating({ reviewId: review.id, ratingId: null }, { onSuccess: () => { refetch() }})	
+	}
+	if (!review) return null
+	if (!review.Rating) return <RatingIconSelect selectRating={handleRatingSelect}></RatingIconSelect>
+	return <div className="cursor-pointer" onClick={handleResetRating}>
+		<RatingIcon value={review.Rating.value} />
+	</div>
+}
+
+interface RatingIconSelectProps {
+	selectRating: Dispatch<Rating>
+}
+const RatingIconSelect: FC<RatingIconSelectProps> = ({ selectRating }) => {
+	const { data: ratings } = trpc.review.getRatings.useQuery();
+
+	const [ratingValue, setRatingValue] = useState<number>(0);
+
+	const isSelectedByValue = function(value: number) {
+			return ratingValue == value;
+	}
+	const handleRatingSelection: Dispatch<number> = function(value: number) {
+			setRatingValue(value);
+			if (!ratings) return;
+			const selectedRating = ratings.find(rating => rating.value == value);
+			if (!selectedRating) return;
+			selectRating(selectedRating);
+	}
+	
+	if (!ratings) return null;
+	return (
+		<div className="ml-2 flex gap-2">			
+			{ratings.sort((a,b) => a.value - b.value).map((rating) => {
+				return <RatingButton 
+					key={rating.id} 
+					value={rating.value} 
+					selected={isSelectedByValue(rating.value)} 
+					click={handleRatingSelection}
+				/>
+			})}
+		</div>
+	)
+}
+interface RatingButtonProps {
+	value: number,
+	selected?: boolean,
+	click: Dispatch<number>
+}
+const RatingButton: FC<RatingButtonProps> = ({ value, selected, click }) => {
+	if (selected) {
+		return <div className="p-4 rounded-sm ring-red-900 ring-2 hover:ring-2">
+			<RatingIcon value={value} />
+		</div>
+	}
+	const handleClick = function() {
+		click(value);
+	}
+	return <div className="p-4 cursor-pointer rounded-sm ring-red-900 hover:ring-2" onClick={handleClick}>
+		<RatingIcon value={value} />
+	</div>
+}
 export default EditAssignment
