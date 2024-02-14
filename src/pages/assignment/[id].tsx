@@ -27,7 +27,7 @@ export async function getServerSideProps(context: any) {
 		}
 	}
 }
-const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
+const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const { query } = useRouter();
   const id = query.id as string;
 	const { data: assignment } = trpc.assignment.get.useQuery({ id })
@@ -35,7 +35,7 @@ const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
 		<div>
 			<div className="flex justify-around">
 				<Link href={"/episode/" + assignment?.episodeId}>Back</Link>
-				<span className="text-2xl font-semibold">Assignment {assignment?.id}</span>
+				<span className="text-2xl font-semibold">{assignment?.homework ? 'Homework' : 'Extra Credit'} Assignment</span>
 			</div>
 			{assignment && <EditAssignment assignment={assignment} />}
 		</div>

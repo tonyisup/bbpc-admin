@@ -1,5 +1,5 @@
-import type { Assignment, Guess, Rating, Review, User } from "@prisma/client";
-import { useState, type Dispatch, type FC, type SetStateAction } from "react";
+import type { Assignment, Guess, Rating, Review } from "@prisma/client";
+import { useState, type Dispatch, type FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
 import { HiBookOpen, HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
@@ -7,7 +7,6 @@ import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
 import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
 import Link from "next/link";
 import RatingIcon from "../Review/RatingIcon";
-import RatingSelect from "../Review/RatingSelect";
 
 interface EditAssignmentProps {
 	assignment: Assignment
