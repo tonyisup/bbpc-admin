@@ -62,14 +62,15 @@ model Rating {
 
 model Review {
   id                String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  userId            String
+  userId            String?
   movieId           String             @db.UniqueIdentifier
   ratingId          String?            @db.UniqueIdentifier
+  ReviewdOn         DateTime?          @default(now(), map: "DF__Review__ReviewdO__0C1BC9F9") @db.DateTime
   assignmentReviews AssignmentReview[]
   extraReviews      ExtraReview[]
   Movie             Movie              @relation(fields: [movieId], references: [id], onDelete: Cascade)
   Rating            Rating?            @relation(fields: [ratingId], references: [id])
-  User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ExtraReview {
@@ -168,10 +169,12 @@ model User {
   email         String?      @unique
   emailVerified DateTime?
   image         String?
+  points        Decimal?     @db.Decimal(5, 2)
   accounts      Account[]
   assignments   Assignment[]
   bangers       Banger[]
   guesses       Guess[]
+  Point         Point[]
   reviews       Review[]
   sessions      Session[]
   roles         UserRole[]
@@ -179,29 +182,28 @@ model User {
 
 model Guess {
   id                String           @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  ratingId          String           @db.UniqueIdentifier
   created           DateTime         @db.DateTime
   points            Int
-  assignmntReviewId String           @db.UniqueIdentifier
-  AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction)
-  ratingId          String           @db.UniqueIdentifier
-  Rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction)
   userId            String
-  User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignmntReviewId String           @db.UniqueIdentifier
   seasonId          String           @db.UniqueIdentifier
+  AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction)
+  Rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction)
   Season            Season           @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-}
-
-model Game {
-  id String @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Season {
-  id          String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  id          String    @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   title       String
   description String?
-  gameTypeId  Int      @db.TinyInt
-  gameType    GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  gameTypeId  Int       @db.TinyInt
+  endedOn     DateTime? @db.DateTime
+  startedOn   DateTime? @db.DateTime
   guesses     Guess[]
+  Point       Point[]
+  gameType    GameType  @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
 }
 
 model GameType {
@@ -209,4 +211,23 @@ model GameType {
   title       String
   description String?
   seasons     Season[]
+}
+
+model Feature {
+  id          String  @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  lookupID    String  @unique
+  title       String
+  description String?
+  votes       Int     @db.SmallInt
+}
+
+model Point {
+  id       String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  userId   String
+  seasonId String   @db.UniqueIdentifier
+  value    Int      @db.SmallInt
+  reason   String
+  earnedOn DateTime @db.DateTime
+  Season   Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
