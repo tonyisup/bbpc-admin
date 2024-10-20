@@ -1,5 +1,5 @@
-import React, { DispatchWithoutAction, FC, useState } from "react";
-import { Review, Assignment, Episode, Movie, Rating, User, AssignmentReview, Game, Season } from "@prisma/client";
+import React, { type DispatchWithoutAction, type FC, useState } from "react";
+import type { User, AssignmentReview } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import RatingSelect from "../Review/RatingSelect";
@@ -60,7 +60,7 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div className="grid grid-cols-2 gap-2">
 					<form onSubmit={handleSubmit}>
-						{review && <h2>Add Guess for Review of {review.Movie.title} by {review.User.name}</h2>}
+						{review && <h2>Add Guess for Review of {review.Movie.title} by {review.User?.name}</h2>}
 						<label htmlFor="user">Season</label>
 						<SeasonSelect setSeasonId={setSeasonId} />
 						<label htmlFor="user">Guesser</label>

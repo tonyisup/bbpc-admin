@@ -70,4 +70,14 @@ export const assignmentRouter = router({
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany();
     }),
+  getAudioMessages: publicProcedure
+    .input(z.object({assignmentId: z.string()}))
+    .query(async (req) => {
+      return await req.ctx.prisma.audioMessage.findMany({
+        where: { assignmentId: req.input.assignmentId },
+        include: {
+          User: true
+        } 
+      })
+    })
 })

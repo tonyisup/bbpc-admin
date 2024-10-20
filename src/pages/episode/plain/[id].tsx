@@ -2,7 +2,6 @@ import type { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import { trpc } from "../../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../../server/db/ssr";
@@ -62,7 +61,7 @@ const Plain: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
             Extras: <br/>
             {episode.extras.map(extra => {
               return <div key={extra.id}>
-                [{extra.Review.User.name}] {extra.Review.Movie?.title} ({extra.Review.Movie?.year})
+                [{extra.Review.User?.name}] {extra.Review.Movie?.title} ({extra.Review.Movie?.year})
               </div>
             })} <br/>
             {next?.title}:<br/>
