@@ -240,6 +240,7 @@ model AudioMessage {
   createdAt    DateTime    @default(now())
   userId       String
   assignmentId String?     @db.UniqueIdentifier
+  fileKey      String?
   Assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   User         User        @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }

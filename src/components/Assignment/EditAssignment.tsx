@@ -54,22 +54,36 @@ interface AudioMessagesProps {
 	assignment: Assignment
 }
 const AudioMessages: FC<AudioMessagesProps> = ({ assignment }) => {
+	const { refetch: refreshAudioMessages } = trpc.assignment.getAudioMessages.useQuery({ assignmentId: assignment.id })
+	const handleRefreshAudioMessages = function () {
+		refreshAudioMessages();
+	}
 	const { data: audioMessages } = trpc.assignment.getAudioMessages.useQuery({ assignmentId: assignment.id })
 	return <div className="flex flex-col w-full px-6 items-center">
-		{audioMessages?.map((audioMessage) => <Audio key={audioMessage.id} audioMessage={audioMessage} />)}
+		{audioMessages?.map((audioMessage) => <Audio key={audioMessage.id} audioMessage={audioMessage} refreshAudioMessages={handleRefreshAudioMessages} />)}
 	</div>
 }
 interface AudioProps {
 	audioMessage: AudioMessage & {
 		User: User | null
-	}
+	},
+	refreshAudioMessages: Dispatch<void>
 }
-const Audio: FC<AudioProps> = ({ audioMessage }) => {
-	return <div className="flex gap-4 w-full px-6 items-center">
+const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
+	const { mutate: removeAudioMessage } = trpc.review.removeAudioMessage.useMutation()
+	return <div className="flex gap-4 w-full px-6 items-center justify-between">
 		<a className="text-blue-500 underline" href={audioMessage.url} target="_blank" rel="noreferrer">
 			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()} 
 		</a>
 		<span>{audioMessage.User?.name ?? audioMessage.User?.email}</span>
+		<button
+				className="ml-2 text-red-500 hover:text-red-700"
+				onClick={() => {
+					removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
+				}}
+			>
+				<HiX />
+			</button>
 	</div>
 }
 
