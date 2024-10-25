@@ -78,6 +78,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 		<span>{audioMessage.User?.name ?? audioMessage.User?.email}</span>
 		<button
 				className="ml-2 text-red-500 hover:text-red-700"
+				title="Remove Audio Message"
 				onClick={() => {
 					removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
 				}}
