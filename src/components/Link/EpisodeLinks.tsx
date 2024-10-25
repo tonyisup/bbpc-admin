@@ -1,6 +1,6 @@
-import { Episode } from ".prisma/client";
-import { FC, useState } from "react";
-import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi";
+import type { Episode } from ".prisma/client";
+import { type FC, useState } from "react";
+import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";
 import AddEpisodeLinkModal from "./AddEpisodeLink";
 
@@ -11,9 +11,6 @@ interface EpisodeLinksProps {
 const EpisodeLinks: FC<EpisodeLinksProps> = ({ episode }) => {
 	const [isLinksVisible, setIsLinksVisible] = useState(false)
 	const {data: ep, refetch: refreshLinks} = trpc.episode.getLinks.useQuery({ id: episode.id})
-	const {mutate: removeExtra} = trpc.review.remove.useMutation({
-		onSuccess: () => refreshLinks()
-	})
 	const showLinks = function() {
 		setIsLinksVisible(true)
 	}
@@ -29,7 +26,7 @@ const EpisodeLinks: FC<EpisodeLinksProps> = ({ episode }) => {
 				{episode && <AddEpisodeLinkModal episode={episode} refreshItems={refreshLinks} />}
 			</div>
 			{isLinksVisible && <div className="grid grid-cols-3 w-full">
-						{ep?.links?.map((link, index) => (
+						{ep?.links?.map((link) => (
 							link && <div key={link.id} className="flex">
 									<a href={link.url}>{link.text}</a>
 								</div>

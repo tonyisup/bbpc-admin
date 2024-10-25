@@ -1,9 +1,8 @@
-import { Movie } from "@prisma/client";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
-import { Title } from "../server/tmdb/client";
+import type { Movie } from "@prisma/client";
+import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from "react";
+import type { Title } from "../server/tmdb/client";
 import { trpc } from "../utils/trpc";
 import MovieCard from "./MovieCard";
-import MovieSearch from "./MovieSearch";
 import TitleCard from "./TitleCard";
 import TitleSearch from "./TitleSearch";
 
@@ -47,7 +46,7 @@ const MovieSelect: FC<MovieSelectProps> = ({
       selectMovie(movie)
       setSelectedMovie(movie)
     }
-  }, [movie])
+  }, [selectMovie, movie])
   return (    
     <div className="w-full grid grid-cols-2">
       <div className="w-full flex justify-center">
@@ -55,6 +54,7 @@ const MovieSelect: FC<MovieSelectProps> = ({
         {!selectedMovie && <div className="col-span-2">No movie selected</div>}
       </div>
       <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
+        title="Select a movie"
         onChange={handleChange}   
         value={selectedMovieKey}     
       >

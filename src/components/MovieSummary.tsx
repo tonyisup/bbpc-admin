@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import { type FC } from "react";
 import { trpc } from "../utils/trpc";
 
 const MovieSummary: FC = () => {

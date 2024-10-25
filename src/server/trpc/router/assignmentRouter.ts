@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { utapi } from "../../uploadthing";
 
 export const assignmentRouter = router({
-  setHomework: publicProcedure
+  setHomework: protectedProcedure
     .input(z.object({
       id: z.string(),
       homework: z.boolean()
@@ -17,7 +18,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  add: publicProcedure
+  add: protectedProcedure
     .input(z.object({
       userId: z.string(),
       movieId: z.string(),
@@ -34,7 +35,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  remove: publicProcedure
+  remove: protectedProcedure
     .input(z.object({id: z.string()}))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.delete({
@@ -70,7 +71,7 @@ export const assignmentRouter = router({
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany();
     }),
-  getAudioMessages: publicProcedure
+  getAudioMessages: protectedProcedure
     .input(z.object({assignmentId: z.string()}))
     .query(async (req) => {
       return await req.ctx.prisma.audioMessage.findMany({
@@ -79,5 +80,31 @@ export const assignmentRouter = router({
           User: true
         } 
       })
-    })
+    }),
+  removeAudioMessage: protectedProcedure
+    .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async (req) => {
+        const audioMessage = await req.ctx.prisma.audioMessage.findUnique({
+            where: { id: req.input.id },
+              });
+    
+          if (!audioMessage) {
+            throw new Error("Audio message not found");
+          }
+    
+          if (!audioMessage.fileKey) {
+            throw new Error("Audio message not found");
+          }
+          // Delete from UploadThing
+          await utapi.deleteFiles([audioMessage.fileKey]);
+    
+          // Delete from Prisma database
+          await req.ctx.prisma.audioMessage.delete({
+            where: { id: req.input.id },
+          });
+    
+        return { success: true };
+      }),
 })

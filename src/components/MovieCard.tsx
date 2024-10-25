@@ -1,5 +1,6 @@
-import { Movie } from "@prisma/client";
-import { FC } from "react";
+import type { Movie } from "@prisma/client";
+import { type FC } from "react";
+import Image from "next/image";
 
 interface MovieCardProps {
   movie: Movie,
@@ -12,7 +13,7 @@ const MovieCard: FC<MovieCardProps> = ({ movie, width }) => {
       <div>        
         <a href={movie.url} target="_blank" rel="noreferrer">
           <figure>
-            {movie.poster && <img width={width ?? 100} src={movie.poster} alt={movie.title} />}
+            {movie.poster && <Image unoptimized width={width ?? 100} src={movie.poster} alt={movie.title} />}
             <figcaption className="text-center">
               {movie.title} 
               <span className="text-xs"> ({movie.year})</span>

@@ -1,5 +1,5 @@
-import { Episode, Movie, User } from ".prisma/client";
-import React, { DispatchWithoutAction, FC, useState } from "react";
+import type { Episode } from ".prisma/client";
+import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 

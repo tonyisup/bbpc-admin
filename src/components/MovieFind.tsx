@@ -1,9 +1,8 @@
-import { Movie } from "@prisma/client";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
-import { Title } from "../server/tmdb/client";
+import type { Movie } from "@prisma/client";
+import { type Dispatch, type FC, type SetStateAction, useState } from "react";
+import type { Title } from "../server/tmdb/client";
 import { trpc } from "../utils/trpc";
 import MovieCard from "./MovieCard";
-import MovieSearch from "./MovieSearch";
 import TitleCard from "./TitleCard";
 import TitleSearch from "./TitleSearch";
 

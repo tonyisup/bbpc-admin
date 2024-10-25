@@ -1,5 +1,5 @@
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
-import { Title } from "../server/tmdb/client";
+import { type Dispatch, type FC, type SetStateAction, useState } from "react";
+import type { Title } from "../server/tmdb/client";
 import { trpc } from "../utils/trpc";
 import Search from "./common/Search";
 
@@ -32,7 +32,9 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 			{ !modalOpen &&
 				<div>
 					<button
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
+						type="button"
+						title="Search for a movie"
+						className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
 						onClick={() => setModalOpen(true)}
 					>
 						<span className="focus:outline-none inset-y-0 left-0 flex items-center pl-3">
@@ -47,6 +49,8 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 						<div className="relative w-full flex">
 							<span className="text-2xl font-semibold">Movie Search</span>
 							<button
+								type="button"
+								title="Close"
 								onClick={closeModal}
 								className="absolute right-4 focus:outline-none flex items-center"
 							>
@@ -70,7 +74,7 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 								<Slider>
 									{resp?.results.map((title, index) => (
 										<Slide index={index} key={title.id}>
-											<button onClick={() => selectTitle(title)}>
+											<button type="button" title="Select this movie" onClick={() => selectTitle(title)}>
 												<TitleCard title={title} />
 											</button>
 										</Slide>
