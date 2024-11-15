@@ -1,5 +1,5 @@
-import { Episode, Movie, User } from "@prisma/client";
-import React, { DispatchWithoutAction, FC, ReactEventHandler, useState } from "react"
+import type { Episode, Movie, User } from "@prisma/client";
+import React, { type DispatchWithoutAction, type FC, useState } from "react"
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
@@ -51,6 +51,7 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 				<div>
 					<label>Homework</label>
 					<input
+						title="Homework"
 						type="checkbox"
 						className="rounded-md ml-2"
 						checked={homework}

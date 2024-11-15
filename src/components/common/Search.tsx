@@ -1,4 +1,4 @@
-import { Dispatch, FC, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Dispatch, type FC, type SetStateAction } from "react";
 
 interface SearchProps {
 	setSearch: Dispatch<SetStateAction<string>>;
@@ -37,6 +37,8 @@ const Search: FC<SearchProps> = ({ setSearch }) => {
 			</span>
 			{searchQuery && (
 				<button
+					type="button"
+					title="Clear Search"
 					onClick={clearSearch}
 					className="absolute right-16 focus:outline-none flex items-center"
 				>

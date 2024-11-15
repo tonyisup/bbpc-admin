@@ -1,8 +1,7 @@
 
-import { Assignment, Episode } from "@prisma/client"
-import { FC, useState } from "react"
-import { HiBookOpen, HiChevronDown, HiChevronUp, HiX, HiPencil } from "react-icons/hi"
-import episode from "../../pages/episode"
+import type { Assignment, Episode } from "@prisma/client"
+import { type FC, useState } from "react"
+import { HiBookOpen, HiX, HiPencil } from "react-icons/hi"
 import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
 import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
@@ -14,7 +13,6 @@ interface EpisodeAssignmentsProps {
 
 const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 	
-	const [ showAssignments, setShowAssignments ] = useState<boolean>(false)
   const { data: assignments, refetch: refreshAssignments } = trpc.assignment.getForEpisode.useQuery({ episodeId: episode.id})
   const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
     onSuccess: () => refreshAssignments(),

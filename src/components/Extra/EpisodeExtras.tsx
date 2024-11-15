@@ -1,6 +1,5 @@
-import { Episode } from ".prisma/client";
-import { CarouselProvider, ButtonBack, ButtonNext, Slider, Slide } from "pure-react-carousel";
-import { FC, useState } from "react";
+import type { Episode } from ".prisma/client";
+import { type FC, useState } from "react";
 import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";
 import MovieCard from "../MovieCard";

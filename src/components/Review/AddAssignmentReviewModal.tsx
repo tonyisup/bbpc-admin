@@ -1,5 +1,5 @@
-import React, { DispatchWithoutAction, FC, useState } from "react";
-import { Review, Assignment, Episode, Movie, Rating, User } from "@prisma/client";
+import { type DispatchWithoutAction, type FC, useState } from "react";
+import { type Assignment, type Episode, type Movie, type User } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import RatingSelect from "./RatingSelect";

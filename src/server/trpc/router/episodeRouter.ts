@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { router, publicProcedure } from "../trpc";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { utapi } from "../../uploadthing";
 
 export const episodeRouter = router({
 	getLinks: publicProcedure
@@ -15,7 +16,7 @@ export const episodeRouter = router({
 				}
 			})
 		}),
-	addLink: publicProcedure
+	addLink: protectedProcedure
 		.input(z.object({episodeId: z.string(), url: z.string(), text: z.string()}))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.link.create({
@@ -39,7 +40,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  add: publicProcedure
+  add: protectedProcedure
     .input(z.object({number: z.number(), title: z.string()}))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.create({
@@ -49,7 +50,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  remove: publicProcedure
+  remove: protectedProcedure
     .input(z.object({id: z.string()}))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.delete({
@@ -58,7 +59,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({
       id: z.string(), 
       number: z.number(), 
@@ -156,4 +157,40 @@ export const episodeRouter = router({
     .query(({ ctx }) => {
       return ctx.prisma.episode.count();
     }),
+    getAudioMessages: protectedProcedure
+      .input(z.object({episodeId: z.string()}))
+      .query(async (req) => {
+        return await req.ctx.prisma.audioEpisodeMessage.findMany({
+          where: { episodeId: req.input.episodeId },
+          include: {
+            User: true
+          } 
+        })
+      }),
+    removeAudioMessage: protectedProcedure
+      .input(z.object({
+          id: z.number(),
+        }))
+        .mutation(async (req) => {
+          const audioMessage = await req.ctx.prisma.audioEpisodeMessage.findUnique({
+              where: { id: req.input.id },
+                });
+      
+            if (!audioMessage) {
+              throw new Error("Audio message not found");
+            }
+      
+            if (!audioMessage.fileKey) {
+              throw new Error("Audio message not found");
+            }
+            // Delete from UploadThing
+            await utapi.deleteFiles([audioMessage.fileKey]);
+      
+            // Delete from Prisma database
+            await req.ctx.prisma.audioEpisodeMessage.delete({
+              where: { id: req.input.id },
+            });
+      
+          return { success: true };
+        }),
 });

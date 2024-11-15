@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Episode {
-  id          String        @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  number      Int           @db.SmallInt
-  title       String
-  recording   String?
-  date        DateTime?     @db.Date
-  description String?
-  assignments Assignment[]
-  bangers     Banger[]
-  extras      ExtraReview[]
-  links       Link[]
-  shows       Show[]
+  id                  String                @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  number              Int                   @db.SmallInt
+  title               String
+  recording           String?
+  date                DateTime?             @db.Date
+  description         String?
+  assignments         Assignment[]
+  AudioEpisodeMessage AudioEpisodeMessage[]
+  bangers             Banger[]
+  extras              ExtraReview[]
+  links               Link[]
+  shows               Show[]
 }
 
 model Link {
@@ -165,21 +166,22 @@ model VerificationToken {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String?        @unique
-  emailVerified DateTime?
-  image         String?
-  points        Decimal?       @db.Decimal(5, 2)
-  accounts      Account[]
-  assignments   Assignment[]
-  AudioMessage  AudioMessage[]
-  bangers       Banger[]
-  guesses       Guess[]
-  Point         Point[]
-  reviews       Review[]
-  sessions      Session[]
-  roles         UserRole[]
+  id                  String                @id @default(cuid())
+  name                String?
+  email               String?               @unique
+  emailVerified       DateTime?
+  image               String?
+  points              Decimal?              @db.Decimal(5, 2)
+  accounts            Account[]
+  assignments         Assignment[]
+  AudioEpisodeMessage AudioEpisodeMessage[]
+  AudioMessage        AudioMessage[]
+  bangers             Banger[]
+  guesses             Guess[]
+  Point               Point[]
+  reviews             Review[]
+  sessions            Session[]
+  roles               UserRole[]
 }
 
 model Guess {
@@ -243,4 +245,15 @@ model AudioMessage {
   fileKey      String?
   Assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   User         User        @relation(fields: [userId], references: [id], onUpdate: NoAction)
+}
+
+model AudioEpisodeMessage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+  fileKey   String?
+  userId    String
+  episodeId String?  @db.UniqueIdentifier
+  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  User      User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }

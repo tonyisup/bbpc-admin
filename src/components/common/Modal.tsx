@@ -1,4 +1,4 @@
-import { Dispatch, FC, ReactNode, RefObject, SetStateAction, useState } from "react"
+import type { Dispatch, FC, ReactNode, SetStateAction } from "react"
 import { HiX } from "react-icons/hi"
 
 interface ModalProps {

@@ -10,6 +10,7 @@ import EpisodeLinks from "../../components/Link/EpisodeLinks";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { ssr } from "../../server/db/ssr";
+import EpisodeAudioMessages from "../../components/Episode/EpisodeAudioMessages";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -165,6 +166,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
 				{episode && <EpisodeAssignments episode={episode} />}
 				{episode && <EpisodeExtras episode={episode} />}
 				{episode && <EpisodeLinks episode={episode} />}
+				{episode && <EpisodeAudioMessages episode={episode} />}
       </main>
     </>
   );
