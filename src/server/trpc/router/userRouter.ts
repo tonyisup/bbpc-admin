@@ -32,6 +32,7 @@ export const userRouter = router({
       id: z.string(), 
       name: z.string(),
       email: z.string(),
+      points: z.number().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.user.update({
@@ -41,6 +42,7 @@ export const userRouter = router({
         data: {
           name: req.input.name,
           email: req.input.email,
+          points: req.input.points,
         }
       })
     }),
