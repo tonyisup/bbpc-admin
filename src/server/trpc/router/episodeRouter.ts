@@ -172,7 +172,7 @@ export const episodeRouter = router({
           id: z.number(),
         }))
         .mutation(async (req) => {
-          const audioMessage = await req.ctx.prisma.audioEpisodeMessage.findUnique({
+          const audioMessage = await req.ctx.prisma.audioMessage.findUnique({
               where: { id: req.input.id },
                 });
       
@@ -187,7 +187,7 @@ export const episodeRouter = router({
             await utapi.deleteFiles([audioMessage.fileKey]);
       
             // Delete from Prisma database
-            await req.ctx.prisma.audioEpisodeMessage.delete({
+            await req.ctx.prisma.audioMessage.delete({
               where: { id: req.input.id },
             });
       

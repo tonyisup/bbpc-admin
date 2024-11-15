@@ -47,7 +47,7 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 				<div className="text-white w-full inset-0 flex items-center justify-center bg-black/75">
 					<div className="p-3 w-full bg-gray-800">
 						<div className="relative w-full flex">
-							<span className="text-2xl font-semibold">Movie Search</span>
+							<span className="text-2xl font-semibold">Title Search</span>
 							<button
 								type="button"
 								title="Close"
@@ -72,7 +72,7 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 									<ButtonNext>Next</ButtonNext>
 								</div>
 								<Slider>
-									{resp?.results.map((title, index) => (
+									{resp && resp.results.map((title, index) => (
 										<Slide index={index} key={title.id}>
 											<button type="button" title="Select this movie" onClick={() => selectTitle(title)}>
 												<TitleCard title={title} />
