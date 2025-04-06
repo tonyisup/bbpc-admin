@@ -1,4 +1,4 @@
-import type { Episode } from ".prisma/client";
+import type { Episode } from "@prisma/client";
 import { type FC, useState } from "react";
 import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";

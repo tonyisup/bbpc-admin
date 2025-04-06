@@ -1,4 +1,4 @@
-import { User } from ".prisma/client";
+import { User } from "@prisma/client";
 import { Dispatch, SetStateAction, FC, useState, useEffect } from "react";
 import { trpc } from "../utils/trpc";
 
