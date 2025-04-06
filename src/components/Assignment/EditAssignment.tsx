@@ -97,6 +97,7 @@ interface ReviewsProps {
 }
 const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignment }) => {
 	const { data: assignmentReviews, refetch: refreshAssignmentReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id })
+	const { data: gamblingPoints, refetch: refreshGamblingPoints } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id })
 
 	const { mutate: removeAssignmentReview } = trpc.review.removeAssignment.useMutation({
 		onSuccess: () => refreshAssignmentReviews()
@@ -107,75 +108,119 @@ const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignme
 	const { mutate: setPointsForGuess } = trpc.guess.setPointsForGuess.useMutation({
 		onSuccess: () => refreshAssignmentReviews()
 	})
+	const { mutate: addGamblingPoints } = trpc.gambling.add.useMutation({
+		onSuccess: () => refreshGamblingPoints()
+	})
+	const { mutate: updateGamblingPoints } = trpc.gambling.update.useMutation({
+		onSuccess: () => refreshGamblingPoints()
+	})
+	const { mutate: removeGamblingPoints } = trpc.gambling.remove.useMutation({
+		onSuccess: () => refreshGamblingPoints()
+	})
+	
 	const deleteReview = function (id: string) {
 		removeAssignmentReview({ id })
 	}
 	const deleteGuess = function (id: string) {
 		removeGuess({ id })
 	}
-	const handleAddPointToGuess = function (guess: Guess) {
+	const handleAddPointToGuess = function (guess: any) {
 		return function () {
 			setPointsForGuess({ id: guess.id, points: guess.points + 1 })
 		}
 	}
-	const handleRemovePointFromGuess = function (guess: Guess) {
+	const handleRemovePointFromGuess = function (guess: any) {
 		return function () {
 			setPointsForGuess({ id: guess.id, points: guess.points - 1 })
 		}
 	}
+	
+	// Group guesses by user
+	const guessesByUser = new Map<string, { user: User, guesses: Array<{ guess: any, assignmentReview: any }> }>();
+	
+	assignmentReviews?.forEach(assignmentReview => {
+		assignmentReview.guesses?.forEach(guess => {
+			const userId = guess.User.id;
+			if (!guessesByUser.has(userId)) {
+				guessesByUser.set(userId, { user: guess.User, guesses: [] });
+			}
+			const userData = guessesByUser.get(userId);
+			if (userData) {
+				userData.guesses.push({ guess, assignmentReview });
+			}
+		});
+	});
+	
 	return <div className="flex flex-col w-full px-6 items-center">
 		<h2>Reviews</h2>
-		{movie &&
-			episode &&
-			<AddAssignmentReviewModal
-				assignment={assignment}
-				movie={movie}
-				episode={episode}
-				refreshItems={refreshAssignment}
-			/>}
 
-		<div className="flex flex-col w-full px-6 items-center gap-6">
-			{assignmentReviews?.map((assignmentReview) => (
-				<div className="flex flex-col items-center w-full" key={assignmentReview.id}>
-					<div className="flex justify-around items-center gap-2">
-						<HiX
-							className="text-red-500 cursor-pointer m-2"
-							onClick={() => deleteReview(assignmentReview.id)}
-						/>
-						<Link href={"/user/" + assignmentReview.Review?.User?.id}>
-							{assignmentReview.Review?.User?.name ?? assignmentReview.Review?.User?.email}
-						</Link>
-						<ReviewRating review={assignmentReview.Review} refetch={() => refreshAssignmentReviews()} />
+		<div className="flex flex-col w-full px-6 items-center">
+			{Array.from(guessesByUser.values()).map((userData) => {
+				// Find gambling points for this user
+				const userGamblingPoints = gamblingPoints?.find(gp => gp.userId === userData.user.id);
+				
+				return (
+					<div className="flex items-center w-full" key={userData.user.id}>
+						<div className="flex justify-between items-center gap-2 w-full bg-gray-700 p-2">
+							<Link href={"/user/" + userData.user.id}>
+								{userData.user.name ?? userData.user.email}
+							</Link>
+							<div className="flex items-center gap-2">
+								{userGamblingPoints ? (
+									<>
+										<span>{userGamblingPoints.points}</span>
+										<button
+											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points + 1 })}
+											className="text-green-500"
+										>
+											<HiPlusCircle />
+										</button>
+										<button
+											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points - 1 })}
+											className="text-red-500"
+										>
+											<HiMinusCircle />
+										</button>
+										<button
+											onClick={() => removeGamblingPoints({ id: userGamblingPoints.id })}
+											className="text-red-500"
+										>
+											<HiX />
+										</button>
+									</>
+								) : (
+									<button
+										onClick={() => addGamblingPoints({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}
+										className="text-blue-500"
+									>
+										Add Points
+									</button>
+								)}
+							</div>
+						</div>
+						<ul className="p-2 flex">
+							{userData.guesses.map(({ guess, assignmentReview }) => (
+								<li key={guess.id} className="flex gap-2 bg-gray-800 p-2 items-center justify-between">
+									<div className="flex items-center gap-2">
+										<HiX
+											className="text-red-500 cursor-pointer m-2"
+											onClick={() => deleteGuess(guess.id)}
+										/>
+										<Link href={"/user/" + assignmentReview.Review?.User?.id}>
+											{assignmentReview.Review?.User?.name ?? assignmentReview.Review?.User?.email}
+										</Link>
+									</div>
+									<div className="flex items-center gap-2">
+										<span className="color-yellow-200" title={guess.Rating?.name}>
+											<RatingIcon value={guess.Rating?.value} />
+										</span>
+									</div>
+								</li>
+							))}
+						</ul>
 					</div>
-					<ul className="p-2">
-						{assignmentReview.guesses?.map((guess) => (
-							<li key={guess.id} className="flex gap-2 bg-gray-800 p-2 items-center">
-								<HiX
-									className="text-red-500 cursor-pointer m-2"
-									onClick={() => deleteGuess(guess.id)}
-								/>
-								<Link href={"/user/" + guess.User.id}>
-									{guess.User.name ?? guess.User.email}
-								</Link>
-								<span className="color-yellow-200" title={guess.Rating?.name}>
-									<RatingIcon value={guess.Rating?.value} />
-								</span>
-								<span>{guess.points}</span>
-								<div className="text-green-500" onClick={handleAddPointToGuess(guess)}>
-									<HiPlusCircle />
-								</div>
-								<div className="text-red-500" onClick={handleRemovePointFromGuess(guess)}>
-									<HiMinusCircle />
-								</div>
-							</li>
-						))}
-					</ul>
-					<AddAssignmentReviewGuessModal
-						assignmentReview={assignmentReview}
-						refreshItems={refreshAssignment}
-					/>
-				</div>
-			))}
+				);
+			})}
 		</div>
 	</div>
 }

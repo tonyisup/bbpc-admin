@@ -102,6 +102,7 @@ model Assignment {
   User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignmentReviews AssignmentReview[]
   AudioMessage      AudioMessage[]
+  GamblingPoints    GamblingPoints[]
 }
 
 model Banger {
@@ -177,6 +178,7 @@ model User {
   AudioEpisodeMessage AudioEpisodeMessage[]
   AudioMessage        AudioMessage[]
   bangers             Banger[]
+  GamblingPoints      GamblingPoints[]
   guesses             Guess[]
   Point               Point[]
   reviews             Review[]
@@ -256,4 +258,14 @@ model AudioEpisodeMessage {
   episodeId String?  @db.UniqueIdentifier
   Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   User      User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
+}
+
+model GamblingPoints {
+  id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  userId       String
+  assignmentId String     @db.UniqueIdentifier
+  points       Int
+  createdAt    DateTime   @default(now()) @db.DateTime
+  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  User         User       @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }

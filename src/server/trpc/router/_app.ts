@@ -2,6 +2,7 @@ import { router } from "../trpc";
 import { assignmentRouter } from "./assignmentRouter";
 import { authRouter } from "./auth";
 import { episodeRouter } from "./episodeRouter";
+import { gamblingRouter } from "./gamblingRouter";
 import { guessRouter } from "./guessRouter";
 import { movieRouter } from "./movieRouter";
 import { reviewRouter } from "./reviewRouter";
@@ -17,7 +18,8 @@ export const appRouter = router({
   role: roleRouter,
   movie: movieRouter,
   auth: authRouter,
-	guess: guessRouter
+	guess: guessRouter,
+  gambling: gamblingRouter
 });
 
 // export type definition of API
