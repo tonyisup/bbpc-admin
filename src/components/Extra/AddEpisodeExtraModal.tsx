@@ -1,9 +1,9 @@
-import type { Episode, Movie, User } from ".prisma/client";
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
 import UserSelect from "../UserSelect";
+import type { User, Movie, Episode } from "@prisma/client";
 
 interface AddEpisodeExtraModalProps {
 	refreshItems: DispatchWithoutAction,
