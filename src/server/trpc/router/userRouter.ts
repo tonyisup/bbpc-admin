@@ -97,4 +97,24 @@ export const userRouter = router({
     .query(({ ctx }) => {
       return ctx.prisma.user.count();
     }),
+  getSyllabus: publicProcedure
+    .input(z.object({id: z.string()}))
+    .query(async (req) => {
+      return await req.ctx.prisma.syllabus.findMany({
+        where: {
+          userId: req.input.id
+        },
+        include: {
+          Movie: true,
+          Assignment: {
+            include: {
+              Episode: true
+            }
+          }
+        },
+        orderBy: {
+          order: 'asc'
+        }
+      });
+    }),
 });

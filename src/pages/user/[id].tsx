@@ -35,6 +35,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const id = query.id as string;
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
+  const { data: syllabus } = trpc.user.getSyllabus.useQuery({ id });
   const { mutate: updateUser } = trpc.user.update.useMutation({
     onSuccess: () => {
       refetchUser();
@@ -135,6 +136,27 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               </li>
             ))}
           </ul>
+        </div>
+        <hr className="w-full my-6" />
+        <div className="flex my-6 px-6 w-full justify-between">
+          <h2 className="text-xl font-semibold">Syllabus</h2>
+        </div>
+        <div className="flex flex-col w-full px-6 space-y-4">
+          {syllabus?.map((item) => (
+            <div key={item.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-md">
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-400">#{item.order}</span>
+                <div>
+                  <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
+                  {item.Assignment && (
+                    <p className="text-sm text-gray-400">
+                      Assigned in Episode {item.Assignment.Episode?.number}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </main>    
     </>
