@@ -32,9 +32,9 @@ export async function getServerSideProps(context: any) {
 	}
 }
 const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
-  
   const refresh: DispatchWithoutAction = () => refetchItems()
   const {data: items, isLoading, refetch: refetchItems } = trpc.user.getAll.useQuery()
+  const [filteredItems, setFilteredItems] = useState(items || [])
   const {mutate: removeItem} = trpc.user.remove.useMutation({
     onSuccess: () => {
       refresh()
@@ -65,6 +65,20 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         </button>
       </header>
       
+      <div className="px-6 pb-4">
+        <input
+          type="text"
+          placeholder="Search users..."
+          onChange={(e) => {
+            const filtered = items?.filter(item => 
+              item.name?.toLowerCase().includes(e.target.value.toLowerCase()) ||
+              item.email?.toLowerCase().includes(e.target.value.toLowerCase())
+            )
+            setFilteredItems(filtered || [])
+          }}
+          className="w-full p-2 border rounded"
+        />
+      </div>
       <main className="flex flex-col items-center">
         <table className="text-center w-full">
           <thead>
@@ -75,7 +89,7 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
             </tr>
           </thead>
           <tbody>
-            {items?.map((item) => (
+            {filteredItems && filteredItems?.length > 0 && filteredItems?.map((item) => (
               <tr key={item.id}>
                 <td>{item.name}</td>
                 <td>
