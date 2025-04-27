@@ -35,7 +35,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const id = query.id as string;
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
-  const { data: syllabus } = trpc.user.getSyllabus.useQuery({ id });
+  const { data: syllabus, refetch: refetchSyllabus } = trpc.user.getSyllabus.useQuery({ id });
   const { mutate: updateUser } = trpc.user.update.useMutation({
     onSuccess: () => {
       refetchUser();
@@ -45,8 +45,14 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const { mutate: removeRole } = trpc.user.removeRole.useMutation({
     onSuccess: () => refetchRoles(),
   });
+  const { mutate: assignEpisode } = trpc.syllabus.assignEpisode.useMutation({
+    onSuccess: () => refetchSyllabus(),
+  });
   const [modalOpen, setModalOpen] = useState<boolean>(false)
   const refresh = () => refetchRoles()
+  const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
+    onSuccess: () => refetchSyllabus(),
+  });
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,6 +61,14 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     const email = formData.get('email') as string;
     const points = formData.get('points') as string;
     updateUser({ id, name, email, points: parseFloat(points) });
+  }
+
+  const handleAssignEpisode = (syllabusId: string, episodeNumber: number) => {
+    assignEpisode({ syllabusId, episodeNumber });
+  }
+
+  const handleRemoveAssignment = (syllabusId: string) => {
+    removeAssignment({ syllabusId });
   }
 
   return (
@@ -151,7 +165,30 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                   {item.Assignment && (
                     <p className="text-sm text-gray-400">
                       Assigned in Episode {item.Assignment.Episode?.number}
+                      <HiX className="text-red-500 cursor-pointer" onClick={() => handleRemoveAssignment(item.id)} />
                     </p>
+                  )}
+                  {!item.Assignment && (
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="number" 
+                        placeholder="Episode Number" 
+                        className="border rounded-md p-2 text-black"
+                        id={`episode-${item.id}`}
+                      />
+                      <button 
+                        className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400"
+                        onClick={() => {
+                          const input = document.getElementById(`episode-${item.id}`) as HTMLInputElement;
+                          const episodeNumber = parseInt(input.value);
+                          if (!isNaN(episodeNumber)) {
+                            handleAssignEpisode(item.id, episodeNumber);
+                          }
+                        }}
+                      >
+                        Assign
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
