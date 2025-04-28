@@ -1,13 +1,12 @@
-import type { Assignment, Episode, Guess, Movie, Rating, Review, User } from "@prisma/client";
+import type { Assignment, Episode, Movie, Rating, Review, User } from "@prisma/client";
 import { useState, type Dispatch, type FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
-import { HiBookOpen, HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
-import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
-import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
+import { HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
 import Link from "next/link";
 import RatingIcon from "../Review/RatingIcon";
 import { type AudioMessage } from "@prisma/client";
+import HomeworkFlag from "./HomeworkFlag";
 interface EditAssignmentProps {
 	assignment: Assignment
 }
@@ -17,12 +16,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	const { data: movie } = trpc.movie.get.useQuery({ id: assignment.movieId })
 	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId })
 	const { data: episode } = trpc.episode.get.useQuery({ id: assignment.episodeId })
-	const { mutate: updateHomework } = trpc.assignment.setHomework.useMutation({
-		onSuccess: () => refreshAssignment(),
-	})
-	const toggleHomework = function (assignment: Assignment) {
-		updateHomework({ id: assignment.id, homework: !assignment.homework })
-	}
+
 	const handleRefreshAssignment = function () {
 		refreshAssignment();
 	}
@@ -31,12 +25,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 			<div className="flex flex-col w-full px-6 items-center">
 				<span>{episode && episode.number + ' - ' + episode.title}</span>
 				<span>{user && user.name}</span>
-				<button
-					onClick={() => toggleHomework(assignment)}
-				>
-					{assignment.homework && <HiBookOpen className="text-green-500" />}
-					{!assignment.homework && <HiBookOpen className="text-gray-700" />}
-				</button>
+				<HomeworkFlag showText={true} type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
 				{movie && <MovieCard movie={movie} />}
 			</div>
 

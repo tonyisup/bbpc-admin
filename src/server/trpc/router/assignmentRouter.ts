@@ -3,10 +3,10 @@ import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
 
 export const assignmentRouter = router({
-  setHomework: protectedProcedure
+  setType: protectedProcedure
     .input(z.object({
       id: z.string(),
-      homework: z.boolean()
+      type: z.enum(["HOMEWORK", "EXTRA_CREDIT", "BONUS"])
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.update({
@@ -14,7 +14,8 @@ export const assignmentRouter = router({
           id: req.input.id
         },
         data: {
-          homework: req.input.homework
+          type: req.input.type,
+          homework: req.input.type === "HOMEWORK"
         }
       })
     }),
@@ -23,7 +24,7 @@ export const assignmentRouter = router({
       userId: z.string(),
       movieId: z.string(),
       episodeId: z.string(),
-      homework: z.boolean()
+      type: z.enum(["HOMEWORK", "EXTRA_CREDIT", "BONUS"])
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.create({
@@ -31,7 +32,8 @@ export const assignmentRouter = router({
           userId: req.input.userId,
           movieId: req.input.movieId,
           episodeId: req.input.episodeId,
-          homework: req.input.homework
+          type: req.input.type,
+          homework: req.input.type === "HOMEWORK"
         }
       })
     }),

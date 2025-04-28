@@ -6,6 +6,7 @@ import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
 import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
 import Link from "next/link"
+import HomeworkFlag from "./HomeworkFlag"
 
 interface EpisodeAssignmentsProps {
 	episode: Episode
@@ -17,12 +18,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
   const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
     onSuccess: () => refreshAssignments(),
   });
-	const { mutate: updateHomework } = trpc.assignment.setHomework.useMutation({
-		onSuccess: () => refreshAssignments(),
-	})
-	const toggleHomework = function(assignment: Assignment) {
-		updateHomework({ id: assignment.id, homework: !assignment.homework })
-	}
+
 	return (
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
@@ -38,12 +34,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 							className="text-red-500 cursor-pointer"
 							onClick={() => removeAssignment({id: assignment.id})}
 						/>
-						<button
-							onClick={() => toggleHomework(assignment)}
-						>
-							{assignment.homework && <HiBookOpen className="text-green-500" />}
-							{!assignment.homework && <HiBookOpen className="text-gray-700" />}
-						</button>
+						<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
 						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
 						<Link href={`/assignment/${encodeURIComponent(assignment.id)}`}>
 							<HiPencil />

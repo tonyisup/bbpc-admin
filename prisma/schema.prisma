@@ -98,6 +98,7 @@ model Assignment {
   episodeId         String             @db.UniqueIdentifier
   movieId           String             @db.UniqueIdentifier
   homework          Boolean
+  type              String             @default("HOMEWORK", map: "DF__Assignment__type__60083D91") @db.NVarChar(50)
   Episode           Episode            @relation(fields: [episodeId], references: [id])
   Movie             Movie              @relation(fields: [movieId], references: [id])
   User              User               @relation(fields: [userId], references: [id], onDelete: Cascade)

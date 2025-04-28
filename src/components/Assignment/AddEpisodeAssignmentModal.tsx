@@ -15,15 +15,15 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ assigner, setAssigner ] = useState<User | null>(null);
 	const [ movie, setMovie ] = useState<Movie | null>(null);
-	const [ homework, setHomework ] = useState(false)
+	const [ assignmentType, setAssignmentType ] = useState<"HOMEWORK" | "EXTRA_CREDIT" | "BONUS">("HOMEWORK")
 	const { mutate: addAssignment } = trpc.assignment.add.useMutation({
 		onSuccess: () => {
 			refreshItems();
 			closeModal();
 		}
 	});
-	const handleHomeworkChange = function() {
-		setHomework(!homework)
+	const handleAssignmentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		setAssignmentType(e.target.value as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS")
 	}
 	const handleAddAssignment = function() {
     if (assigner && movie) {
@@ -31,13 +31,14 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
         episodeId: episode.id, 
         userId: assigner.id, 
         movieId: movie.id,
-				homework: homework
+				type: assignmentType
 			})
     }
 	}
   const closeModal = function() {
 		setAssigner(null)
 		setMovie(null)
+		setAssignmentType("HOMEWORK")
     setModalOpen(false)
   }
 
@@ -48,16 +49,17 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 				<UserSelect selectUser={setAssigner} />
 				<label htmlFor="movie">Movie</label>
 				<MovieFind selectMovie={setMovie} />
-				<div>
-					<label>Homework</label>
-					<input
-						title="Homework"
-						type="checkbox"
-						className="rounded-md ml-2"
-						checked={homework}
-						onChange={handleHomeworkChange}
-					/>
-				</div>
+				<label htmlFor="type">Assignment Type</label>
+				<select
+					id="type"
+					value={assignmentType}
+					onChange={handleAssignmentTypeChange}
+					className="rounded-md bg-gray-700 text-white p-1"
+				>
+					<option value="HOMEWORK">Homework</option>
+					<option value="EXTRA_CREDIT">Extra Credit</option>
+					<option value="BONUS">Bonus</option>
+				</select>
 				<button
 					onClick={closeModal}
 					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
