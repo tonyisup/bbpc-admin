@@ -1,7 +1,7 @@
 import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HiX } from "react-icons/hi";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
@@ -63,8 +63,8 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     updateUser({ id, name, email, points: parseFloat(points) });
   }
 
-  const handleAssignEpisode = (syllabusId: string, episodeNumber: number) => {
-    assignEpisode({ syllabusId, episodeNumber });
+  const handleAssignEpisode = (syllabusId: string, episodeNumber: number, assignmentType: string) => {
+    assignEpisode({ syllabusId, episodeNumber, assignmentType });
   }
 
   const handleRemoveAssignment = (syllabusId: string) => {
@@ -176,13 +176,24 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                         className="border rounded-md p-2 text-black"
                         id={`episode-${item.id}`}
                       />
+                      <select 
+                        className="border rounded-md p-2 text-black"
+                        id={`assignment-type-${item.id}`}
+                      >
+                        <option value="HOMEWORK">Homework</option>
+                        <option value="EXTRA_CREDIT">Extra Credit</option>
+                        <option value="BONUS">Bonus</option>
+                      </select> 
+                      
                       <button 
                         className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400"
                         onClick={() => {
                           const input = document.getElementById(`episode-${item.id}`) as HTMLInputElement;
                           const episodeNumber = parseInt(input.value);
+                          const assignmentType = document.getElementById(`assignment-type-${item.id}`) as HTMLSelectElement;
+                          const assignmentTypeValue = assignmentType.value;
                           if (!isNaN(episodeNumber)) {
-                            handleAssignEpisode(item.id, episodeNumber);
+                            handleAssignEpisode(item.id, episodeNumber, assignmentTypeValue);
                           }
                         }}
                       >

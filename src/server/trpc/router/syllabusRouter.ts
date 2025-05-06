@@ -5,7 +5,8 @@ export const syllabusRouter = router({
   assignEpisode: protectedProcedure
     .input(z.object({
       syllabusId: z.string(),
-      episodeNumber: z.number()
+      episodeNumber: z.number(),
+      assignmentType: z.string()
     }))
     .mutation(async (req) => {
       // First get the episode by number
@@ -33,13 +34,34 @@ export const syllabusRouter = router({
         throw new Error("Syllabus item not found");
       }
 
+      // Check if the assignment already exists
+      const existingAssignment = await req.ctx.prisma.assignment.findFirst({
+        where: {
+          userId: syllabus.userId,
+          movieId: syllabus.movieId,
+          episodeId: episode.id 
+        }
+      });
+
+      if (existingAssignment) {
+        return await req.ctx.prisma.syllabus.update({
+          where: {
+            id: req.input.syllabusId
+          },
+          data: {
+            assignmentId: existingAssignment.id
+          }
+        });
+      }
+
       // Create the assignment
       const assignment = await req.ctx.prisma.assignment.create({
         data: {
           userId: syllabus.userId,
           movieId: syllabus.movieId,
           episodeId: episode.id,
-          homework: true
+          homework: req.input.assignmentType === "HOMEWORK",
+          type: req.input.assignmentType
         }
       });
 
