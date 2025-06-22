@@ -35,7 +35,7 @@ const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
 		<div>
 			<div className="flex justify-around">
 				<Link href={"/episode/" + assignment?.episodeId}>Back</Link>
-				<span className="text-2xl font-semibold">{assignment?.homework ? 'Homework' : 'Extra Credit'} Assignment</span>
+				<span className="text-2xl font-semibold">{assignment?.type === 'HOMEWORK' ? 'Homework' : assignment?.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus'} Assignment</span>
 			</div>
 			{assignment && <EditAssignment assignment={assignment} />}
 		</div>

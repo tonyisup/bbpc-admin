@@ -55,7 +55,7 @@ const Plain: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
           {episode &&<pre>
             {episode.assignments.map(assignment => {
               return <div key={assignment.id}>
-                {(assignment.homework ? 'Homework' : 'Extra Credit')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
+                {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
               </div>
             })} <br/>
             Extras: <br/>
@@ -65,9 +65,9 @@ const Plain: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = 
               </div>
             })} <br/>
             {next?.title}:<br/>
-            {next && next.assignments.sort((a, b) => a.homework && !b.homework ? -1 : 1).map(assignment => {
+            {next && next.assignments.sort((a, b) => a.type === 'HOMEWORK' && b.type !== 'HOMEWORK' ? -1 : 1).map(assignment => {
               return <div key={assignment.id}>
-                {(assignment.homework ? 'Homework' : 'Extra Credit')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
+                {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
               </div>
             })} <br/>
           </pre>}

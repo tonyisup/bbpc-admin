@@ -51,7 +51,7 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div className="grid grid-cols-2 gap-2">
 					<form onSubmit={handleSubmit}>
-						<h2>Add Review for {movie.title} on episode {episode.number} for the {assignment.homework ? 'homework' : 'extra credit'}</h2>
+						<h2>Add Review for {movie.title} on episode {episode.number} for the {assignment.type === 'HOMEWORK' ? 'homework' : assignment.type === 'EXTRA_CREDIT' ? 'extra credit' : 'bonus'}</h2>
 						<label htmlFor="user">Reviewer</label>
 						<UserSelect selectUser={setReviewer} />
 						<label htmlFor="user">Rating</label>

@@ -60,7 +60,6 @@ export const syllabusRouter = router({
           userId: syllabus.userId,
           movieId: syllabus.movieId,
           episodeId: episode.id,
-          homework: req.input.assignmentType === "HOMEWORK",
           type: req.input.assignmentType
         }
       });

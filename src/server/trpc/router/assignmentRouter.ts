@@ -14,8 +14,7 @@ export const assignmentRouter = router({
           id: req.input.id
         },
         data: {
-          type: req.input.type,
-          homework: req.input.type === "HOMEWORK"
+          type: req.input.type
         }
       })
     }),
@@ -32,8 +31,7 @@ export const assignmentRouter = router({
           userId: req.input.userId,
           movieId: req.input.movieId,
           episodeId: req.input.episodeId,
-          type: req.input.type,
-          homework: req.input.type === "HOMEWORK"
+          type: req.input.type
         }
       })
     }),
