@@ -162,6 +162,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 <span className="text-gray-400">#{item.order}</span>
                 <div>
                   <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
+                  <p className="text-sm text-gray-400">{item.notes}</p>
                   {item.Assignment && (
                     <p className="text-sm text-gray-400">
                       Assigned in Episode {item.Assignment.Episode?.number}

@@ -64,7 +64,11 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 		<a className="text-blue-500 underline" href={audioMessage.url} target="_blank" rel="noreferrer">
 			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()} 
 		</a>
-		<span>{audioMessage.User?.name ?? audioMessage.User?.email}</span>
+		<span>
+			<Link href={"/user/" + audioMessage.User?.id}>
+				{audioMessage.User?.name ?? audioMessage.User?.email}
+			</Link>
+		</span>
 		<button
 			type="button"
 			title="Remove Audio Message"
