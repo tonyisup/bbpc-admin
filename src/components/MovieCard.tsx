@@ -1,6 +1,7 @@
 import type { Movie } from "@prisma/client";
 import { type FC } from "react";
 import Image from "next/image";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 interface MovieCardProps {
   movie: Movie,
@@ -10,19 +11,19 @@ interface MovieCardProps {
 
 const MovieCard: FC<MovieCardProps> = ({ movie, width, height }) => {
   return (
-    <div className="w-full flex justify-center">
-      <div>        
-        <a href={movie.url} target="_blank" rel="noreferrer">
-          <figure>
-            {movie.poster && <Image unoptimized width={width ?? 100} height={height ?? 150} src={movie.poster} alt={movie.title} />}
-            <figcaption className="text-center">
-              {movie.title} 
-              <span className="text-xs"> ({movie.year})</span>
-            </figcaption>
-          </figure>
-        </a>
-      </div>
-    </div>
+    <Card>
+      <a href={movie.url} target="_blank" rel="noreferrer">
+        <CardContent>
+          {movie.poster && <Image unoptimized width={width ?? 100} height={height ?? 150} src={movie.poster} alt={movie.title} />}
+        </CardContent>
+        <CardFooter>
+          <p className="text-center">
+            {movie.title}
+            <span className="text-xs"> ({movie.year})</span>
+          </p>
+        </CardFooter>
+      </a>
+    </Card>
   )
 }
 

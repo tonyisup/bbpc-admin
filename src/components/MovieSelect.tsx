@@ -1,5 +1,7 @@
 import type { Movie } from "@prisma/client";
 import { type Dispatch, type FC, type SetStateAction, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Title } from "../server/tmdb/client";
 import { trpc } from "../utils/trpc";
 import MovieCard from "./MovieCard";
@@ -25,8 +27,8 @@ const MovieSelect: FC<MovieSelectProps> = ({
       refreshMovies()
     }
   })
-  const handleChange = function(e: React.ChangeEvent<HTMLSelectElement>) {
-    setSelectedMovieKey(e.target.value)
+  const handleChange = function(value: string) {
+    setSelectedMovieKey(value)
   }
   const saveTitleAsMovie = function() {
     if (!title) return;
@@ -53,24 +55,24 @@ const MovieSelect: FC<MovieSelectProps> = ({
         {selectedMovie && <MovieCard movie={selectedMovie} />}
         {!selectedMovie && <div className="col-span-2">No movie selected</div>}
       </div>
-      <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-        title="Select a movie"
-        onChange={handleChange}   
-        value={selectedMovieKey}     
-      >
-        <option value="00000000-0000-0000-0000-000000000000">Select a movie</option>
-        {movies?.map((movie) => <option key={movie.id} value={movie.id}>{movie.title} <span className="text-xs">({movie.year})</span></option>)}
-      </select>
+      <Select onValueChange={handleChange} value={selectedMovieKey}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select a movie" />
+        </SelectTrigger>
+        <SelectContent>
+          {movies?.map((movie) => <SelectItem key={movie.id} value={movie.id}>{movie.title} <span className="text-xs">({movie.year})</span></SelectItem>)}
+        </SelectContent>
+      </Select>
       <div className="w-full flex justify-center">
         {!title && <div className="col-span-2">No title selected</div>}
         {title && 
           <>
             <TitleCard title={title} />
-            <button className="bg-violet-500 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded"
+            <Button
               onClick={saveTitleAsMovie}
             >
               Save
-            </button>
+            </Button>
           </>
         }
       </div>

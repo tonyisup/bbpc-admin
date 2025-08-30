@@ -1,5 +1,7 @@
 import React, { type DispatchWithoutAction, type FC, useState } from "react";
 import type { User, AssignmentReview } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import RatingSelect from "../Review/RatingSelect";
@@ -69,7 +71,7 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 						<RatingSelect setRatingId={setRatingId} />
 						<div>
 							<label htmlFor="number">Number</label>
-							<input
+							<Input
 								title="number"
 								type="number"
 								name="number"
@@ -78,7 +80,7 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 								className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
 							/>
 						</div>
-						<button className="m-2 py-2 px-4 bg-purple-600 rounded-sm" type="submit">Submit Guess</button>
+						<Button className="m-2" type="submit">Submit Guess</Button>
 					</form>
 				</div>
 			</div>

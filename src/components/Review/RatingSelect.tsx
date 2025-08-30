@@ -1,4 +1,5 @@
 import type { Dispatch, FC } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { trpc } from "../../utils/trpc"
 
 interface RatingSelectProps {
@@ -8,15 +9,17 @@ const RatingSelect: FC<RatingSelectProps> = ({
   setRatingId: setRatingId,
 }) => {
   const { data: ratings } = trpc.review.getRatings.useQuery()
-  const handleChange = function(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (!e.target.value) return
-    setRatingId(e.target.value)
+  const handleChange = function(value: string) {
+    if (!value) return
+    setRatingId(value)
   }
-  return <select title="Rating Selection" className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-    onChange={handleChange}        
-  >
-    <option value={0}>Select a rating</option>
-    {ratings?.sort((r) => r.value).map((rating) => <option key={rating.id} value={rating.id}>{rating.name}</option>)}
-  </select>
+  return <Select onValueChange={handleChange}>
+    <SelectTrigger>
+      <SelectValue placeholder="Select a rating" />
+    </SelectTrigger>
+    <SelectContent>
+      {ratings?.sort((r) => r.value).map((rating) => <SelectItem key={rating.id} value={rating.id}>{rating.name}</SelectItem>)}
+    </SelectContent>
+  </Select>
 }
 export default RatingSelect

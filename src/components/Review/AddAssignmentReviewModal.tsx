@@ -1,5 +1,6 @@
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { type Assignment, type Episode, type Movie, type User } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import RatingSelect from "./RatingSelect";
@@ -56,7 +57,7 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
 						<UserSelect selectUser={setReviewer} />
 						<label htmlFor="user">Rating</label>
 						<RatingSelect setRatingId={setRatingId} />
-						<button className="m-2 py-2 px-4 bg-purple-600 rounded-sm" type="submit">Submit Review</button>
+						<Button className="m-2" type="submit">Submit Review</Button>
 					</form>
 				</div>
 			</div>

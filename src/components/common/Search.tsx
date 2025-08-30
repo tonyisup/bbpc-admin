@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type Dispatch, type FC, type SetStateAction } from "react";
+import { Input } from "../ui/input";
 
 interface SearchProps {
 	setSearch: Dispatch<SetStateAction<string>>;
@@ -25,7 +26,7 @@ const Search: FC<SearchProps> = ({ setSearch }) => {
 	}
 	return (
 		<div className="relative flex items-center justify-center text-white">
-			<input
+			<Input
 				type="text"
 				value={searchQuery}
 				placeholder="Search..."
