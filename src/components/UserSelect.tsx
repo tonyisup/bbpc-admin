@@ -1,5 +1,6 @@
 import { User } from "@prisma/client";
 import { Dispatch, SetStateAction, FC, useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "../utils/trpc";
 
 interface UserSelectProps {
@@ -12,8 +13,8 @@ const UserSelect: FC<UserSelectProps> = ({
   const [userId, setUserId] = useState<string>("");
   const { data: users } = trpc.user.getAll.useQuery();
   const { data: user } = trpc.user.get.useQuery({ id: userId });
-  const handleChange = function(e: React.ChangeEvent<HTMLSelectElement>) {
-    setUserId(e.target.value);
+  const handleChange = function(value: string) {
+    setUserId(value);
   }
   useEffect(() => {
     if (user)
@@ -21,12 +22,14 @@ const UserSelect: FC<UserSelectProps> = ({
   }, [user]);
   return (
     <div className="w-full flex justify-center">
-      <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-        onChange={handleChange}        
-      >
-				<option value="">Select a user</option>
-        {users?.map((user) => <option key={user.id} value={user.id}>{user.name} - {user.email}</option>)}
-      </select>
+      <Select onValueChange={handleChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select a user" />
+        </SelectTrigger>
+        <SelectContent>
+          {users?.map((user) => <SelectItem key={user.id} value={user.id}>{user.name} - {user.email}</SelectItem>)}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

@@ -3,6 +3,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
 import EpisodeExtras from "../../components/Extra/EpisodeExtras";
 import { trpc } from "../../utils/trpc";
@@ -107,7 +109,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-2">
               <label htmlFor="number">Number</label>
-              <input
+              <Input
                 className="bg-gray-800 text-gray-300" 
                 id="number"
                 type="number"
@@ -117,7 +119,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="title">Title</label>
-              <input
+              <Input
                 className="bg-gray-800 text-gray-300" 
                 id="title"
                 type="text"
@@ -127,7 +129,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="desc">Description</label>
-              <input
+              <Input
                 className="bg-gray-800 text-gray-300" 
                 id="desc"
                 type="text"
@@ -137,7 +139,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="date">Date</label>
-              <input
+              <Input
                 className="bg-gray-800 text-gray-300"
                 id="date"
                 type="date"
@@ -147,7 +149,7 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="url">Recording Url</label>
-              <input
+              <Input
                 className="bg-gray-800 text-gray-300"
                 id="url"
                 type="text"
@@ -155,12 +157,11 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
                 onChange={handleRecordingChange}
               />
             </div>
-            <button
-              className="bg-slate-500 rounded-sm"
+            <Button
               onClick={handleSave}
             >
               Save
-            </button>
+            </Button>
           </div>
         </section>}
 				{episode && <EpisodeAssignments episode={episode} />}

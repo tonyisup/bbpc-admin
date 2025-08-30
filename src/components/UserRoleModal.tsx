@@ -1,4 +1,5 @@
 import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../utils/trpc";
 import RoleSelect from "./RoleSelect";
 
@@ -34,21 +35,20 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
       </div>
       <RoleSelect setRoleId={setRoleId}/>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button
           onClick={() => setModalOpen(false)}
-          className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+          variant="secondary"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => {
             addRoleToUser()
             setModalOpen(false)
           }}
-          className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
         >
           Add
-        </button>
+        </Button>
         </div>
     </div>
   </div>

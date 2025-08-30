@@ -1,5 +1,7 @@
 import type { Episode } from "@prisma/client";
 import { type DispatchWithoutAction, type FC, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 
@@ -33,7 +35,7 @@ const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episod
 			<div className="grid grid-cols-2 gap-2">
 				<div className="flex flex-col gap-2">
 					<label htmlFor="url">Url</label>
-					<input
+					<Input
 						id="url"
 						type="text"
 						value={url}
@@ -43,7 +45,7 @@ const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episod
 				</div>
 				<div className="flex flex-col gap-2">
 					<label htmlFor="text">Text</label>
-					<input
+					<Input
 						id="text"
 						type="text"
 						value={text}
@@ -51,19 +53,18 @@ const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episod
 						className="bg-gray-600 text-gray-300"
 					/>
 				</div>
-				<button
+				<Button
 					onClick={closeModal}
-					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+					variant="secondary"
 				>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					onClick={handleAddExtra}
 					disabled={!url || !text}
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600 disabled:bg-gray-600 disabled:text-gray-400"
 				>
 					Add Link
-				</button>
+				</Button>
 			</div>
 		</div>
 	</Modal>

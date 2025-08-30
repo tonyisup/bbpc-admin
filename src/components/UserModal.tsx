@@ -1,4 +1,6 @@
 import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "../utils/trpc";
 
 interface EpisodeModalProps {
@@ -19,7 +21,7 @@ const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refres
       <h3 className="text-xl font-medium">New User</h3>
       <div>
         <label htmlFor="number">Name</label>
-        <input
+        <Input
           title="name"
           type="text"
           name="name"
@@ -30,7 +32,7 @@ const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refres
       </div>
       <div>
         <label htmlFor="email">Email</label>
-        <input
+        <Input
           title="email"
           type="email"
           name="email"
@@ -40,21 +42,20 @@ const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refres
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button
           onClick={() => setModalOpen(false)}
-          className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+          variant="secondary"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => {
             addItem({ name: userName, email: userEmail })
             setModalOpen(false)
           }}
-          className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
         >
           Add
-        </button>
+        </Button>
         </div>
     </div>
   </div>

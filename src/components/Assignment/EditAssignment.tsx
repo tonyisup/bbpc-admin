@@ -1,5 +1,6 @@
 import type { Assignment, Episode, Movie, Rating, Review, User } from "@prisma/client";
 import { useState, type Dispatch, type FC } from "react";
+import { Button } from "@/components/ui/button";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
 import { HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
@@ -69,8 +70,8 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				{audioMessage.User?.name ?? audioMessage.User?.email}
 			</Link>
 		</span>
-		<button
-			type="button"
+		<Button
+			variant="ghost"
 			title="Remove Audio Message"
 			className="ml-2 text-red-500 hover:text-red-700"
 			onClick={() => {
@@ -78,7 +79,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 			}}
 		>
 			<HiX />
-		</button>
+		</Button>
 	</div>
 }
 
@@ -162,32 +163,34 @@ const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignme
 								{userGamblingPoints ? (
 									<>
 										<span>{userGamblingPoints.points}</span>
-										<button
+										<Button
+											variant="ghost"
 											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points + 1 })}
 											className="text-green-500"
 										>
 											<HiPlusCircle />
-										</button>
-										<button
+										</Button>
+										<Button
+											variant="ghost"
 											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points - 1 })}
 											className="text-red-500"
 										>
 											<HiMinusCircle />
-										</button>
-										<button
+										</Button>
+										<Button
+											variant="ghost"
 											onClick={() => removeGamblingPoints({ id: userGamblingPoints.id })}
 											className="text-red-500"
 										>
 											<HiX />
-										</button>
+										</Button>
 									</>
 								) : (
-									<button
+									<Button
 										onClick={() => addGamblingPoints({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}
-										className="text-blue-500"
 									>
 										Add Points
-									</button>
+									</Button>
 								)}
 							</div>
 						</div>

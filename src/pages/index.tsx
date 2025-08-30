@@ -2,6 +2,7 @@ import { NextPage } from "next";
 import { useSession, signOut, signIn } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../utils/trpc";
 
 const Home: NextPage = () => {
@@ -48,12 +49,11 @@ const AuthShowcase: React.FC = () => {
       <p className="text-center text-2xl text-white">
         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
       </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+      <Button
         onClick={sessionData ? () => signOut() : () => signIn()}
       >
         {sessionData ? "Sign out" : "Sign in"}
-      </button>
+      </Button>
     </div>
   );
 };

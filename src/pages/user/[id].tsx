@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { HiX } from "react-icons/hi";
+import SyllabusItem from "../../components/SyllabusItem";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -63,13 +64,6 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     updateUser({ id, name, email, points: parseFloat(points) });
   }
 
-  const handleAssignEpisode = (syllabusId: string, episodeNumber: number, assignmentType: string) => {
-    assignEpisode({ syllabusId, episodeNumber, assignmentType });
-  }
-
-  const handleRemoveAssignment = (syllabusId: string) => {
-    removeAssignment({ syllabusId });
-  }
 
   return (
     <>
@@ -157,54 +151,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         </div>
         <div className="flex flex-col w-full px-6 space-y-4">
           {syllabus?.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-md">
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-400">#{item.order}</span>
-                <div>
-                  <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
-                  <p className="text-sm text-gray-400">{item.notes}</p>
-                  {item.Assignment && (
-                    <p className="text-sm text-gray-400">
-                      Assigned in Episode {item.Assignment.Episode?.number}
-                      <HiX className="text-red-500 cursor-pointer" onClick={() => handleRemoveAssignment(item.id)} />
-                    </p>
-                  )}
-                  {!item.Assignment && (
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="number" 
-                        placeholder="Episode Number" 
-                        className="border rounded-md p-2 text-black"
-                        id={`episode-${item.id}`}
-                      />
-                      <select 
-                        className="border rounded-md p-2 text-black"
-                        id={`assignment-type-${item.id}`}
-                      >
-                        <option value="HOMEWORK">Homework</option>
-                        <option value="EXTRA_CREDIT">Extra Credit</option>
-                        <option value="BONUS">Bonus</option>
-                      </select> 
-                      
-                      <button 
-                        className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400"
-                        onClick={() => {
-                          const input = document.getElementById(`episode-${item.id}`) as HTMLInputElement;
-                          const episodeNumber = parseInt(input.value);
-                          const assignmentType = document.getElementById(`assignment-type-${item.id}`) as HTMLSelectElement;
-                          const assignmentTypeValue = assignmentType.value;
-                          if (!isNaN(episodeNumber)) {
-                            handleAssignEpisode(item.id, episodeNumber, assignmentTypeValue);
-                          }
-                        }}
-                      >
-                        Assign
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SyllabusItem key={item.id} item={item} refetchSyllabus={refetchSyllabus} />
           ))}
         </div>
       </main>    
