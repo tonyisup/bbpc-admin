@@ -16,17 +16,7 @@ const Home: NextPage = () => {
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
-			<header className="flex p-6 w-full justify-start items-center">
-				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
-				{isAdmin && <nav className="flex gap-2 w-full justify-around">
-
-					<Link href="episode">Episodes</Link>
-					<Link href="user">Users</Link>
-					<Link href="about">About</Link>
-					<Link href="test">Test</Link>
-					
-				</nav>}
-			</header>
+			{/* Navbar moved to global layout */}
 
 			<main className="w-full flex flex-col items-center">
 				<AuthShowcase />
