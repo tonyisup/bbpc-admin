@@ -1,4 +1,6 @@
 import { type DispatchWithoutAction, type FC, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 
@@ -36,7 +38,7 @@ const AddEpisodeModal: FC<AddEpisodeModalProps> = ({refreshItems: refreshItems})
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div>
 					<label htmlFor="number">Number</label>
-					<input
+					<Input
 						title="number"
 						type="number"
 						name="number"
@@ -47,7 +49,7 @@ const AddEpisodeModal: FC<AddEpisodeModalProps> = ({refreshItems: refreshItems})
 				</div>
 				<div>
 					<label htmlFor="title">Title</label>
-					<input
+					<Input
 						title="title"
 						type="text"
 						name="title"
@@ -57,18 +59,17 @@ const AddEpisodeModal: FC<AddEpisodeModalProps> = ({refreshItems: refreshItems})
 					/>
 				</div>
 				<div className="grid grid-cols-2 gap-2">
-					<button
+					<Button
 						onClick={closeModal}
-						className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+						variant="secondary"
 					>
 						Cancel
-					</button>
-					<button
+					</Button>
+					<Button
 						onClick={handleAddEpisode}
-						className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
 					>
 						Add
-					</button>
+					</Button>
 				</div>
 			</div>
 		</Modal>

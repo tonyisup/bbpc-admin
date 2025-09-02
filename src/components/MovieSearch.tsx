@@ -1,9 +1,9 @@
 import { type Dispatch, type FC, type SetStateAction, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../utils/trpc";
 import Search from "./common/Search";
 
-import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
-import 'pure-react-carousel/dist/react-carousel.es.css';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import type { Movie } from "@prisma/client";
 import MovieCard from "./MovieCard";
 
@@ -30,16 +30,15 @@ const MovieSearch: FC<MovieSearchProps> = ({ setMovie: setMovie }) => {
 		<>
 			{ !modalOpen &&
 				<div>
-					<button
+					<Button
 						type="button"
 						title="Search for a movie"
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
 						onClick={() => setModalOpen(true)}
 					>
-						<span className="focus:outline-none inset-y-0 left-0 flex items-center pl-3">
+						<span className="focus:outline-none inset-y-0 left-0 flex items-center">
 							<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
 						</span>
-					</button>
+					</Button>
 				</div>
 			}
 			{ modalOpen &&
@@ -47,43 +46,41 @@ const MovieSearch: FC<MovieSearchProps> = ({ setMovie: setMovie }) => {
 					<div className="p-3 w-full bg-gray-800">
 						<div className="relative w-full flex">
 							<span className="text-2xl font-semibold">Movie Search</span>
-							<button
+							<Button
+								variant="ghost"
 								type="button"
 								title="Close"
 								onClick={closeModal}
 								className="absolute right-4 focus:outline-none flex items-center"
 							>
 								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-							</button>
+							</Button>
 						</div>
 						<div>
 							<Search setSearch={setSearchQuery} />
-							<CarouselProvider
-								naturalSlideWidth={150}
-								naturalSlideHeight={300}
-								totalSlides={movies?.length || 0}
-								visibleSlides={5}
-								step={5}
-								infinite={true}
+							<Carousel
+								opts={{
+									align: "start",
+								}}
+								className="w-full"
 							>
-								<div className="flex justify-between">
-									<ButtonBack>Back</ButtonBack>
-									<ButtonNext>Next</ButtonNext>
-								</div>
-								<Slider>
+								<CarouselContent>
 									{movies?.map((movie, index) => (
-										<Slide index={index} key={movie.id}>
-											<button 
+										<CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+											<Button
+												variant="ghost"
 												type="button"
 												title="Select this movie"
 												onClick={() => selectMovie(movie)}
 											>
 												<MovieCard movie={movie} />
-											</button>
-										</Slide>
+											</Button>
+										</CarouselItem>
 									))}
-								</Slider>
-							</CarouselProvider>
+								</CarouselContent>
+								<CarouselPrevious />
+								<CarouselNext />
+							</Carousel>
 						</div>
 					</div>
 				</div>}

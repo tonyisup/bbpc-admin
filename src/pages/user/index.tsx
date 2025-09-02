@@ -4,7 +4,9 @@ import Link from "next/link";
 
 import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useEffect, useState } from "react";
-import { HiX } from "react-icons/hi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 import UserModal from "../../components/UserModal";
 import { useRouter } from "next/router";
 import { getServerSession } from "next-auth";
@@ -53,20 +55,13 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {modalOpen && <UserModal setModalOpen={setModalOpen} refreshItems={refresh} />}
-
       <header className="flex p-6 w-full justify-between">
         <h2 className="text-2xl font-semibold">Users</h2>
-        <button
-          type="button" 
-          onClick={() => setModalOpen(true)}
-          className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
-          Add User
-        </button>
+        <UserModal isOpen={modalOpen} setIsOpen={setModalOpen} refreshItems={refresh} />
       </header>
       
       <div className="px-6 pb-4">
-        <input
+        <Input
           type="text"
           placeholder="Search users..."
           onChange={(e) => {
@@ -99,7 +94,7 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 </td>
                 <td>
                   <div className="flex justify-center">
-                    <HiX className="text-red-500 cursor-pointer" onClick={() => removeItem({ id: item.id})} />
+                    <X className="text-red-500 cursor-pointer" onClick={() => removeItem({ id: item.id})} />
                   </div>
                 </td>
               </tr>

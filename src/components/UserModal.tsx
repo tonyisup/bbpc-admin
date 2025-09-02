@@ -1,63 +1,71 @@
-import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import { Dispatch, FC, SetStateAction, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "../utils/trpc";
 
-interface EpisodeModalProps {
-  setModalOpen: Dispatch<SetStateAction<boolean>>
-  refreshItems: DispatchWithoutAction
+interface UserModalProps {
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  refreshItems: () => void;
 }
 
-const EpisodeModal: FC<EpisodeModalProps> = ({setModalOpen, refreshItems: refreshItems}) => {
-  const {mutate: addItem} = trpc.user.add.useMutation({
+const UserModal: FC<UserModalProps> = ({ isOpen, setIsOpen, refreshItems }) => {
+  const { mutate: addItem } = trpc.user.add.useMutation({
     onSuccess: () => {
-      refreshItems()
-    }
+      refreshItems();
+      setIsOpen(false);
+    },
   });
   const [userName, setUserName] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
-  return <div className=" text-white absolute inset-0 flex items-center justify-center bg-black/75">
-    <div className="p-3 space-y-4 bg-gray-800">
-      <h3 className="text-xl font-medium">New User</h3>
-      <div>
-        <label htmlFor="number">Name</label>
-        <input
-          title="name"
-          type="text"
-          name="name"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-        />
-      </div>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
-          title="email"
-          type="email"
-          name="email"
-          value={userEmail}
-          onChange={(e) => setUserEmail(e.target.value)}
-          className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setModalOpen(false)}
-          className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={() => {
-            addItem({ name: userName, email: userEmail })
-            setModalOpen(false)
-          }}
-          className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600"
-        >
-          Add
-        </button>
-        </div>
-    </div>
-  </div>
-}
 
-export default EpisodeModal
+  const handleAddUser = () => {
+    addItem({ name: userName, email: userEmail });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>Add User</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New User</DialogTitle>
+        </DialogHeader>
+        <div>
+          <label htmlFor="name">Name</label>
+          <Input
+            id="name"
+            title="name"
+            type="text"
+            name="name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
+          />
+        </div>
+        <div>
+          <label htmlFor="email">Email</label>
+          <Input
+            id="email"
+            title="email"
+            type="email"
+            name="email"
+            value={userEmail}
+            onChange={(e) => setUserEmail(e.target.value)}
+            className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => setIsOpen(false)} variant="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddUser}>Add</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default UserModal;

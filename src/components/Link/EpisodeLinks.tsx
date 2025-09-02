@@ -1,6 +1,6 @@
 import type { Episode } from "@prisma/client";
 import { type FC, useState } from "react";
-import { HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { trpc } from "../../utils/trpc";
 import AddEpisodeLinkModal from "./AddEpisodeLink";
 
@@ -21,8 +21,8 @@ const EpisodeLinks: FC<EpisodeLinksProps> = ({ episode }) => {
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
 				<h2 className="text-xl font-semibold">Links ({ep?.links.length ?? 0})</h2>
-				{isLinksVisible && <HiChevronUp className="cursor-pointer" onClick={hideLinks} />}
-				{!isLinksVisible && <HiChevronDown className="cursor-pointer" onClick={showLinks} />}
+				{isLinksVisible && <ChevronUp className="cursor-pointer" onClick={hideLinks} />}
+				{!isLinksVisible && <ChevronDown className="cursor-pointer" onClick={showLinks} />}
 				{episode && <AddEpisodeLinkModal episode={episode} refreshItems={refreshLinks} />}
 			</div>
 			{isLinksVisible && <div className="grid grid-cols-3 w-full">

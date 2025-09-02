@@ -1,5 +1,7 @@
 import type { Episode, Movie, User } from "@prisma/client";
 import React, { type DispatchWithoutAction, type FC, useState } from "react"
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
@@ -22,8 +24,8 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 			closeModal();
 		}
 	});
-	const handleAssignmentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setAssignmentType(e.target.value as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS")
+	const handleAssignmentTypeChange = (value: "HOMEWORK" | "EXTRA_CREDIT" | "BONUS") => {
+		setAssignmentType(value)
 	}
 	const handleAddAssignment = function() {
     if (assigner && movie) {
@@ -50,29 +52,28 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 				<label htmlFor="movie">Movie</label>
 				<MovieFind selectMovie={setMovie} />
 				<label htmlFor="type">Assignment Type</label>
-				<select
-					id="type"
-					value={assignmentType}
-					onChange={handleAssignmentTypeChange}
-					className="rounded-md bg-gray-700 text-white p-1"
-				>
-					<option value="HOMEWORK">Homework</option>
-					<option value="EXTRA_CREDIT">Extra Credit</option>
-					<option value="BONUS">Bonus</option>
-				</select>
-				<button
+				<Select onValueChange={handleAssignmentTypeChange} value={assignmentType}>
+					<SelectTrigger>
+						<SelectValue placeholder="Select an assignment type" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="HOMEWORK">Homework</SelectItem>
+						<SelectItem value="EXTRA_CREDIT">Extra Credit</SelectItem>
+						<SelectItem value="BONUS">Bonus</SelectItem>
+					</SelectContent>
+				</Select>
+				<Button
 					onClick={closeModal}
-					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+					variant="secondary"
 				>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					onClick={handleAddAssignment}
 					disabled={!assigner || !movie}
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600 disabled:bg-gray-600 disabled:text-gray-400"
 				>
 					Add Assignment
-				</button>
+				</Button>
 			</div>
 		</div>
 	</Modal>

@@ -1,8 +1,9 @@
 import type { Assignment, Episode, Movie, Rating, Review, User } from "@prisma/client";
 import { useState, type Dispatch, type FC } from "react";
+import { Button } from "@/components/ui/button";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
-import { HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
+import { MinusCircle, PlusCircle, X } from "lucide-react";
 import Link from "next/link";
 import RatingIcon from "../Review/RatingIcon";
 import { type AudioMessage } from "@prisma/client";
@@ -69,16 +70,16 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				{audioMessage.User?.name ?? audioMessage.User?.email}
 			</Link>
 		</span>
-		<button
-			type="button"
+		<Button
+			variant="ghost"
 			title="Remove Audio Message"
 			className="ml-2 text-red-500 hover:text-red-700"
 			onClick={() => {
 				removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
 			}}
 		>
-			<HiX />
-		</button>
+			<X />
+		</Button>
 	</div>
 }
 
@@ -162,32 +163,34 @@ const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignme
 								{userGamblingPoints ? (
 									<>
 										<span>{userGamblingPoints.points}</span>
-										<button
+										<Button
+											variant="ghost"
 											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points + 1 })}
 											className="text-green-500"
 										>
-											<HiPlusCircle />
-										</button>
-										<button
+											<PlusCircle />
+										</Button>
+										<Button
+											variant="ghost"
 											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points - 1 })}
 											className="text-red-500"
 										>
-											<HiMinusCircle />
-										</button>
-										<button
+											<MinusCircle />
+										</Button>
+										<Button
+											variant="ghost"
 											onClick={() => removeGamblingPoints({ id: userGamblingPoints.id })}
 											className="text-red-500"
 										>
-											<HiX />
-										</button>
+											<X />
+										</Button>
 									</>
 								) : (
-									<button
+									<Button
 										onClick={() => addGamblingPoints({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}
-										className="text-blue-500"
 									>
 										Add Points
-									</button>
+									</Button>
 								)}
 							</div>
 						</div>
@@ -195,7 +198,7 @@ const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignme
 							{userData.guesses.map(({ guess, assignmentReview }) => (
 								<li key={guess.id} className="flex gap-2 bg-gray-800 p-2 items-center justify-between">
 									<div className="flex items-center gap-2">
-										<HiX
+										<X
 											className="text-red-500 cursor-pointer m-2"
 											onClick={() => deleteGuess(guess.id)}
 										/>

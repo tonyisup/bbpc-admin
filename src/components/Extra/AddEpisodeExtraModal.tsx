@@ -1,4 +1,5 @@
 import { type DispatchWithoutAction, type FC, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../../utils/trpc";
 import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
@@ -41,19 +42,18 @@ const AddEpisodeExtraModal: FC<AddEpisodeExtraModalProps> = ({refreshItems, epis
 				<UserSelect selectUser={setReviewer} />
 				<label htmlFor="movie">Movie</label>
 				<MovieFind selectMovie={setMovie} />
-				<button
+				<Button
 					onClick={closeModal}
-					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
+					variant="secondary"
 				>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					onClick={handleAddExtra}
 					disabled={!reviewer || !movie}
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600 disabled:bg-gray-600 disabled:text-gray-400"
 				>
 					Add Extra
-				</button>
+				</Button>
 			</div>
 		</div>
 	</Modal>

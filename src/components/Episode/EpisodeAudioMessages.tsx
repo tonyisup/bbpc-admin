@@ -1,7 +1,8 @@
 import { type Dispatch, type FC } from "react";
 import { type AudioEpisodeMessage, type User, type Episode } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 import { trpc } from "../../utils/trpc";
-import { HiX } from "react-icons/hi";
+import { X } from "lucide-react";
 import Link from "next/link";
 
 interface EpisodeAudioMessagesProps {
@@ -41,16 +42,16 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				{audioMessage.User?.name ?? audioMessage.User?.email}
 			</Link>
 		</span>
-		<button
-			type="button"
+		<Button
+			variant="ghost"
 			title="Remove Audio Message"
 			className="ml-2 text-red-500 hover:text-red-700"
 			onClick={() => {
 				removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
 			}}
 		>
-			<HiX />
-		</button>
+			<X />
+		</Button>
 	</div>
 }
 export default EpisodeAudioMessages

@@ -1,7 +1,7 @@
 
 import type { Assignment, Episode } from "@prisma/client"
 import { type FC, useState } from "react"
-import { HiBookOpen, HiX, HiPencil } from "react-icons/hi"
+import { X, Pencil } from "lucide-react"
 import { trpc } from "../../utils/trpc"
 import MovieCard from "../MovieCard"
 import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
@@ -30,14 +30,14 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 					assignment.Movie && <div key={assignment.movieId} className="flex">
 					<MovieCard movie={assignment.Movie}  />
 					<div className="flex flex-col justify-between">
-						<HiX
+						<X
 							className="text-red-500 cursor-pointer"
 							onClick={() => removeAssignment({id: assignment.id})}
 						/>
 						<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
 						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
 						<Link href={`/assignment/${encodeURIComponent(assignment.id)}`}>
-							<HiPencil />
+							<Pencil />
 						</Link>
 					</div>
 				</div>

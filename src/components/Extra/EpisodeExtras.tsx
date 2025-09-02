@@ -1,6 +1,6 @@
 import type { Episode } from "@prisma/client";
 import { type FC, useState } from "react";
-import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { trpc } from "../../utils/trpc";
 import MovieCard from "../MovieCard";
 import AddEpisodeExtraModal from "./AddEpisodeExtraModal";
@@ -25,8 +25,8 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
 				<h2 className="text-xl font-semibold">Extras ({extras?.length ?? 0})</h2>
-				{isExtrasVisible && <HiChevronUp className="cursor-pointer" onClick={hideExtras} />}
-				{!isExtrasVisible && <HiChevronDown className="cursor-pointer" onClick={showExtras} />}
+				{isExtrasVisible && <ChevronUp className="cursor-pointer" onClick={hideExtras} />}
+				{!isExtrasVisible && <ChevronDown className="cursor-pointer" onClick={showExtras} />}
 				{episode && <AddEpisodeExtraModal episode={episode} refreshItems={refreshExtras} />}
 			</div>
 			{isExtrasVisible && <div className="grid grid-cols-3 w-full">
@@ -34,7 +34,7 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 							extra.Movie && <div key={extra.movieId} className="flex">
 									<MovieCard movie={extra.Movie}  />
 									<div className="flex flex-col justify-between">
-										<HiX
+										<X
 											className="text-red-500 cursor-pointer"
 											onClick={() => removeExtra({id: extra.id})}
 										/>

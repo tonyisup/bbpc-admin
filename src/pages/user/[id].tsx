@@ -2,7 +2,10 @@ import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { HiX } from "react-icons/hi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
+import SyllabusItem from "../../components/SyllabusItem";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -63,21 +66,12 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     updateUser({ id, name, email, points: parseFloat(points) });
   }
 
-  const handleAssignEpisode = (syllabusId: string, episodeNumber: number, assignmentType: string) => {
-    assignEpisode({ syllabusId, episodeNumber, assignmentType });
-  }
-
-  const handleRemoveAssignment = (syllabusId: string) => {
-    removeAssignment({ syllabusId });
-  }
 
   return (
     <>
       <Head>
         <title>User {user?.name ?? user?.email} - Bad Boys Podcast Admin</title>
       </Head>
-
-      {modalOpen && user?.id && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
 
       <main className="flex w-full min-h-screen flex-col items-center">
         <header className="flex my-6 px-6 w-full justify-center">
@@ -91,7 +85,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               <label htmlFor="name" className="text-sm font-medium">
                 Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="name"
                 name="name"
@@ -103,7 +97,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               <label htmlFor="email" className="text-sm font-medium">
                 Email
               </label>
-              <input
+              <Input
                 type="email"
                 id="email"
                 name="email"
@@ -115,7 +109,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               <label htmlFor="points" className="text-sm font-medium">
                 Points
               </label>
-              <input 
+              <Input
                 type="number"
                 id="points"
                 name="points"
@@ -123,29 +117,29 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 className="border rounded-md p-2 text-black"
               />
             </div>
-            <button
+            <Button
               type="submit"
-              className="bg-violet-500 text-white p-2 rounded-md transition hover:bg-violet-400"
             >
               Save Changes
-            </button>
+            </Button>
           </form>
           <hr className="w-full my-6" />
           <div className="flex my-6 px-6 w-full justify-between">
             <h2 className="text-xl font-semibold">Roles</h2>
-            <button
+            <Button
               type="button" 
               onClick={() => setModalOpen(true)}
-              className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
+            >
               Add Role
-            </button>
+            </Button>
+            {user?.id && <UserRoleModal userId={id} isOpen={modalOpen} setIsOpen={setModalOpen} refresh={refresh} />}
           </div>
           <ul className="flex flex-col space-y-2">
             {userRoles?.map((userRole) => (
               <li key={userRole.id}>
                 <span>{userRole.role.name}</span>                
                 <div className="flex justify-center">
-                  <HiX className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id})} />
+                  <X className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id})} />
                 </div>
               </li>
             ))}
@@ -157,54 +151,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         </div>
         <div className="flex flex-col w-full px-6 space-y-4">
           {syllabus?.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-md">
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-400">#{item.order}</span>
-                <div>
-                  <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
-                  <p className="text-sm text-gray-400">{item.notes}</p>
-                  {item.Assignment && (
-                    <p className="text-sm text-gray-400">
-                      Assigned in Episode {item.Assignment.Episode?.number}
-                      <HiX className="text-red-500 cursor-pointer" onClick={() => handleRemoveAssignment(item.id)} />
-                    </p>
-                  )}
-                  {!item.Assignment && (
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="number" 
-                        placeholder="Episode Number" 
-                        className="border rounded-md p-2 text-black"
-                        id={`episode-${item.id}`}
-                      />
-                      <select 
-                        className="border rounded-md p-2 text-black"
-                        id={`assignment-type-${item.id}`}
-                      >
-                        <option value="HOMEWORK">Homework</option>
-                        <option value="EXTRA_CREDIT">Extra Credit</option>
-                        <option value="BONUS">Bonus</option>
-                      </select> 
-                      
-                      <button 
-                        className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400"
-                        onClick={() => {
-                          const input = document.getElementById(`episode-${item.id}`) as HTMLInputElement;
-                          const episodeNumber = parseInt(input.value);
-                          const assignmentType = document.getElementById(`assignment-type-${item.id}`) as HTMLSelectElement;
-                          const assignmentTypeValue = assignmentType.value;
-                          if (!isNaN(episodeNumber)) {
-                            handleAssignEpisode(item.id, episodeNumber, assignmentTypeValue);
-                          }
-                        }}
-                      >
-                        Assign
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <SyllabusItem key={item.id} item={item} refetchSyllabus={refetchSyllabus} />
           ))}
         </div>
       </main>    

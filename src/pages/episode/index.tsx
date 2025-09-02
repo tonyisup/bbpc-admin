@@ -5,7 +5,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 
 import { trpc } from "../../utils/trpc";
 import { type DispatchWithoutAction, useEffect } from "react";
-import { HiX } from "react-icons/hi";
+import { X } from "lucide-react";
 import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
 import { useRouter } from "next/router";
 import { getServerSession } from "next-auth";
@@ -81,7 +81,7 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 <td>{episode.date?.toUTCString()}</td>
                 <td>
                   <div className="flex justify-center">
-                    <HiX className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />
+                    <X className="text-red-500 cursor-pointer" onClick={() => removeEpisode({ id: episode.id})} />
                   </div>
                 </td>
                 <td>
