@@ -1,10 +1,10 @@
 import React, { type DispatchWithoutAction, type FC, useState } from "react";
 import type { User, AssignmentReview } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
-import Modal from "../common/Modal";
 import RatingSelect from "../Review/RatingSelect";
 import UserSelect from "../UserSelect";
 import SeasonSelect from "./SeasonSelect";
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
 
 interface AddAssignmentReviewGuessModalProps {
   refreshItems: DispatchWithoutAction;
@@ -56,7 +56,11 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 	}
 
   return (
-    <Modal isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Guess" titleText="New Guess">
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Guess</DialogTitle>
+        </DialogHeader>
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div className="grid grid-cols-2 gap-2">
 					<form onSubmit={handleSubmit}>
@@ -82,7 +86,8 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 					</form>
 				</div>
 			</div>
-    </Modal>
+    </DialogContent>
+	</Dialog>
   );
 };
 
