@@ -1,9 +1,9 @@
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { type Assignment, type Episode, type Movie, type User } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
-import Modal from "../common/Modal";
 import RatingSelect from "./RatingSelect";
 import UserSelect from "../UserSelect";
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
 
 interface AddAssignmentReviewModalProps {
   refreshItems: DispatchWithoutAction;
@@ -47,7 +47,11 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
   };
 
   return (
-    <Modal isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Review" titleText="New Review">
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Review</DialogTitle>
+        </DialogHeader>
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div className="grid grid-cols-2 gap-2">
 					<form onSubmit={handleSubmit}>
@@ -60,7 +64,8 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
 					</form>
 				</div>
 			</div>
-    </Modal>
+    </DialogContent>
+	</Dialog>
   );
 };
 

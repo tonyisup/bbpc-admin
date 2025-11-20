@@ -1,7 +1,7 @@
 import type { Episode } from "@prisma/client";
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
-import Modal from "../common/Modal";
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
 
 interface AddEpisodeLinkModalProps {
 	refreshItems: DispatchWithoutAction,
@@ -28,7 +28,11 @@ const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episod
 				text: text
 			})
 	}
-	return <Modal  isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Link" titleText="New Link">
+	return <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Link</DialogTitle>
+        </DialogHeader>
 		<div className="p-3 space-y-4 bg-gray-800">
 			<div className="grid grid-cols-2 gap-2">
 				<div className="flex flex-col gap-2">
@@ -66,6 +70,7 @@ const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episod
 				</button>
 			</div>
 		</div>
-	</Modal>
+	</DialogContent>
+	</Dialog>
 }
 export default AddEpisodeLinkModal

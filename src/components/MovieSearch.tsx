@@ -1,11 +1,11 @@
 import { type Dispatch, type FC, type SetStateAction, useState } from "react";
 import { trpc } from "../utils/trpc";
-import Search from "./common/Search";
 
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
 import 'pure-react-carousel/dist/react-carousel.es.css';
 import type { Movie } from "@prisma/client";
 import MovieCard from "./MovieCard";
+import { Input } from "./ui/input";
 
 interface MovieSearchProps {
 	setMovie: Dispatch<SetStateAction<Movie | null>>;
@@ -57,7 +57,7 @@ const MovieSearch: FC<MovieSearchProps> = ({ setMovie: setMovie }) => {
 							</button>
 						</div>
 						<div>
-							<Search setSearch={setSearchQuery} />
+							<Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search for a movie" />
 							<CarouselProvider
 								naturalSlideWidth={150}
 								naturalSlideHeight={300}
