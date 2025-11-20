@@ -1,9 +1,9 @@
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
-import Modal from "../common/Modal";
 import MovieFind from "../MovieFind";
 import UserSelect from "../UserSelect";
 import type { User, Movie, Episode } from "@prisma/client";
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
 
 interface AddEpisodeExtraModalProps {
 	refreshItems: DispatchWithoutAction,
@@ -34,7 +34,11 @@ const AddEpisodeExtraModal: FC<AddEpisodeExtraModalProps> = ({refreshItems, epis
 			})
 		}
 	}
-	return <Modal  isOpen={modalOpen} setIsOpen={setModalOpen} openText="Add Extra" titleText="New Extra">
+	return <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Extra</DialogTitle>
+        </DialogHeader>
 		<div className="p-3 space-y-4 bg-gray-800">
 			<div className="grid grid-cols-2 gap-2">
 				<label htmlFor="user">Assigner</label>
@@ -56,6 +60,7 @@ const AddEpisodeExtraModal: FC<AddEpisodeExtraModalProps> = ({refreshItems, epis
 				</button>
 			</div>
 		</div>
-	</Modal>
+	</DialogContent>
+	</Dialog>
 }
 export default AddEpisodeExtraModal

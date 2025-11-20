@@ -1,11 +1,11 @@
 import { type Dispatch, type FC, type SetStateAction, useState } from "react";
 import type { Title } from "../server/tmdb/client";
 import { trpc } from "../utils/trpc";
-import Search from "./common/Search";
 
 import { CarouselProvider, Slider, Slide, ButtonBack, ButtonNext } from 'pure-react-carousel';
 import 'pure-react-carousel/dist/react-carousel.es.css';
 import TitleCard from "./TitleCard";
+import { Input } from "./ui/input";
 
 interface TitleSearchProps {
 	setTitle: Dispatch<SetStateAction<Title | null>>;
@@ -58,7 +58,7 @@ const TitleSearch: FC<TitleSearchProps> = ({ setTitle: setTitle }) => {
 							</button>
 						</div>
 						<div>
-							<Search setSearch={setSearchQuery} />
+							<Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search for a title" />
 							<CarouselProvider
 								naturalSlideWidth={150}
 								naturalSlideHeight={300}
