@@ -1,37 +1,38 @@
 import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-
 import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useEffect, useState } from "react";
-import { HiX } from "react-icons/hi";
+import { Trash2, Plus } from "lucide-react";
 import UserModal from "../../components/UserModal";
-import { useRouter } from "next/router";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 
 export async function getServerSideProps(context: any) {
-	const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
-	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
-	
-	if (!session || !isAdmin) {
-		return {
-			redirect: {
-				destionation: '/',
-				permanent: false,
-			}
-		}
-	}
+  if (!session || !isAdmin) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      }
+    }
+  }
 
-	return {
-		props: {
-			session
-		}
-	}
+  return {
+    props: {
+      session
+    }
+  }
 }
-const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
+
+const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const refresh: DispatchWithoutAction = () => refetchItems()
   const {data: items, isLoading, refetch: refetchItems } = trpc.user.getAll.useQuery()
   const [filteredItems, setFilteredItems] = useState(items || [])
@@ -42,97 +43,85 @@ const Home: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   })
   const [modalOpen, setModalOpen] = useState<boolean>(false)
 
-  if (!items || isLoading) return <p>Loading...</p>
+  useEffect(() => {
+    if(items) {
+        setFilteredItems(items)
+    }
+  }, [items])
 
-  
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const filtered = items?.filter(item =>
+        item.name?.toLowerCase().includes(e.target.value.toLowerCase()) ||
+        item.email?.toLowerCase().includes(e.target.value.toLowerCase())
+    )
+    setFilteredItems(filtered || [])
+  }
+
   return (
     <>
       <Head>
-        <title>Users - Bad Boys Podcast Admin</title>
-        <meta name="description" content="Bad Boys Podcast Administration App" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>Users - BBPC Admin</title>
       </Head>
 
-      {modalOpen && <UserModal setModalOpen={setModalOpen} refreshItems={refresh} />}
+      <UserModal open={modalOpen} setOpen={setModalOpen} refreshItems={refresh} />
 
-      <header className="flex p-6 w-full justify-between">
-        <h2 className="text-2xl font-semibold">Users</h2>
-        <button
-          type="button" 
-          onClick={() => setModalOpen(true)}
-          className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
-          Add User
-        </button>
-      </header>
-      
-      <div className="px-6 pb-4">
-        <input
-          type="text"
-          placeholder="Search users..."
-          onChange={(e) => {
-            const filtered = items?.filter(item => 
-              item.name?.toLowerCase().includes(e.target.value.toLowerCase()) ||
-              item.email?.toLowerCase().includes(e.target.value.toLowerCase())
-            )
-            setFilteredItems(filtered || [])
-          }}
-          className="w-full p-2 border rounded"
-        />
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+           <div>
+            <h2 className="text-3xl font-bold tracking-tight">Users</h2>
+            <p className="text-muted-foreground">Manage admin users and permissions.</p>
+           </div>
+           <Button onClick={() => setModalOpen(true)}>
+             <Plus className="mr-2 h-4 w-4" />
+             Add User
+           </Button>
+        </div>
+
+        <div className="flex items-center py-2">
+            <Input
+              placeholder="Search users..."
+              onChange={handleSearch}
+              className="max-w-sm"
+            />
+        </div>
+
+        <div className="rounded-md border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableRow><TableCell colSpan={3} className="text-center h-24">Loading...</TableCell></TableRow>}
+
+              {!isLoading && filteredItems?.length === 0 && (
+                 <TableRow><TableCell colSpan={3} className="text-center h-24">No users found.</TableCell></TableRow>
+              )}
+
+              {filteredItems?.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>
+                    <Link href={`/user/${encodeURIComponent(item.id)}`} className="hover:underline">
+                      {item.email}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeItem({ id: item.id})} title="Delete">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-      <main className="flex flex-col items-center">
-        <table className="text-center w-full">
-          <thead>
-            <tr>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems && filteredItems?.length > 0 && filteredItems?.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>
-                  <Link href={`/user/${encodeURIComponent(item.id)}`}>
-                    {item.email}
-                  </Link>
-                </td>
-                <td>
-                  <div className="flex justify-center">
-                    <HiX className="text-red-500 cursor-pointer" onClick={() => removeItem({ id: item.id})} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </main>
     </>
   );
 };
 
-export default Home;
-
-// const AuthShowcase: React.FC = () => {
-//   const { data: sessionData } = useSession();
-
-//   const { data: secretMessage } = trpc.auth.getSecretMessage.useQuery(
-//     undefined, // no input
-//     { enabled: sessionData?.user !== undefined },
-//   );
-
-//   return (
-//     <div className="flex flex-col items-center justify-center gap-4">
-//       <p className="text-center text-2xl text-white">
-//         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-//         {secretMessage && <span> - {secretMessage}</span>}
-//       </p>
-//       <button
-//         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-//         onClick={sessionData ? () => signOut() : () => signIn()}
-//       >
-//         {sessionData ? "Sign out" : "Sign in"}
-//       </button>
-//     </div>
-//   );
-// };
+export default UsersPage;

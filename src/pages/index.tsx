@@ -1,59 +1,91 @@
 import { NextPage } from "next";
-import { useSession, signOut, signIn } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import Head from "next/head";
-import Link from "next/link";
 import { trpc } from "../utils/trpc";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Mic2, Users } from "lucide-react";
+import Link from "next/link";
 
 const Home: NextPage = () => {
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery();
-	
-	return (
-		<>
-			<Head>
-				<title>Bad Boys Podcast Admin</title>
-				<meta name="description" content="Bad Boys Podcast Administration App" />
-				<link rel="icon" href="/favicon.ico" />
-			</Head>
+  const { data: session } = useSession();
+  const { data: isAdmin } = trpc.auth.isAdmin.useQuery(undefined, { enabled: !!session });
 
-			<header className="flex p-6 w-full justify-start items-center">
-				<h2 className="text-2xl font-semibold">BBPC Admin</h2>
-				{isAdmin && <nav className="flex gap-2 w-full justify-around">
+  // If not logged in, the Layout component centers this content
+  if (!session) {
+    return (
+      <>
+        <Head>
+          <title>BBPC Admin - Login</title>
+        </Head>
+        <Card className="w-[350px] shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle>BBPC Admin</CardTitle>
+            <CardDescription>Sign in to manage the podcast</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center pb-8">
+            <Button onClick={() => signIn()} size="lg">
+              Sign In with Provider
+            </Button>
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
 
-					<Link href="episode">Episodes</Link>
-					<Link href="user">Users</Link>
-					<Link href="about">About</Link>
-					<Link href="test">Test</Link>
-					
-				</nav>}
-			</header>
-
-			<main className="w-full flex flex-col items-center">
-				<AuthShowcase />
-			</main>
-		</>
-	);
-}
-export default Home;
-
-const AuthShowcase: React.FC = () => {
-  const { data: sessionData } = useSession();
-
-  const { data: secretMessage } = trpc.auth.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined },
-  );
-
+  // If logged in, the Layout component puts this in the main area
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => signOut() : () => signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
+    <>
+      <Head>
+        <title>BBPC Admin - Dashboard</title>
+      </Head>
+
+      <div className="flex flex-col gap-8">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Welcome back, {session.user?.name}.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Link href="/episode">
+            <Card className="hover:bg-muted/50 transition cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Episodes
+                </CardTitle>
+                <Mic2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">Manage</div>
+                <p className="text-xs text-muted-foreground">
+                  View and edit podcast episodes
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/user">
+            <Card className="hover:bg-muted/50 transition cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Users
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">Manage</div>
+                <p className="text-xs text-muted-foreground">
+                  Manage admin users
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </div>
+    </>
   );
-};
+}
+
+export default Home;
