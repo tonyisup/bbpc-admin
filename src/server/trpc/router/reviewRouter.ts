@@ -99,11 +99,6 @@ export const reviewRouter = router({
 				include: {
 					Movie: true,
 					User: true,
-					extraReviews: {
-						where: {
-							episodeId: req.input.episodeId
-						},
-					},
 				}
 			})
 		}),
