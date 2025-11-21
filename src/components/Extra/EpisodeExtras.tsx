@@ -1,6 +1,6 @@
 import type { Episode } from "@prisma/client";
 import { type FC, useState } from "react";
-import { HiChevronDown, HiChevronUp, HiX } from "react-icons/hi";
+import { HiChevronDown, HiChevronUp, HiTrash } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";
 import MovieCard from "../MovieCard";
 import AddEpisodeExtraModal from "./AddEpisodeExtraModal";
@@ -34,7 +34,7 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 							extra.Movie && <div key={extra.movieId} className="flex">
 									<MovieCard movie={extra.Movie}  />
 									<div className="flex flex-col justify-between">
-										<HiX
+										<HiTrash
 											className="text-red-500 cursor-pointer"
 											onClick={() => removeExtra({id: extra.id})}
 										/>

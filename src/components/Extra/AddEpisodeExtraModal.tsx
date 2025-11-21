@@ -4,6 +4,7 @@ import MovieFind from "../MovieFind";
 import UserSelect from "../UserSelect";
 import type { User, Movie, Episode } from "@prisma/client";
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
+import { HiPlus } from "react-icons/hi";
 
 interface AddEpisodeExtraModalProps {
 	refreshItems: DispatchWithoutAction,
@@ -34,11 +35,17 @@ const AddEpisodeExtraModal: FC<AddEpisodeExtraModalProps> = ({refreshItems, epis
 			})
 		}
 	}
-	return <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Extra</DialogTitle>
-        </DialogHeader>
+	return (
+		<>
+			<HiPlus
+				className="cursor-pointer text-2xl"
+				onClick={() => setModalOpen(true)}
+			/>
+			<Dialog open={modalOpen} onOpenChange={setModalOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Add Extra</DialogTitle>
+					</DialogHeader>
 		<div className="p-3 space-y-4 bg-gray-800">
 			<div className="grid grid-cols-2 gap-2">
 				<label htmlFor="user">Assigner</label>
@@ -60,7 +67,9 @@ const AddEpisodeExtraModal: FC<AddEpisodeExtraModalProps> = ({refreshItems, epis
 				</button>
 			</div>
 		</div>
-	</DialogContent>
-	</Dialog>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
 }
 export default AddEpisodeExtraModal

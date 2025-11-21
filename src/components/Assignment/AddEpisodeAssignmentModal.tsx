@@ -4,6 +4,7 @@ import { trpc } from "../../utils/trpc";
 import MovieFind from "../MovieFind";
 import UserSelect from "../UserSelect";
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
+import { HiPlus } from "react-icons/hi";
 
 
 interface AddEpisodeAssignmentModalProps {
@@ -42,11 +43,17 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
     setModalOpen(false)
   }
 
-	return <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New User</DialogTitle>
-        </DialogHeader>
+	return (
+		<>
+			<HiPlus
+				className="cursor-pointer text-2xl"
+				onClick={() => setModalOpen(true)}
+			/>
+			<Dialog open={modalOpen} onOpenChange={setModalOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Add New User</DialogTitle>
+					</DialogHeader>
 		<div className="p-3 space-y-4 bg-gray-800">
 			<div className="grid grid-cols-2 gap-2">
 				<label htmlFor="user">Assigner</label>
@@ -79,8 +86,10 @@ const AddEpisodeAssignmentModal: FC<AddEpisodeAssignmentModalProps> = ({refreshI
 				</button>
 			</div>
 		</div>
-	</DialogContent>
-	</Dialog>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
 }
 
 export default AddEpisodeAssignmentModal;
