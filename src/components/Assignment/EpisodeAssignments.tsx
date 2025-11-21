@@ -1,12 +1,8 @@
-
-import type { Assignment, Episode } from "@prisma/client"
-import { type FC, useState } from "react"
-import { HiBookOpen, HiPencil, HiTrash } from "react-icons/hi"
+import type { Episode } from "@prisma/client"
+import { type FC } from "react"
 import { trpc } from "../../utils/trpc"
-import MovieCard from "../MovieCard"
 import AddEpisodeAssignmentModal from "./AddEpisodeAssignmentModal"
-import Link from "next/link"
-import HomeworkFlag from "./HomeworkFlag"
+import AssignmentCard from "./AssignmentCard"
 
 interface EpisodeAssignmentsProps {
 	episode: Episode
@@ -15,9 +11,6 @@ interface EpisodeAssignmentsProps {
 const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 	
   const { data: assignments, refetch: refreshAssignments } = trpc.assignment.getForEpisode.useQuery({ episodeId: episode.id})
-  const { mutate: removeAssignment } = trpc.assignment.remove.useMutation({
-    onSuccess: () => refreshAssignments(),
-  });
 
 	return (
 		<section className="flex flex-col w-full px-6">
@@ -25,26 +18,11 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 				<h2 className="text-xl font-semibold">Assignments ({assignments?.length ?? 0})</h2>
 				{episode && <AddEpisodeAssignmentModal episode={episode} refreshItems={refreshAssignments} />}
 			</div>
-			<div className="grid grid-cols-3 w-full">
-				{assignments?.map((assignment) => (
-					assignment.Movie && <div key={assignment.movieId} className="flex">
-					<MovieCard movie={assignment.Movie}  />
-					<div className="flex flex-col justify-between">
-						<HiTrash
-							className="text-red-500 cursor-pointer"
-							onClick={() => removeAssignment({id: assignment.id})}
-						/>
-						<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
-						{assignment.User && <div className="w-full">{assignment.User.name}</div>}
-						<Link href={`/assignment/${encodeURIComponent(assignment.id)}`}>
-							<HiPencil />
-						</Link>
-					</div>
-				</div>
-				))}
+			<div className="flex gap-4">
+				{assignments?.map((assignment) => <AssignmentCard key={assignment.id} assignment={assignment} refreshAssignments={refreshAssignments} />)}
 			</div>
 		</section>
 	)
 }
 
-export default EpisodeAssignments
+export default EpisodeAssignments	

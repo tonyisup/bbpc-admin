@@ -62,7 +62,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
         <Separator />
         <ScrollArea className="flex-1 px-1">
-          <div className="space-y-1 p-2">
+          <div className="space-y-1 p-2 flex flex-col gap-1">
             {routes.map((route) => (
               <Link key={route.href} href={route.href}>
                 <Button

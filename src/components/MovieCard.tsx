@@ -6,19 +6,20 @@ interface MovieCardProps {
   movie: Movie,
   width?: number,
   height?: number,
+  showTitle?: boolean,
 }
 
-const MovieCard: FC<MovieCardProps> = ({ movie, width, height }) => {
+const MovieCard: FC<MovieCardProps> = ({ movie, width, height, showTitle = true }) => {
   return (
     <div className="w-full flex justify-center">
       <div>        
         <a href={movie.url} target="_blank" rel="noreferrer">
           <figure>
             {movie.poster && <Image unoptimized width={width ?? 100} height={height ?? 150} src={movie.poster} alt={movie.title} />}
-            <figcaption className="text-center">
+            {showTitle && <figcaption className="text-center">
               {movie.title} 
               <span className="text-xs"> ({movie.year})</span>
-            </figcaption>
+            </figcaption>}
           </figure>
         </a>
       </div>
