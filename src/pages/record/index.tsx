@@ -11,6 +11,8 @@ import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import EpisodeEditor from "../../components/Episode/EpisodeEditor";
+import MovieCard from "../../components/MovieCard";
+import ShowCard from "../../components/ShowCard";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -130,19 +132,14 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							<Card className="w-full max-w-4xl p-6">
 								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.extras.length})</h3>
 								<div className="space-y-4">
-									{recordingData.extras.map((extra) => (
-										<div key={extra.id} className="border border-gray-700 rounded p-4">
-											<p className="font-medium">{extra.Review.Movie.title} ({extra.Review.Movie.year})</p>
-											<p className="text-sm text-gray-400">
-												Reviewed by: {extra.Review.User?.name || "Unknown"}
-											</p>
-											{extra.Review.Rating && (
-												<p className="text-sm text-gray-400">
-													Rating: {extra.Review.Rating.name}
-												</p>
-											)}
-										</div>
-									))}
+									{recordingData.extras.map((extra) => {
+										if (extra.Review.Movie) {
+											return <MovieCard key={extra.id} movie={extra.Review.Movie} />
+										}
+										if (extra.Review.Show) {
+											return <ShowCard key={extra.id} show={extra.Review.Show} />
+										}
+									})}
 								</div>
 							</Card>
 						)}

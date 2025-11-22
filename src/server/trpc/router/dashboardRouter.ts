@@ -33,7 +33,8 @@ export const dashboardRouter = router({
               Review: {
                 include: {
                   User: true,
-                  Movie: true
+                  Movie: true,
+                  Show: true
                 }
               }
             }
