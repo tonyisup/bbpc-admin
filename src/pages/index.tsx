@@ -10,10 +10,13 @@ import AssignmentCard from "../components/Assignment/AssignmentCard";
 import ExtraCard from "../components/Extra/ExtraCard";
 import MovieCard from "../components/MovieCard";
 
+import GuessesGraph from "../components/Dashboard/GuessesGraph";
+
 const Home: NextPage = () => {
   const { data: session } = useSession();
   const { data: isAdmin } = trpc.auth.isAdmin.useQuery(undefined, { enabled: !!session });
   const { data: stats } = trpc.dashboard.getStats.useQuery(undefined, { enabled: !!session });
+  const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(undefined, { enabled: !!session });
 
   // If not logged in, the Layout component centers this content
   if (!session) {
@@ -120,6 +123,8 @@ const Home: NextPage = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          {guessesStats && <GuessesGraph data={guessesStats} className="col-span-7" />}
+
           {/* Latest Episode */}
           <Card className="col-span-4">
             <CardHeader>

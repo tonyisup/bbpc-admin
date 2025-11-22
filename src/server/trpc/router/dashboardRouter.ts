@@ -61,5 +61,52 @@ export const dashboardRouter = router({
       latestEpisode,
       latestSyllabus
     };
+  }),
+
+  getGuessesStats: publicProcedure.query(async ({ ctx }) => {
+    const episodes = await ctx.prisma.episode.findMany({
+      take: 10,
+      orderBy: { number: 'desc' },
+      where: {
+        recording: {
+          not: null
+        }
+      },
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        assignments: {
+          select: {
+            assignmentReviews: {
+              select: {
+                guesses: {
+                  select: {
+                    id: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const data = episodes.map((ep) => {
+      let guessCount = 0;
+      ep.assignments.forEach((a) => {
+        a.assignmentReviews.forEach((ar) => {
+          guessCount += ar.guesses.length;
+        });
+      });
+      return {
+        id: ep.id,
+        name: `Ep ${ep.number}`,
+        fullTitle: `Episode ${ep.number}: ${ep.title}`,
+        guesses: guessCount,
+      };
+    }).reverse();
+
+    return data;
   })
 });
