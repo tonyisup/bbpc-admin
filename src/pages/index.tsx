@@ -14,7 +14,6 @@ import GuessesGraph from "../components/Dashboard/GuessesGraph";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
-  const { data: isAdmin } = trpc.auth.isAdmin.useQuery(undefined, { enabled: !!session });
   const { data: stats } = trpc.dashboard.getStats.useQuery(undefined, { enabled: !!session });
   const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(undefined, { enabled: !!session });
 
@@ -122,82 +121,80 @@ const Home: NextPage = () => {
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          {guessesStats && <GuessesGraph data={guessesStats} className="col-span-7" />}
+        {guessesStats && <GuessesGraph data={guessesStats} className="col-span-7" />}
 
-          {/* Latest Episode */}
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Latest Episode</CardTitle>
-              <CardDescription>
-                The most recent episode added to the database.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats?.latestEpisode ? (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-lg">Episode {stats.latestEpisode.number}: {stats.latestEpisode.title}</span>
-                    {stats.latestEpisode.date && (
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(stats.latestEpisode.date).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {stats.latestEpisode.description || "No description available."}
-                  </p>
-                  <div className="flex gap-2 justify-around">
-                    {stats.latestEpisode.assignments?.map((assignment) => (
-                      <AssignmentCard key={assignment.id} assignment={assignment} />
-                    ))}
-                  </div>
-                  <div className="flex gap-2 justify-around">
-                    {stats.latestEpisode.extras?.map((extra) => (
-                      <ExtraCard key={extra.id} extra={extra} />
-                    ))}
-                  </div>
-                  <div className="mt-2">
-                    <Link href={`/episode/${stats.latestEpisode.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No episodes found.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Latest Syllabus Additions */}
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Recent Syllabus Additions</CardTitle>
-              <CardDescription>
-                Latest movies added to user syllabuses.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 flex gap-2">
-                {stats?.latestSyllabus.map((item) => (
-                  <div key={item.id} className="flex-1 flex flex-col items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(item.createdAt).toLocaleDateString()}
+        {/* Latest Episode */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Latest Episode</CardTitle>
+            <CardDescription>
+              The most recent episode added to the database.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.latestEpisode ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-lg">Episode {stats.latestEpisode.number}: {stats.latestEpisode.title}</span>
+                  {stats.latestEpisode.date && (
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(stats.latestEpisode.date).toLocaleDateString()}
                     </span>
-                    <MovieCard movie={item.Movie} showTitle={false} />
-                    <span className="text-xs text-muted-foreground">{item.User.name || "Unknown User"}</span>
-                  </div>
-                ))}
-                {(!stats?.latestSyllabus || stats.latestSyllabus.length === 0) && (
-                  <p className="text-sm text-muted-foreground">No syllabus items found.</p>
-                )}
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {stats.latestEpisode.description || "No description available."}
+                </p>
+                <div className="flex gap-2 justify-around">
+                  {stats.latestEpisode.assignments?.map((assignment) => (
+                    <AssignmentCard key={assignment.id} assignment={assignment} />
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-around">
+                  {stats.latestEpisode.extras?.map((extra) => (
+                    <ExtraCard key={extra.id} extra={extra} />
+                  ))}
+                </div>
+                <div className="mt-2">
+                  <Link href={`/episode/${stats.latestEpisode.id}`}>
+                    <Button variant="outline" size="sm">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No episodes found.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Latest Syllabus Additions */}
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Recent Syllabus Additions</CardTitle>
+            <CardDescription>
+              Latest movies added to user syllabuses.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 flex gap-2">
+              {stats?.latestSyllabus.map((item) => (
+                <div key={item.id} className="flex-1 flex flex-col items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                  <MovieCard movie={item.Movie} showTitle={false} />
+                  <span className="text-xs text-muted-foreground">{item.User.name || "Unknown User"}</span>
+                </div>
+              ))}
+              {(!stats?.latestSyllabus || stats.latestSyllabus.length === 0) && (
+                <p className="text-sm text-muted-foreground">No syllabus items found.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { LayoutDashboard, Mic2, Users, FileText, Beaker, LogOut } from "lucide-react"
+import { LayoutDashboard, Mic2, Users, FileText, Beaker, LogOut, Mic } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { signOut, useSession } from "next-auth/react"
@@ -25,7 +25,7 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       label: "Episodes",
-      icon: Mic2,
+      icon: Mic,
       href: "/episode",
       active: pathname.startsWith("/episode"),
     },
@@ -57,7 +57,7 @@ export function Sidebar({ className }: SidebarProps) {
             BBPC Admin
           </h2>
           <p className="px-2 text-xs text-muted-foreground">
-             Manage your podcast
+            Manage your podcast
           </p>
         </div>
         <Separator />
@@ -78,27 +78,35 @@ export function Sidebar({ className }: SidebarProps) {
         </ScrollArea>
 
         <div className="mt-auto p-4">
-           <Separator className="mb-4" />
-           {session?.user && (
-             <div className="flex items-center gap-4 mb-4 px-2">
-               <Avatar>
-                 <AvatarImage src={session.user.image || ""} />
-                 <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
-               </Avatar>
-               <div className="flex flex-col">
-                 <span className="text-sm font-medium">{session.user.name}</span>
-                 <span className="text-xs text-muted-foreground truncate w-32">{session.user.email}</span>
-               </div>
-             </div>
-           )}
-           <Button
+          <div className="mb-4">
+            <Link href="/record">
+              <Button variant="ghost" className="w-full justify-start">
+                <Mic2 className="mr-2 h-4 w-4" />
+                Record
+              </Button>
+            </Link>
+          </div>
+          <Separator className="mb-4" />
+          {session?.user && (
+            <div className="flex items-center gap-4 mb-4 px-2">
+              <Avatar>
+                <AvatarImage src={session.user.image || ""} />
+                <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{session.user.name}</span>
+                <span className="text-xs text-muted-foreground truncate w-32">{session.user.email}</span>
+              </div>
+            </div>
+          )}
+          <Button
             variant="destructive"
             className="w-full justify-start"
             onClick={() => signOut()}
-           >
-             <LogOut className="mr-2 h-4 w-4" />
-             Log Out
-           </Button>
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Log Out
+          </Button>
         </div>
       </div>
     </div>

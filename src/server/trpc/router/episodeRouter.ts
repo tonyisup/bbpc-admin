@@ -4,35 +4,35 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { utapi } from "../../uploadthing";
 
 export const episodeRouter = router({
-	getLinks: publicProcedure
-		.input(z.object({id: z.string()}))
-		.query(async (req) => {
-			return await req.ctx.prisma.episode.findUnique({
-				where: {
-					id: req.input.id
-				},
-				select: {
-					links: true
-				}
-			})
-		}),
-	addLink: protectedProcedure
-		.input(z.object({episodeId: z.string(), url: z.string(), text: z.string()}))
-		.mutation(async (req) => {
-			return await req.ctx.prisma.link.create({
-				data: {
-					Episode: {
-						connect: {
-							id: req.input.episodeId
-						}
-					},
-					url: req.input.url,
-					text: req.input.text
-				}
-			})
-		}),
+  getLinks: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.episode.findUnique({
+        where: {
+          id: req.input.id
+        },
+        select: {
+          links: true
+        }
+      })
+    }),
+  addLink: protectedProcedure
+    .input(z.object({ episodeId: z.string(), url: z.string(), text: z.string() }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.link.create({
+        data: {
+          Episode: {
+            connect: {
+              id: req.input.episodeId
+            }
+          },
+          url: req.input.url,
+          text: req.input.text
+        }
+      })
+    }),
   getAssigments: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany({
         where: {
@@ -41,17 +41,18 @@ export const episodeRouter = router({
       })
     }),
   add: protectedProcedure
-    .input(z.object({number: z.number(), title: z.string()}))
+    .input(z.object({ number: z.number(), title: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.create({
         data: {
           number: req.input.number,
-          title: req.input.title   
+          title: req.input.title,
+          status: "pending"
         }
       })
     }),
   remove: protectedProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.delete({
         where: {
@@ -61,12 +62,13 @@ export const episodeRouter = router({
     }),
   update: protectedProcedure
     .input(z.object({
-      id: z.string(), 
-      number: z.number(), 
+      id: z.string(),
+      number: z.number(),
       title: z.string(),
       description: z.string(),
       date: z.date().optional(),
-      recording: z.string().optional()
+      recording: z.string().optional(),
+      status: z.string().optional()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
@@ -78,12 +80,13 @@ export const episodeRouter = router({
           title: req.input.title,
           description: req.input.description,
           date: req.input.date,
-          recording: req.input.recording
+          recording: req.input.recording,
+          status: req.input.status
         }
       })
     }),
   get: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findUnique({
         where: {
@@ -91,35 +94,35 @@ export const episodeRouter = router({
         }
       })
     }),
-    full: publicProcedure
-      .input(z.object({id: z.string()}))
-      .query(async (req) => {
-        return await req.ctx.prisma.episode.findUnique({
-          where: {
-            id: req.input.id
+  full: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.episode.findUnique({
+        where: {
+          id: req.input.id
+        },
+        include: {
+          assignments: {
+            include: {
+              User: true,
+              Movie: true
+            }
           },
-          include: {
-            assignments: {
-              include: {
-                User: true,
-                Movie: true
-              }
-            },
-            extras: {
-              include: {
-								Review: {
-									include: {
-										User: true,
-										Movie: true
-									}
-								}
+          extras: {
+            include: {
+              Review: {
+                include: {
+                  User: true,
+                  Movie: true
+                }
               }
             }
           }
-        })
-      }),
+        }
+      })
+    }),
   fullByNumber: publicProcedure
-    .input(z.object({number: z.number()}))
+    .input(z.object({ number: z.number() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findFirst({
         where: {
@@ -132,65 +135,139 @@ export const episodeRouter = router({
               Movie: true
             }
           },
-					extras: {
-						include: {
-							Review: {
-								include: {
-									User: true,
-									Movie: true
-								}
-							}
-						}
-					}
+          extras: {
+            include: {
+              Review: {
+                include: {
+                  User: true,
+                  Movie: true
+                }
+              }
+            }
+          }
         }
       })
     }),
   getAll: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.episode.findMany({
-				orderBy: {
-					number: 'desc'
-				}
-			});
+        orderBy: {
+          number: 'desc'
+        }
+      });
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.episode.count();
     }),
-    getAudioMessages: protectedProcedure
-      .input(z.object({episodeId: z.string()}))
-      .query(async (req) => {
-        return await req.ctx.prisma.audioEpisodeMessage.findMany({
-          where: { episodeId: req.input.episodeId },
-          include: {
-            User: true
-          } 
-        })
-      }),
-    removeAudioMessage: protectedProcedure
-      .input(z.object({
-          id: z.number(),
-        }))
-        .mutation(async (req) => {
-          const audioMessage = await req.ctx.prisma.audioEpisodeMessage.findUnique({
-              where: { id: req.input.id },
-                });
-      
-            if (!audioMessage) {
-              throw new Error("Audio message not found");
+  getAudioMessages: protectedProcedure
+    .input(z.object({ episodeId: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.audioEpisodeMessage.findMany({
+        where: { episodeId: req.input.episodeId },
+        include: {
+          User: true
+        }
+      })
+    }),
+  removeAudioMessage: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+    }))
+    .mutation(async (req) => {
+      const audioMessage = await req.ctx.prisma.audioEpisodeMessage.findUnique({
+        where: { id: req.input.id },
+      });
+
+      if (!audioMessage) {
+        throw new Error("Audio message not found");
+      }
+
+      if (!audioMessage.fileKey) {
+        throw new Error("Audio message not found");
+      }
+      // Delete from UploadThing
+      await utapi.deleteFiles([audioMessage.fileKey]);
+
+      // Delete from Prisma database
+      await req.ctx.prisma.audioEpisodeMessage.delete({
+        where: { id: req.input.id },
+      });
+
+      return { success: true };
+    }),
+  updateStatus: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      status: z.string()
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.episode.update({
+        where: { id: req.input.id },
+        data: { status: req.input.status }
+      });
+    }),
+  getByStatus: publicProcedure
+    .input(z.object({ status: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.episode.findFirst({
+        where: { status: req.input.status },
+        orderBy: { number: 'desc' }
+      });
+    }),
+  getRecordingData: protectedProcedure
+    .input(z.object({ episodeId: z.string() }))
+    .query(async (req) => {
+      const episode = await req.ctx.prisma.episode.findUnique({
+        where: { id: req.input.episodeId },
+        include: {
+          extras: {
+            include: {
+              Review: {
+                include: {
+                  User: true,
+                  Movie: true,
+                  Rating: true
+                }
+              }
             }
-      
-            if (!audioMessage.fileKey) {
-              throw new Error("Audio message not found");
+          },
+          assignments: {
+            include: {
+              User: true,
+              Movie: true,
+              assignmentReviews: {
+                include: {
+                  Review: {
+                    include: {
+                      User: true,
+                      Movie: true,
+                      Rating: true
+                    }
+                  },
+                  guesses: {
+                    include: {
+                      User: true,
+                      Rating: true
+                    }
+                  }
+                }
+              },
+              AudioMessage: {
+                include: {
+                  User: true
+                }
+              }
             }
-            // Delete from UploadThing
-            await utapi.deleteFiles([audioMessage.fileKey]);
-      
-            // Delete from Prisma database
-            await req.ctx.prisma.audioEpisodeMessage.delete({
-              where: { id: req.input.id },
-            });
-      
-          return { success: true };
-        }),
+          },
+          AudioEpisodeMessage: {
+            include: {
+              User: true
+            }
+          }
+        }
+      });
+
+      return episode;
+    }),
 });
