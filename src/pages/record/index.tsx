@@ -110,7 +110,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 				{!recordingData && !pendingEpisode && !nextEpisode && (
 					<Card className="w-full max-w-4xl p-6">
-						<p>No episode ready to record. Please create a "next" episode first.</p>
+						<p>No episode ready to record. Please create a &quot;next&quot; episode first.</p>
 					</Card>
 				)}
 
