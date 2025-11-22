@@ -11,9 +11,11 @@ import { roleRouter } from "./roleRouter";
 import { syllabusRouter } from "./syllabusRouter";
 import { userRouter } from "./userRouter";
 
+import { dashboardRouter } from "./dashboardRouter";
+
 
 export const appRouter = router({
-	review: reviewRouter,
+  review: reviewRouter,
   assignment: assignmentRouter,
   episode: episodeRouter,
   user: userRouter,
@@ -21,9 +23,10 @@ export const appRouter = router({
   movie: movieRouter,
   show: showRouter,
   auth: authRouter,
-	guess: guessRouter,
+  guess: guessRouter,
   gambling: gamblingRouter,
-  syllabus: syllabusRouter
+  syllabus: syllabusRouter,
+  dashboard: dashboardRouter
 });
 
 // export type definition of API

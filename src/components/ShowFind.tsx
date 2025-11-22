@@ -13,8 +13,8 @@ interface ShowFindProps {
 const ShowFind: FC<ShowFindProps> = ({
   selectShow
 }) => {
-  const [ selectedShow, setSelectedShow ] = useState<Show | null>(null)
-  const [ title, setTitle ] = useState<Title | null>(null)
+  const [selectedShow, setSelectedShow] = useState<Show | null>(null)
+  const [title, setTitle] = useState<Title | null>(null)
 
   const { data: temp_title } = trpc.show.getTitle.useQuery({
     id: title?.id ?? 0
@@ -22,7 +22,7 @@ const ShowFind: FC<ShowFindProps> = ({
     onSuccess: (result) => {
       if (!title) return;
       if (!result) return;
-			if (!title.poster_path) return;
+      if (!title.poster_path) return;
 
       const year = (new Date(result.release_date)).getFullYear()
 
@@ -43,10 +43,11 @@ const ShowFind: FC<ShowFindProps> = ({
 
   return (
     <div className="w-full flex flex-col justify-center">
-      {selectedShow && <ShowCard show={selectedShow as any} />}
+      {selectedShow && <ShowCard show={selectedShow} />}
       {!selectedShow && title && <TitleCard title={title} />}
       {!selectedShow && !title && <div className="col-span-2">No show selected</div>}
       <ShowSearch setShow={setTitle} />
     </div>
-)}
+  )
+}
 export default ShowFind

@@ -3,7 +3,7 @@ import { type FC, useState } from "react";
 import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { trpc } from "../../utils/trpc";
 import AddEpisodeExtraModal from "./AddEpisodeExtraModal";
-import ExtraCard from "./ExtraCard";
+import ExtraAdminCard from "./ExtraAdminCard";
 
 interface EpsideExtrasProps {
 	episode: Episode
@@ -27,7 +27,7 @@ const EpisodeExtras: FC<EpsideExtrasProps> = ({ episode }) => {
 				{episode && <AddEpisodeExtraModal episode={episode} refreshItems={refreshExtras} />}
 			</div>
 			{isExtrasVisible && <div className="flex gap-4">
-				{extras?.map((extra) => <ExtraCard key={extra.id} extra={extra} refreshExtras={refreshExtras} />)}
+				{extras?.map((extra) => <ExtraAdminCard key={extra.id} extra={extra} refreshExtras={refreshExtras} />)}
 			</div>}
 		</section>
 	)
