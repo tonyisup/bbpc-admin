@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { type FC } from "react";
 import MovieCard from "../MovieCard";
+import ShowCard from "../ShowCard";
 import { HiTrash } from "react-icons/hi";
 import type { RouterOutputs } from "../../utils/trpc";
 import { trpc } from "../../utils/trpc";
@@ -18,11 +19,12 @@ const ExtraAdminCard: FC<ExtraAdminCardProps> = ({ extra, refreshExtras }) => {
 		<Card>
 			<CardHeader>
 				<CardTitle>
-					{extra.Movie.title}
+					{extra.Movie?.title ?? extra.Show?.title ?? "Unknown"}
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-2 items-center">
-				<MovieCard movie={extra.Movie} showTitle={false} />
+				{extra.Movie && <MovieCard movie={extra.Movie} showTitle={false} />}
+				{extra.Show && <ShowCard show={extra.Show} />}
 				<span className="text-sm">
 					{extra.User?.name ?? 'Unknown'}
 				</span>

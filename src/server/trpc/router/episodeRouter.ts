@@ -227,7 +227,8 @@ export const episodeRouter = router({
                 include: {
                   User: true,
                   Movie: true,
-                  Rating: true
+                  Rating: true,
+                  Show: true
                 }
               }
             }
