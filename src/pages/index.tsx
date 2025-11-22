@@ -8,6 +8,7 @@ import { Mic2, Users, Film, Star, Calendar } from "lucide-react";
 import Link from "next/link";
 import AssignmentCard from "../components/Assignment/AssignmentCard";
 import ExtraCard from "../components/Extra/ExtraCard";
+import MovieCard from "../components/MovieCard";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -175,16 +176,14 @@ const Home: NextPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 flex gap-2">
                 {stats?.latestSyllabus.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.Movie.title}</span>
-                      <span className="text-xs text-muted-foreground">Added by {item.User.name || "Unknown User"}</span>
-                    </div>
+                  <div key={item.id} className="flex-1 flex flex-col items-center justify-between">
                     <span className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </span>
+                    <MovieCard movie={item.Movie} showTitle={false} />
+                    <span className="text-xs text-muted-foreground">{item.User.name || "Unknown User"}</span>
                   </div>
                 ))}
                 {(!stats?.latestSyllabus || stats.latestSyllabus.length === 0) && (
