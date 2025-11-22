@@ -19,7 +19,6 @@ model Episode {
   bangers             Banger[]
   extras              ExtraReview[]
   links               Link[]
-  shows               Show[]
 }
 
 model Link {
@@ -42,13 +41,12 @@ model Movie {
 }
 
 model Show {
-  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  title     String
-  year      Int      @db.SmallInt
-  poster    String?
-  url       String
-  episodeId String?  @db.UniqueIdentifier
-  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  id      String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  title   String
+  year    Int      @db.SmallInt
+  poster  String?
+  url     String
+  reviews Review[]
 }
 
 model Rating {
@@ -65,12 +63,14 @@ model Rating {
 model Review {
   id                String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId            String?
-  movieId           String             @db.UniqueIdentifier
+  movieId           String?            @db.UniqueIdentifier
+  showId            String?            @db.UniqueIdentifier
   ratingId          String?            @db.UniqueIdentifier
   ReviewdOn         DateTime?          @default(now(), map: "DF__Review__ReviewdO__0C1BC9F9") @db.DateTime
   assignmentReviews AssignmentReview[]
   extraReviews      ExtraReview[]
-  Movie             Movie              @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  Movie             Movie?             @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  Show              Show?              @relation(fields: [showId], references: [id], onDelete: Cascade)
   Rating            Rating?            @relation(fields: [ratingId], references: [id])
   User              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

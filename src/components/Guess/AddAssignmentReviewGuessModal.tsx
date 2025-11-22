@@ -64,7 +64,7 @@ const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({
 			<div className="p-3 space-y-4 bg-gray-800">
 				<div className="grid grid-cols-2 gap-2">
 					<form onSubmit={handleSubmit}>
-						{review && <h2>Add Guess for Review of {review.Movie.title} by {review.User?.name}</h2>}
+						{review && <h2>Add Guess for Review of {review.Movie?.title ?? review.Show?.title} by {review.User?.name}</h2>}
 						<label htmlFor="user">Season</label>
 						<SeasonSelect setSeasonId={setSeasonId} />
 						<label htmlFor="user">Guesser</label>

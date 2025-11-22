@@ -12,6 +12,7 @@ export const reviewRouter = router({
 				},
 				include: {
 					Movie: true,
+					Show: true,
 					User: true,
 					Rating: true,
 				}
@@ -20,7 +21,8 @@ export const reviewRouter = router({
 	add: protectedProcedure
 		.input(z.object({
 			userId: z.string(),
-			movieId: z.string(),
+			movieId: z.string().optional(),
+			showId: z.string().optional(),
 			episodeId: z.string(),
 			ratingId: z.string().optional(),
 		}))
@@ -29,6 +31,7 @@ export const reviewRouter = router({
 				data: {
 					userId: req.input.userId,
 					movieId: req.input.movieId,
+					showId: req.input.showId,
 					ratingId: req.input.ratingId,
 					extraReviews: {
 						create: {
@@ -98,6 +101,7 @@ export const reviewRouter = router({
 				},
 				include: {
 					Movie: true,
+					Show: true,
 					User: true,
 				}
 			})
