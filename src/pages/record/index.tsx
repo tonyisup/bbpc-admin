@@ -1,6 +1,5 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -9,7 +8,6 @@ import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
 import EpisodeEditor from "../../components/Episode/EpisodeEditor";
 import MovieCard from "../../components/MovieCard";
 import ShowCard from "../../components/ShowCard";
@@ -33,6 +31,94 @@ export async function getServerSideProps(context: any) {
 		}
 	}
 }
+
+// --- Components ---
+
+const UserGuesses = ({ guesses, onPointsChange }: { guesses: any[], onPointsChange: (id: string, points: number) => void }) => {
+	if (!guesses || guesses.length === 0) return null;
+
+	return (
+		<div className="mt-2">
+			<p className="text-xs text-gray-500 mb-1">Guesses:</p>
+			{guesses.map((guess) => (
+				<div key={guess.id} className="flex items-center gap-2 mb-2">
+					<span className="text-xs">
+						{guess.User.name} guessed {guess.Rating.name}
+					</span>
+					<Input
+						type="number"
+						className="w-20 h-8"
+						placeholder="Points"
+						value={guess.points || 0}
+						onChange={(e) => onPointsChange(guess.id, parseInt(e.target.value) || 0)}
+					/>
+				</div>
+			))}
+		</div>
+	);
+};
+
+const HostReview = ({ review, onPointsChange }: { review: any, onPointsChange: (id: string, points: number) => void }) => {
+	return (
+		<div className="ml-4 mb-4 border-l-2 border-gray-600 pl-4">
+			<p className="text-sm">
+				{review.Review.User?.name || "Unknown"} rated:{" "}
+				{review.Review.Rating?.name || "Not rated"}
+			</p>
+			<UserGuesses guesses={review.guesses} onPointsChange={onPointsChange} />
+		</div>
+	);
+};
+
+const AssignmentAudioMessages = ({ messages }: { messages: any[] }) => {
+	if (!messages || messages.length === 0) return null;
+
+	return (
+		<div>
+			<h5 className="font-medium mb-2">Audio Messages ({messages.length})</h5>
+			{messages.map((audio) => (
+				<div key={audio.id} className="ml-4 mb-2">
+					<p className="text-sm text-gray-400 mb-1">
+						{audio.User.name}
+					</p>
+					<audio controls className="w-full max-w-md">
+						<source src={audio.url} type="audio/mpeg" />
+					</audio>
+				</div>
+			))}
+		</div>
+	);
+};
+
+const Assignment = ({ assignment, onPointsChange }: { assignment: any, onPointsChange: (id: string, points: number) => void }) => {
+	return (
+		<div className="border border-gray-700 rounded p-4">
+			<h4 className="text-lg font-semibold mb-2">
+				{assignment.Movie.title} ({assignment.Movie.year})
+			</h4>
+			<p className="text-sm text-gray-400 mb-4">
+				Assigned to: {assignment.User.name}
+			</p>
+
+			{/* Reviews */}
+			{assignment.assignmentReviews && assignment.assignmentReviews.length > 0 && (
+				<div className="mb-4">
+					<h5 className="font-medium mb-2">Reviews</h5>
+					{assignment.assignmentReviews.map((assignmentReview: any) => (
+						<HostReview
+							key={assignmentReview.id}
+							review={assignmentReview}
+							onPointsChange={onPointsChange}
+						/>
+					))}
+				</div>
+			)}
+
+			{/* Audio Messages */}
+			<AssignmentAudioMessages messages={assignment.AudioMessage} />
+		</div>
+	);
+};
 
 const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
 	const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
@@ -89,6 +175,13 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				}
 			);
 		}
+	};
+
+	const handlePointsChange = (id: string, points: number) => {
+		setGuessPoints({
+			id,
+			points
+		});
 	};
 
 	return (
@@ -152,72 +245,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								</h3>
 								<div className="space-y-6">
 									{recordingData.assignments.map((assignment) => (
-										<div key={assignment.id} className="border border-gray-700 rounded p-4">
-											<h4 className="text-lg font-semibold mb-2">
-												{assignment.Movie.title} ({assignment.Movie.year})
-											</h4>
-											<p className="text-sm text-gray-400 mb-4">
-												Assigned to: {assignment.User.name}
-											</p>
-
-											{/* Reviews */}
-											{assignment.assignmentReviews && assignment.assignmentReviews.length > 0 && (
-												<div className="mb-4">
-													<h5 className="font-medium mb-2">Reviews</h5>
-													{assignment.assignmentReviews.map((assignmentReview) => (
-														<div key={assignmentReview.id} className="ml-4 mb-4 border-l-2 border-gray-600 pl-4">
-															<p className="text-sm">
-																{assignmentReview.Review.User?.name || "Unknown"} rated:{" "}
-																{assignmentReview.Review.Rating?.name || "Not rated"}
-															</p>
-
-															{/* Guesses */}
-															{assignmentReview.guesses && assignmentReview.guesses.length > 0 && (
-																<div className="mt-2">
-																	<p className="text-xs text-gray-500 mb-1">Guesses:</p>
-																	{assignmentReview.guesses.map((guess) => (
-																		<div key={guess.id} className="flex items-center gap-2 mb-2">
-																			<span className="text-xs">
-																				{guess.User.name} guessed {guess.Rating.name}
-																			</span>
-																			<Input
-																				type="number"
-																				className="w-20 h-8"
-																				placeholder="Points"
-																				value={guess.points || 0}
-																				onChange={(e) => {
-																					setGuessPoints({
-																						id: guess.id,
-																						points: parseInt(e.target.value) || 0
-																					});
-																				}}
-																			/>
-																		</div>
-																	))}
-																</div>
-															)}
-														</div>
-													))}
-												</div>
-											)}
-
-											{/* Audio Messages */}
-											{assignment.AudioMessage && assignment.AudioMessage.length > 0 && (
-												<div>
-													<h5 className="font-medium mb-2">Audio Messages ({assignment.AudioMessage.length})</h5>
-													{assignment.AudioMessage.map((audio) => (
-														<div key={audio.id} className="ml-4 mb-2">
-															<p className="text-sm text-gray-400 mb-1">
-																{audio.User.name}
-															</p>
-															<audio controls className="w-full max-w-md">
-																<source src={audio.url} type="audio/mpeg" />
-															</audio>
-														</div>
-													))}
-												</div>
-											)}
-										</div>
+										<Assignment
+											key={assignment.id}
+											assignment={assignment}
+											onPointsChange={handlePointsChange}
+										/>
 									))}
 								</div>
 							</Card>
