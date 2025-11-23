@@ -11,6 +11,8 @@ import { Input } from "../../components/ui/input";
 import EpisodeEditor from "../../components/Episode/EpisodeEditor";
 import MovieCard from "../../components/MovieCard";
 import ShowCard from "../../components/ShowCard";
+import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
+import Link from "next/link";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -97,10 +99,10 @@ const AssignmentGrid = ({
 	return (
 		<div className="border border-gray-700 rounded p-4 overflow-x-auto">
 			<div className="flex justify-between items-center mb-4">
-				<div>
+				<div className="flex gap-2">
 					<MovieCard movie={assignment.Movie} width={150} height={225} />
 					<p className="text-sm text-gray-400 mt-2 text-center">
-						Assigned to: {assignment.User.name}
+						<HomeworkFlag type={assignment.type} />&nbsp;{assignment.User.name}
 					</p>
 				</div>
 				<div className="flex gap-2">
@@ -328,8 +330,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.extras.length})</h3>
 								<div className="space-y-4">
 									{recordingData.extras.map((extra) => {
-										if (extra.Review.Movie) return <MovieCard key={extra.id} movie={extra.Review.Movie} />
-										if (extra.Review.Show) return <ShowCard key={extra.id} show={extra.Review.Show} />
+										if (extra.Review.Movie) return <div className="flex flex-col items-center gap-2"><MovieCard key={extra.id} movie={extra.Review.Movie} />{extra.Review.User?.name}</div>
+										if (extra.Review.Show) return <div className="flex flex-col items-center gap-2"><ShowCard key={extra.id} show={extra.Review.Show} />{extra.Review.User?.name}</div>
+										return null;
 									})}
 								</div>
 							</Card>
@@ -378,6 +381,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				)}
 
 				{pendingEpisode && <EpisodeEditor episode={pendingEpisode} />}
+				{pendingEpisode && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
 			</main>
 		</>
 	);
