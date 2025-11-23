@@ -199,12 +199,13 @@ export const episodeRouter = router({
   updateStatus: protectedProcedure
     .input(z.object({
       id: z.string(),
-      status: z.string()
+      status: z.string(),
+      title: z.string().optional()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
         where: { id: req.input.id },
-        data: { status: req.input.status }
+        data: { status: req.input.status, title: req.input.title }
       });
     }),
   getByStatus: publicProcedure
