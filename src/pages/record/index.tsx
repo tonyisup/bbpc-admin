@@ -330,8 +330,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.extras.length})</h3>
 								<div className="space-y-4">
 									{recordingData.extras.map((extra) => {
-										if (extra.Review.Movie) return <div className="flex flex-col items-center gap-2"><MovieCard key={extra.id} movie={extra.Review.Movie} />{extra.Review.User?.name}</div>
-										if (extra.Review.Show) return <div className="flex flex-col items-center gap-2"><ShowCard key={extra.id} show={extra.Review.Show} />{extra.Review.User?.name}</div>
+										if (extra.Review.Movie) return <div key={extra.id} className="flex flex-col items-center gap-2"><MovieCard movie={extra.Review.Movie} />{extra.Review.User?.name}</div>
+										if (extra.Review.Show) return <div key={extra.id} className="flex flex-col items-center gap-2"><ShowCard show={extra.Review.Show} />{extra.Review.User?.name}</div>
 										return null;
 									})}
 								</div>
