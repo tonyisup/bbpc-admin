@@ -17,7 +17,7 @@ export const userRouter = router({
       })
     }),
   remove: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.user.delete({
         where: {
@@ -27,7 +27,7 @@ export const userRouter = router({
     }),
   update: publicProcedure
     .input(z.object({
-      id: z.string(), 
+      id: z.string(),
       name: z.string(),
       email: z.string(),
       points: z.number().optional(),
@@ -44,7 +44,7 @@ export const userRouter = router({
         }
       })
     }),
-  addRole: publicProcedure 
+  addRole: publicProcedure
     .input(z.object({
       userId: z.string(),
       roleId: z.number(),
@@ -67,9 +67,9 @@ export const userRouter = router({
           id: req.input.id
         }
       })
-    }),          
+    }),
   get: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.user.findUnique({
         where: {
@@ -78,7 +78,7 @@ export const userRouter = router({
       })
     }),
   getRoles: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.userRole.findMany({
         where: {
@@ -98,7 +98,7 @@ export const userRouter = router({
       return ctx.prisma.user.count();
     }),
   getSyllabus: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.syllabus.findMany({
         where: {
@@ -114,6 +114,20 @@ export const userRouter = router({
         },
         orderBy: {
           order: 'asc'
+        }
+      });
+    }),
+  getAdmins: publicProcedure
+    .query(async ({ ctx }) => {
+      return await ctx.prisma.user.findMany({
+        where: {
+          roles: {
+            some: {
+              role: {
+                admin: true
+              }
+            }
+          }
         }
       });
     }),
