@@ -98,10 +98,8 @@ const AssignmentGrid = ({
 		<div className="border border-gray-700 rounded p-4 overflow-x-auto">
 			<div className="flex justify-between items-center mb-4">
 				<div>
-					<h4 className="text-lg font-semibold">
-						{assignment.Movie.title} ({assignment.Movie.year})
-					</h4>
-					<p className="text-sm text-gray-400">
+					<MovieCard movie={assignment.Movie} width={150} height={225} />
+					<p className="text-sm text-gray-400 mt-2 text-center">
 						Assigned to: {assignment.User.name}
 					</p>
 				</div>
@@ -121,11 +119,13 @@ const AssignmentGrid = ({
 				<thead>
 					<tr className="border-b border-gray-700">
 						<th className="p-2 font-medium">User</th>
-						{admins.map(admin => (
-							<th key={admin.id} className="p-2 font-medium">{admin.name}</th>
-						))}
-					</tr>
-				</thead>
+						{
+							admins.map(admin => (
+								<th key={admin.id} className="p-2 font-medium">{admin.name}</th>
+							))
+						}
+					</tr >
+				</thead >
 				<tbody>
 					{/* Host Ratings Row */}
 					<tr className="border-b border-gray-700 bg-gray-800/50">
@@ -192,23 +192,25 @@ const AssignmentGrid = ({
 						</tr>
 					))}
 				</tbody>
-			</table>
+			</table >
 
 			{/* Audio Messages */}
-			{assignment.AudioMessage && assignment.AudioMessage.length > 0 && (
-				<div className="mt-4">
-					<h5 className="font-medium mb-2">Audio Messages</h5>
-					{assignment.AudioMessage.map((audio: any) => (
-						<div key={audio.id} className="mb-2">
-							<p className="text-xs text-gray-400 mb-1">{audio.User.name}</p>
-							<audio controls className="w-full max-w-md h-8">
-								<source src={audio.url} type="audio/mpeg" />
-							</audio>
-						</div>
-					))}
-				</div>
-			)}
-		</div>
+			{
+				assignment.AudioMessage && assignment.AudioMessage.length > 0 && (
+					<div className="mt-4">
+						<h5 className="font-medium mb-2">Audio Messages</h5>
+						{assignment.AudioMessage.map((audio: any) => (
+							<div key={audio.id} className="mb-2">
+								<p className="text-xs text-gray-400 mb-1">{audio.User.name}</p>
+								<audio controls className="w-full max-w-md h-8">
+									<source src={audio.url} type="audio/mpeg" />
+								</audio>
+							</div>
+						))}
+					</div>
+				)
+			}
+		</div >
 	);
 };
 
