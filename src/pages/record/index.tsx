@@ -257,7 +257,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 	const handleStartRecording = () => {
 		if (nextEpisode) {
-			updateStatus({ id: nextEpisode.id, status: "recording" });
+			updateStatus({ id: nextEpisode.id, status: "recording", title: "Recording..." });
 			setCurrentEpisodeId(nextEpisode.id);
 			createEpisode({ number: nextEpisode.number + 1, title: "Coming up next..." }, {
 				onSuccess: () => setNewEpisodeTitle("")
