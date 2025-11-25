@@ -8,7 +8,8 @@ export const dashboardRouter = router({
       movieCount,
       reviewCount,
       latestEpisode,
-      latestSyllabus
+      latestSyllabus,
+      upcomingEpisode
     ] = await Promise.all([
       ctx.prisma.episode.count(),
       ctx.prisma.user.count(),
@@ -16,11 +17,9 @@ export const dashboardRouter = router({
       ctx.prisma.review.count(),
       ctx.prisma.episode.findFirst({
         where: {
-          recording: {
-            not: null
-          }
+          status: 'published'
         },
-        orderBy: { number: 'desc' },
+        orderBy: { date: 'desc' },
         include: {
           assignments: {
             include: {
@@ -49,6 +48,31 @@ export const dashboardRouter = router({
           User: true,
           Movie: true
         }
+      }),
+      ctx.prisma.episode.findFirst({
+        where: {
+          status: 'next'
+        },
+        orderBy: { date: 'desc' },
+        include: {
+          assignments: {
+            include: {
+              Movie: true,
+              User: true
+            }
+          },
+          extras: {
+            include: {
+              Review: {
+                include: {
+                  User: true,
+                  Movie: true,
+                  Show: true
+                }
+              }
+            }
+          }
+        }
       })
     ]);
 
@@ -60,6 +84,7 @@ export const dashboardRouter = router({
         reviews: reviewCount
       },
       latestEpisode,
+      upcomingEpisode,
       latestSyllabus
     };
   }),

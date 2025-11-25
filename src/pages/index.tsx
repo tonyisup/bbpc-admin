@@ -170,6 +170,53 @@ const Home: NextPage = () => {
           </CardContent>
         </Card>
 
+        {/* Upcoming Episode */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Upcoming Episode</CardTitle>
+            <CardDescription>
+              The next scheduled episode.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.upcomingEpisode ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-lg">Episode {stats.upcomingEpisode.number}: {stats.upcomingEpisode.title}</span>
+                  {stats.upcomingEpisode.date && (
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(stats.upcomingEpisode.date).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {stats.upcomingEpisode.description || "No description available."}
+                </p>
+                <div className="flex gap-2 justify-around">
+                  {stats.upcomingEpisode.assignments?.map((assignment) => (
+                    <AssignmentCard key={assignment.id} assignment={assignment} />
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-around">
+                  {stats.upcomingEpisode.extras?.map((extra) => (
+                    <ExtraCard key={extra.id} extra={extra} />
+                  ))}
+                </div>
+                <div className="mt-2">
+                  <Link href={`/episode/${stats.upcomingEpisode.id}`}>
+                    <Button variant="outline" size="sm">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No upcoming episodes found.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Latest Syllabus Additions */}
         <Card className="col-span-3">
           <CardHeader>
