@@ -174,7 +174,6 @@ model User {
   email               String?               @unique
   emailVerified       DateTime?
   image               String?
-  points              Decimal?              @db.Decimal(5, 2)
   accounts            Account[]
   assignments         Assignment[]
   AudioEpisodeMessage AudioEpisodeMessage[]
@@ -267,11 +266,13 @@ model GamblingPoints {
   id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId       String
   assignmentId String     @db.UniqueIdentifier
+  seasonId     String     @db.UniqueIdentifier
   points       Int
   createdAt    DateTime   @default(now()) @db.DateTime
   successful   Boolean?   @default(false)
   Assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   User         User       @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  Season       Season     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 }
 
 model Syllabus {

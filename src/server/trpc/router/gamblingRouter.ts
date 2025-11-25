@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
+import { calculateUserPoints } from "../utils/points";
 
 export const gamblingRouter = router({
   getForAssignment: publicProcedure
@@ -32,15 +33,29 @@ export const gamblingRouter = router({
     .input(z.object({
       userId: z.string(),
       assignmentId: z.string(),
-      points: z.number()
+      points: z.number(),
+      seasonId: z.string(),
     }))
-    .mutation(async (req) => {
-      return await req.ctx.prisma.gamblingPoints.create({
-        data: {
-          userId: req.input.userId,
-          assignmentId: req.input.assignmentId,
-          points: req.input.points
+    .mutation(async ({ ctx, input }) => {
+      const { userId, seasonId, points, assignmentId } = input;
+
+      return await ctx.prisma.$transaction(async (prisma) => {
+        const userTotalPoints = await calculateUserPoints(prisma, userId, seasonId);
+
+        if (userTotalPoints < points) {
+          throw new Error("Not enough points to gamble");
         }
+
+        const newGamble = await prisma.gamblingPoints.create({
+          data: {
+            userId,
+            assignmentId,
+            points,
+            seasonId,
+          },
+        });
+
+        return newGamble;
       });
     }),
   

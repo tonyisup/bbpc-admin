@@ -1,6 +1,6 @@
 import { z } from "zod";
-
 import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { calculateUserPoints } from "../utils/points";
 
 export const userRouter = router({
   add: publicProcedure
@@ -30,7 +30,6 @@ export const userRouter = router({
       id: z.string(),
       name: z.string(),
       email: z.string(),
-      points: z.number().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.user.update({
@@ -40,7 +39,6 @@ export const userRouter = router({
         data: {
           name: req.input.name,
           email: req.input.email,
-          points: req.input.points,
         }
       })
     }),
@@ -89,20 +87,26 @@ export const userRouter = router({
         }
       })
     }),
+  getTotalPointsForSeason: publicProcedure
+    .input(z.object({ userId: z.string(), seasonId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { userId, seasonId } = input;
+      return await calculateUserPoints(ctx.prisma, userId, seasonId);
+    }),
   getPoints: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.point.findMany({
         where: {
-          userId: req.input.id
+          userId: req.input.id,
         },
         include: {
-          Season: true
+          Season: true,
         },
         orderBy: {
-          earnedOn: 'desc'
-        }
-      })
+          earnedOn: "desc",
+        },
+      });
     }),
   addPoint: protectedProcedure
     .input(z.object({
