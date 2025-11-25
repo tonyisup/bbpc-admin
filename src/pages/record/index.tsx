@@ -13,6 +13,7 @@ import MovieCard from "../../components/MovieCard";
 import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
+import { User, Rating } from "@prisma/client";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -34,20 +35,92 @@ export async function getServerSideProps(context: any) {
 	}
 }
 
-// --- Components ---
+// --- Types ---
+type Admin = User;
+type AssignmentWithRelations = NonNullable<ReturnType<typeof trpc.episode.getRecordingData.useQuery>['data']>['assignments'][number];
 
-const AssignmentGrid = ({
+// --- Components ---
+interface QuickAddGuessRowProps {
+	users: User[];
+	admins: Admin[];
+	ratings: Rating[];
+	assignment: AssignmentWithRelations;
+	onAddGuess: (userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+}
+
+const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
+	users,
+	admins,
+	ratings,
+	onAddGuess,
+}) => {
+	const [selectedUserId, setSelectedUserId] = useState<string>("");
+	const [guesses, setGuesses] = useState<Record<string, string>>({});
+
+	const handleSave = () => {
+		if (!selectedUserId) return;
+		const guessData = Object.entries(guesses).map(([adminId, ratingId]) => ({ adminId, ratingId }));
+		onAddGuess(selectedUserId, guessData);
+		setSelectedUserId("");
+		setGuesses({});
+	};
+
+	return (
+		<tr className="border-t border-gray-700">
+			<td className="p-2">
+				<select
+					className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-full"
+					value={selectedUserId}
+					onChange={(e) => setSelectedUserId(e.target.value)}
+				>
+					<option value="">Select User...</option>
+					{users.map(user => (
+						<option key={user.id} value={user.id}>{user.name}</option>
+					))}
+				</select>
+			</td>
+			{admins.map(admin => (
+				<td key={admin.id} className="p-2">
+					<select
+						className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-full"
+						value={guesses[admin.id] || ""}
+						onChange={(e) => setGuesses(prev => ({ ...prev, [admin.id]: e.target.value }))}
+						disabled={!selectedUserId}
+					>
+						<option value="">Select...</option>
+						{ratings.map(r => (
+							<option key={r.id} value={r.id}>{r.name}</option>
+						))}
+					</select>
+				</td>
+			))}
+			<td className="p-2">
+				<Button size="sm" onClick={handleSave} disabled={!selectedUserId || Object.keys(guesses).length === 0}>
+					Save
+				</Button>
+			</td>
+		</tr>
+	);
+};
+
+interface AssignmentGridProps {
+	assignment: AssignmentWithRelations;
+	admins: Admin[];
+	ratings: Rating[];
+	users: User[];
+	onPointsChange: (id: string, points: number) => void;
+	onRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
+	onAddGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+}
+
+const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	assignment,
 	admins,
 	ratings,
+	users,
 	onPointsChange,
-	onRatingChange
-}: {
-	assignment: any,
-	admins: any[],
-	ratings: any[],
-	onPointsChange: (id: string, points: number) => void,
-	onRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void
+	onRatingChange,
+	onAddGuess
 }) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
@@ -126,9 +199,19 @@ const AssignmentGrid = ({
 								<th key={admin.id} className="p-2 font-medium">{admin.name}</th>
 							))
 						}
+						<th className="p-2 font-medium">Actions</th>
 					</tr >
 				</thead >
 				<tbody>
+					{/* Quick Add Guess Row */}
+					<QuickAddGuessRow
+						users={users}
+						admins={admins}
+						ratings={ratings}
+						assignment={assignment}
+						onAddGuess={(userId, guesses) => onAddGuess(assignment.id, userId, guesses)}
+					/>
+
 					{/* Host Ratings Row */}
 					<tr className="border-b border-gray-700 bg-gray-800/50">
 						<td className="p-2 font-semibold">Host Ratings</td>
@@ -191,6 +274,7 @@ const AssignmentGrid = ({
 									</td>
 								);
 							})}
+							<td className="p-2"></td>
 						</tr>
 					))}
 				</tbody>
@@ -225,6 +309,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	const { data: nextEpisode } = trpc.episode.getByStatus.useQuery({ status: "next" });
 	const { data: admins } = trpc.user.getAdmins.useQuery();
 	const { data: ratings } = trpc.review.getRatings.useQuery();
+	const { data: users } = trpc.user.getAll.useQuery();
 
 	const { data: recordingEpisode, refetch: refetchRecordingEpisode } = trpc.episode.getByStatus.useQuery(
 		{ status: "recording" },
@@ -256,6 +341,14 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	const { mutate: addToAssignment } = trpc.review.addToAssignment.useMutation({
 		onSuccess: () => refetchRecordingData()
 	});
+
+	const { mutate: addOrUpdateGuessesForUser } = trpc.guess.addOrUpdateGuessesForUser.useMutation({
+		onSuccess: () => refetchRecordingData()
+	});
+
+	const handleAddGuess = (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => {
+		addOrUpdateGuessesForUser({ assignmentId, userId, guesses });
+	};
 
 	const handleStartRecording = () => {
 		if (nextEpisode) {
@@ -351,8 +444,10 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											assignment={assignment}
 											admins={admins || []}
 											ratings={ratings || []}
+											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
 											onPointsChange={handlePointsChange}
 											onRatingChange={handleRatingChange}
+											onAddGuess={handleAddGuess}
 										/>
 									))}
 								</div>
