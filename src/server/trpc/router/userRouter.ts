@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { router, publicProcedure } from "../trpc";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
 
 export const userRouter = router({
   add: publicProcedure
@@ -86,6 +86,48 @@ export const userRouter = router({
         },
         include: {
           role: true
+        }
+      })
+    }),
+  getPoints: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.point.findMany({
+        where: {
+          userId: req.input.id
+        },
+        include: {
+          Season: true
+        },
+        orderBy: {
+          earnedOn: 'desc'
+        }
+      })
+    }),
+  addPoint: protectedProcedure
+    .input(z.object({
+      userId: z.string(),
+      seasonId: z.string(),
+      value: z.number(),
+      reason: z.string(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.point.create({
+        data: {
+          userId: req.input.userId,
+          seasonId: req.input.seasonId,
+          value: req.input.value,
+          reason: req.input.reason,
+          earnedOn: new Date(),
+        }
+      })
+    }),
+  removePoint: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.point.delete({
+        where: {
+          id: req.input.id
         }
       })
     }),

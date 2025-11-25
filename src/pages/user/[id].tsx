@@ -2,7 +2,7 @@ import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { HiX } from "react-icons/hi";
+import { HiX, HiTrash } from "react-icons/hi";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -36,6 +36,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
   const { data: syllabus, refetch: refetchSyllabus } = trpc.user.getSyllabus.useQuery({ id });
+  const { data: seasons } = trpc.guess.seasons.useQuery();
+  const { data: points, refetch: refetchPoints } = trpc.user.getPoints.useQuery({ id });
+
   const { mutate: updateUser } = trpc.user.update.useMutation({
     onSuccess: () => {
       refetchUser();
@@ -48,6 +51,13 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const { mutate: assignEpisode } = trpc.syllabus.assignEpisode.useMutation({
     onSuccess: () => refetchSyllabus(),
   });
+  const { mutate: addPoint } = trpc.user.addPoint.useMutation({
+    onSuccess: () => refetchPoints(),
+  });
+  const { mutate: removePoint } = trpc.user.removePoint.useMutation({
+    onSuccess: () => refetchPoints(),
+  });
+
   const [modalOpen, setModalOpen] = useState<boolean>(false)
   const refresh = () => refetchRoles()
   const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
@@ -69,6 +79,19 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
 
   const handleRemoveAssignment = (syllabusId: string) => {
     removeAssignment({ syllabusId });
+  }
+
+  const handleAddPoint = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const seasonId = formData.get('seasonId') as string;
+    const value = parseInt(formData.get('value') as string);
+    const reason = formData.get('reason') as string;
+
+    if (seasonId && !isNaN(value) && reason) {
+      addPoint({ userId: id, seasonId, value, reason });
+      (e.target as HTMLFormElement).reset();
+    }
   }
 
   return (
@@ -151,6 +174,47 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
             ))}
           </ul>
         </div>
+
+        <hr className="w-full my-6" />
+        <div className="flex my-6 px-6 w-full justify-between">
+          <h2 className="text-xl font-semibold">Points</h2>
+        </div>
+        <div className="flex flex-col w-full px-6 max-w-2xl space-y-4">
+          <form className="flex space-x-2 items-end" onSubmit={handleAddPoint}>
+            <div className="flex flex-col space-y-1 flex-1">
+              <label htmlFor="seasonId" className="text-sm font-medium">Season</label>
+              <select name="seasonId" id="seasonId" className="border rounded-md p-2 text-black" required>
+                <option value="">Select Season</option>
+                {seasons?.map(s => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col space-y-1 w-24">
+              <label htmlFor="value" className="text-sm font-medium">Value</label>
+              <input type="number" name="value" id="value" className="border rounded-md p-2 text-black" required />
+            </div>
+            <div className="flex flex-col space-y-1 flex-1">
+              <label htmlFor="reason" className="text-sm font-medium">Reason</label>
+              <input type="text" name="reason" id="reason" className="border rounded-md p-2 text-black" required />
+            </div>
+            <button type="submit" className="bg-violet-500 text-white p-2 rounded-md transition hover:bg-violet-400 mb-[1px]">Add</button>
+          </form>
+
+          <div className="space-y-2">
+            {points?.map((point) => (
+              <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md">
+                <div className="flex flex-col">
+                  <span className="font-semibold">{point.value} points</span>
+                  <span className="text-sm text-gray-400">{point.reason}</span>
+                  <span className="text-xs text-gray-500">{point.Season?.title} - {point.earnedOn.toLocaleDateString()}</span>
+                </div>
+                <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <hr className="w-full my-6" />
         <div className="flex my-6 px-6 w-full justify-between">
           <h2 className="text-xl font-semibold">Syllabus</h2>

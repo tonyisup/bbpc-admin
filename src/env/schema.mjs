@@ -27,6 +27,8 @@ export const serverSchema = z.object({
 	EMAIL_FROM: z.string().email(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  UPLOADTHING_SECRET: z.string().optional(),
+  UPLOADTHING_APP_ID: z.string().optional(),
 });
 
 /**
