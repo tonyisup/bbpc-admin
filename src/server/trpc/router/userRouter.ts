@@ -25,7 +25,7 @@ export const userRouter = router({
         }
       })
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({
       id: z.string(),
       name: z.string(),
@@ -43,6 +43,21 @@ export const userRouter = router({
           points: req.input.points,
         }
       })
+    }),
+  updatePoints: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        points: z.number(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      return ctx.prisma.user.update({
+        where: { id: input.id },
+        data: {
+          points: input.points,
+        },
+      });
     }),
   addRole: publicProcedure
     .input(z.object({

@@ -10,6 +10,7 @@ import { showRouter } from "./showRouter";
 import { roleRouter } from "./roleRouter";
 import { syllabusRouter } from "./syllabusRouter";
 import { userRouter } from "./userRouter";
+import { seasonRouter } from "./seasonRouter";
 
 import { dashboardRouter } from "./dashboardRouter";
 
@@ -26,7 +27,8 @@ export const appRouter = router({
   guess: guessRouter,
   gambling: gamblingRouter,
   syllabus: syllabusRouter,
-  dashboard: dashboardRouter
+  dashboard: dashboardRouter,
+  season: seasonRouter
 });
 
 // export type definition of API
