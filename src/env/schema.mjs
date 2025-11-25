@@ -29,6 +29,7 @@ export const serverSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   UPLOADTHING_SECRET: z.string().optional(),
   UPLOADTHING_APP_ID: z.string().optional(),
+  AUDIO_UPOLOADER_URL: z.string(),
 });
 
 /**

@@ -1,5 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next-legacy";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { env } from "../../env/server.mjs";
 
 const f = createUploadthing();
 
@@ -24,10 +25,31 @@ export const ourFileRouter = {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
 
-      console.log("file url", file.url);
-
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };
+    }),
+  audioUploader: f({ audio: { maxFileSize: "4MB" } })
+    .middleware(async ({ req, res }) => {
+      const user = await auth(req, res);
+      if (!user) throw new Error("Unauthorized");
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Upload complete for userId:", metadata.userId);
+
+      console.log("file url", file.url);
+
+      const triggerN8NWebhook = await fetch(env.AUDIO_UPOLOADER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileKey: file.key,
+          fileUrl: file.url,
+        }),
+      });
+      console.log("triggerN8NWebhook", await triggerN8NWebhook.json());
     }),
 } satisfies FileRouter;
 

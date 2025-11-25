@@ -12,6 +12,7 @@ import { syllabusRouter } from "./syllabusRouter";
 import { userRouter } from "./userRouter";
 
 import { dashboardRouter } from "./dashboardRouter";
+import { testRouter } from "./testRouter";
 
 
 export const appRouter = router({
@@ -26,7 +27,8 @@ export const appRouter = router({
   guess: guessRouter,
   gambling: gamblingRouter,
   syllabus: syllabusRouter,
-  dashboard: dashboardRouter
+  dashboard: dashboardRouter,
+  test: testRouter
 });
 
 // export type definition of API

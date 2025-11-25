@@ -2,6 +2,7 @@ import { type NextPage } from "next";
 import { useState } from "react";
 import { UploadButton } from "../utils/uploadthing";
 
+
 const Test: NextPage = () => {
   const [fileData, setFileData] = useState<{ url: string; key: string } | null>(
     null
@@ -12,7 +13,7 @@ const Test: NextPage = () => {
       <h1 className="text-2xl font-bold">Test page</h1>
       <main className="flex flex-col items-center gap-4">
         <UploadButton
-          endpoint="imageUploader"
+          endpoint="audioUploader"
           onClientUploadComplete={(res) => {
             // Do something with the response
             console.log("Files: ", res);
@@ -22,7 +23,6 @@ const Test: NextPage = () => {
                 key: res[0].key,
               });
             }
-            alert("Upload Completed");
           }}
           onUploadError={(error: Error) => {
             // Do something with the error.
