@@ -132,7 +132,7 @@ export const reviewRouter = router({
 		}),
 	getRatings: publicProcedure
 		.query(async (req) => {
-			return await req.ctx.prisma.rating.findMany()
+			return await req.ctx.prisma.rating.findMany({orderBy: {value: 'desc'}})
 		}),
 	setReviewRating: protectedProcedure
 		.input(z.object({reviewId: z.string(), ratingId: z.string().nullish()}))

@@ -31,7 +31,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 
 			{movie && episode &&
 				<>
-					<Reviews movie={movie} episode={episode} assignment={assignment} refreshAssignment={handleRefreshAssignment} />
+					<Reviews assignment={assignment} refreshAssignment={handleRefreshAssignment} />
 				</>
 			}
 			<AudioMessages assignment={assignment} />
@@ -83,14 +83,12 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 }
 
 interface ReviewsProps {
-	movie: Movie,
-	episode: Episode,
 	assignment: Assignment,
 	refreshAssignment: Dispatch<void>
 }
-const Reviews: FC<ReviewsProps> = ({ movie, episode, assignment, refreshAssignment }) => {
-	const { data: assignmentReviews, refetch: refreshAssignmentReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id })
-	const { data: gamblingPoints, refetch: refreshGamblingPoints } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id })
+const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
+	const { data: assignmentReviews, refetch: refreshAssignmentReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id }, { onSuccess: () => refreshAssignment() })
+	const { data: gamblingPoints, refetch: refreshGamblingPoints } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id }, { onSuccess: () => refreshAssignment() })
 
 	const { mutate: removeAssignmentReview } = trpc.review.removeAssignment.useMutation({
 		onSuccess: () => refreshAssignmentReviews()

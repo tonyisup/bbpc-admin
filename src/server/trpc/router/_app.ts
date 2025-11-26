@@ -26,7 +26,7 @@ export const appRouter = router({
   guess: guessRouter,
   gambling: gamblingRouter,
   syllabus: syllabusRouter,
-  dashboard: dashboardRouter
+  dashboard: dashboardRouter,
 });
 
 // export type definition of API
