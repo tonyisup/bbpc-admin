@@ -1,19 +1,29 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
-import { trpc } from "../../utils/trpc";
+import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../../components/ui/select";
 import EpisodeEditor from "../../components/Episode/EpisodeEditor";
 import MovieCard from "../../components/MovieCard";
 import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
 import { User, Rating } from "@prisma/client";
+import { PencilIcon, SaveIcon, XIcon } from "lucide-react";
+import { ButtonGroup } from "@/components/ui/button-group";
+import RatingIcon from "@/components/Review/RatingIcon";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -37,9 +47,176 @@ export async function getServerSideProps(context: any) {
 
 // --- Types ---
 type Admin = User;
-type AssignmentWithRelations = NonNullable<ReturnType<typeof trpc.episode.getRecordingData.useQuery>['data']>['assignments'][number];
+type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number];
 
 // --- Components ---
+interface HostRatingRowProps {
+	assignment: AssignmentWithRelations;
+	admins: Admin[];
+	ratings: Rating[];
+	onRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
+}
+
+const HostRatingRow: React.FC<HostRatingRowProps> = ({
+	assignment,
+	admins,
+	ratings,
+	onRatingChange,
+}) => {
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
+
+	const handleEdit = () => {
+		const initialRatings: Record<string, string> = {};
+		admins.forEach(admin => {
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			if (review?.Review?.ratingId) {
+				initialRatings[admin.id] = review.Review.ratingId;
+			}
+		});
+		setEditedRatings(initialRatings);
+		setIsEditing(true);
+	};
+
+	const handleSave = () => {
+		admins.forEach(admin => {
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const newRatingId = editedRatings[admin.id];
+
+			// Only save if changed or new
+			if (newRatingId !== review?.Review?.ratingId && newRatingId) {
+				onRatingChange(review?.Review?.id || null, assignment.id, admin.id, newRatingId);
+			}
+		});
+		setIsEditing(false);
+	};
+
+	const handleCancel = () => {
+		setIsEditing(false);
+		setEditedRatings({});
+	};
+
+	return (
+		<tr className="border-b border-gray-700 bg-gray-800/50">
+			<td className="p-2 font-semibold">Host Ratings</td>
+			{admins.map(admin => {
+				const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+				const currentRatingId = isEditing ? editedRatings[admin.id] : review?.Review?.ratingId;
+				const currentRating = ratings.find(r => r.id === currentRatingId);
+
+				return (
+					<td key={admin.id} className="p-2">
+						{isEditing ? (
+							<Select
+								value={currentRatingId || undefined}
+								onValueChange={(value) => setEditedRatings(prev => ({ ...prev, [admin.id]: value }))}
+							>
+								<SelectTrigger className="w-full">
+									<SelectValue placeholder="Select..." />
+								</SelectTrigger>
+								<SelectContent>
+									{ratings.map(r => (
+										<SelectItem key={r.id} value={r.id}>
+											<RatingIcon value={r.value} />
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						) : (
+							<span className="font-bold text-yellow-500">
+								<RatingIcon value={currentRating?.value} />
+							</span>
+						)}
+					</td>
+				);
+			})}
+			<td></td>
+			<td className="p-2">
+				{isEditing ? (
+					<ButtonGroup>
+						<Button size="icon" variant="ghost" onClick={handleCancel}>
+							<XIcon />
+						</Button>
+						<Button size="icon" variant="ghost" onClick={handleSave}>
+							<SaveIcon />
+						</Button>
+					</ButtonGroup>
+				) : (
+					<Button size="icon" variant="ghost" onClick={handleEdit}>
+						<PencilIcon />
+					</Button>
+				)}
+			</td>
+		</tr>
+	);
+};
+
+interface GuesserRowProps {
+	guesser: {
+		id: string;
+		name: string | null;
+	};
+	assignment: AssignmentWithRelations;
+	admins: Admin[];
+}
+
+const GuesserRow: React.FC<GuesserRowProps> = ({
+	guesser,
+	assignment,
+	admins
+}) => {
+	return (
+		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
+			<td className="p-2">{guesser.name}</td>
+			{admins.map(admin => {
+				const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+				const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+				const isBlurred = !review?.Review?.ratingId;
+
+				return (
+					<td key={admin.id} className="p-2">
+						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none" : ""}`}>
+							{guess ? (
+								<div className="flex items-center gap-1">
+									<span><RatingIcon value={guess.Rating.value} /></span>
+									<span className="text-xs text-gray-400">{guess.points 
+											|| (
+												review?.Review?.ratingId == guess.Rating.id 
+												? 1 : 0)
+										} pts</span>
+								</div>
+							) : (
+								<span className="text-gray-600">-</span>
+							)}
+						</div>
+					</td>
+				);
+			})}
+			<td className="p-2">				
+				<span className="text-sm text-gray-400">{
+					admins.reduce((acc, admin) => (
+						acc + 
+						assignment.assignmentReviews?.reduce((acc2, ar) => (
+							acc2 + (
+								(ar.Review.userId !== admin.id) ? 0 : ar.guesses?.reduce((acc3, g) => (
+									acc3 + (
+										(g.userId === guesser.id
+										&& ar.Review.ratingId == g.Rating.id)
+										? 1 : 0
+									)
+								), 0)
+							)
+						), 0)
+					), 0)} pts
+				</span>
+			</td>
+			<td className="p-2">
+
+			</td>
+		</tr >
+	);
+};
+
 interface QuickAddGuessRowProps {
 	users: User[];
 	admins: Admin[];
@@ -68,35 +245,41 @@ const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
 	return (
 		<tr className="border-t border-gray-700">
 			<td className="p-2">
-				<select
-					className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-full"
-					value={selectedUserId}
-					onChange={(e) => setSelectedUserId(e.target.value)}
+				<Select
+					value={selectedUserId || undefined}
+					onValueChange={(value) => setSelectedUserId(value)}
 				>
-					<option value="">Select User...</option>
-					{users.map(user => (
-						<option key={user.id} value={user.id}>{user.name}</option>
-					))}
-				</select>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select User..." />
+					</SelectTrigger>
+					<SelectContent>
+						{users.map(user => (
+							<SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</td>
 			{admins.map(admin => (
 				<td key={admin.id} className="p-2">
-					<select
-						className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-full"
-						value={guesses[admin.id] || ""}
-						onChange={(e) => setGuesses(prev => ({ ...prev, [admin.id]: e.target.value }))}
+					<Select
+						value={guesses[admin.id] || undefined}
+						onValueChange={(value) => setGuesses(prev => ({ ...prev, [admin.id]: value }))}
 						disabled={!selectedUserId}
 					>
-						<option value="">Select...</option>
-						{ratings.map(r => (
-							<option key={r.id} value={r.id}>{r.name}</option>
-						))}
-					</select>
+						<SelectTrigger className="w-full">
+							<SelectValue placeholder="Select..." />
+						</SelectTrigger>
+						<SelectContent>
+							{ratings.map(r => (
+								<SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</td>
 			))}
 			<td className="p-2">
-				<Button size="sm" onClick={handleSave} disabled={!selectedUserId || Object.keys(guesses).length === 0}>
-					Save
+				<Button size="icon" variant="outline" onClick={handleSave} disabled={!selectedUserId || Object.keys(guesses).length === 0}>
+					<SaveIcon />
 				</Button>
 			</td>
 		</tr>
@@ -122,9 +305,6 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	onRatingChange,
 	onAddGuess
 }) => {
-	const [isEditing, setIsEditing] = useState(false);
-	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
-
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
 	assignment.assignmentReviews?.forEach((ar: any) => {
@@ -139,70 +319,49 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 		return { id, name: "Unknown" };
 	});
 
-	const handleEdit = () => {
-		const initialRatings: Record<string, string> = {};
-		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			if (review?.Review?.ratingId) {
-				initialRatings[admin.id] = review.Review.ratingId;
-			}
-		});
-		setEditedRatings(initialRatings);
-		setIsEditing(true);
-	};
-
-	const handleSave = () => {
-		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			const newRatingId = editedRatings[admin.id];
-
-			// Only save if changed or new
-			if (newRatingId !== review?.Review?.ratingId && newRatingId) {
-				onRatingChange(review?.Review?.id, assignment.id, admin.id, newRatingId);
-			}
-		});
-		setIsEditing(false);
-	};
-
-	const handleCancel = () => {
-		setIsEditing(false);
-		setEditedRatings({});
-	};
-
 	return (
-		<div className="border border-gray-700 rounded p-4 overflow-x-auto">
-			<div className="flex justify-between items-center mb-4">
-				<div className="flex gap-2">
+		<div className="border border-gray-700 rounded p-4">
+			<div className="flex justify-around items-center gap-4 mb-4">
+				<div className="flex flex-col items-center gap-2">
 					<MovieCard movie={assignment.Movie} width={150} height={225} />
-					<p className="text-sm text-gray-400 mt-2 text-center">
-						<HomeworkFlag type={assignment.type} />&nbsp;{assignment.User.name}
-					</p>
 				</div>
-				<div className="flex gap-2">
-					{isEditing ? (
-						<>
-							<Button size="sm" variant="outline" onClick={handleCancel}>Cancel</Button>
-							<Button size="sm" onClick={handleSave}>Save</Button>
-						</>
-					) : (
-						<Button size="sm" variant="outline" onClick={handleEdit}>Edit Ratings</Button>
-					)}
+				<div className="flex flex-col items-center gap-2">
+					<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />&nbsp;{assignment.User.name}
 				</div>
 			</div>
 
 			<table className="w-full text-sm text-left">
 				<thead>
 					<tr className="border-b border-gray-700">
-						<th className="p-2 font-medium">User</th>
+						<th className="p-2 font-medium"></th>
 						{
 							admins.map(admin => (
 								<th key={admin.id} className="p-2 font-medium">{admin.name}</th>
 							))
 						}
+						<th className="p-2 font-medium">Total</th>
 						<th className="p-2 font-medium">Actions</th>
 					</tr >
 				</thead >
 				<tbody>
+					{/* Host Ratings Row */}
+					<HostRatingRow
+						assignment={assignment}
+						admins={admins}
+						ratings={ratings}
+						onRatingChange={onRatingChange}
+					/>
+
+					{/* Guesser Rows */}
+					{guessers.map(guesser => guesser.name && (
+						<GuesserRow
+							key={guesser.id}
+							guesser={guesser}
+							assignment={assignment}
+							admins={admins}
+						/>
+					))}
+
 					{/* Quick Add Guess Row */}
 					<QuickAddGuessRow
 						users={users}
@@ -211,72 +370,6 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 						assignment={assignment}
 						onAddGuess={(userId, guesses) => onAddGuess(assignment.id, userId, guesses)}
 					/>
-
-					{/* Host Ratings Row */}
-					<tr className="border-b border-gray-700 bg-gray-800/50">
-						<td className="p-2 font-semibold">Host Ratings</td>
-						{admins.map(admin => {
-							const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-							const currentRatingId = isEditing ? editedRatings[admin.id] : review?.Review?.ratingId;
-							const currentRating = ratings.find(r => r.id === currentRatingId);
-
-							return (
-								<td key={admin.id} className="p-2">
-									{isEditing ? (
-										<select
-											className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm w-full"
-											value={currentRatingId || ""}
-											onChange={(e) => setEditedRatings(prev => ({ ...prev, [admin.id]: e.target.value }))}
-										>
-											<option value="">Select...</option>
-											{ratings.map(r => (
-												<option key={r.id} value={r.id}>{r.name}</option>
-											))}
-										</select>
-									) : (
-										<span className="font-bold text-yellow-500">
-											{currentRating?.name || "-"}
-										</span>
-									)}
-								</td>
-							);
-						})}
-					</tr>
-
-					{/* Guesser Rows */}
-					{guessers.map(guesser => (
-						<tr key={guesser.id} className="border-b border-gray-700/50 hover:bg-gray-800/30">
-							<td className="p-2">{guesser.name}</td>
-							{admins.map(admin => {
-								const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-								const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
-								const isBlurred = !review?.Review?.ratingId;
-
-								return (
-									<td key={admin.id} className="p-2">
-										<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none" : ""}`}>
-											{guess ? (
-												<div className="flex flex-col gap-1">
-													<span>{guess.Rating.name}</span>
-													<Input
-														type="number"
-														className="w-16 h-6 text-xs"
-														placeholder="Pts"
-														value={guess.points || 0}
-														onChange={(e) => onPointsChange(guess.id, parseInt(e.target.value) || 0)}
-														disabled={isBlurred}
-													/>
-												</div>
-											) : (
-												<span className="text-gray-600">-</span>
-											)}
-										</div>
-									</td>
-								);
-							})}
-							<td className="p-2"></td>
-						</tr>
-					))}
 				</tbody>
 			</table >
 

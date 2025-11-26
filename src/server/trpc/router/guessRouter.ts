@@ -106,7 +106,7 @@ export const guessRouter = router({
 						const newGuess = await prisma.guess.create({
 							data: {
 								userId: userId,
-								assignmentReviewId: assignmentReview.id,
+								assignmntReviewId: assignmentReview.id,
 								ratingId: ratingId,
 								seasonId: latestSeason.id,
 								points: 0, // Default points to 0
@@ -133,7 +133,7 @@ export const guessRouter = router({
 					points: req.input.points,
 					created: new Date(),
 					userId: req.input.userId,
-					assignmentReviewId: req.input.assignmentReviewId,
+					assignmntReviewId: req.input.assignmentReviewId,
 					ratingId: req.input.ratingId,
 					seasonId: req.input.seasonId
 				}
