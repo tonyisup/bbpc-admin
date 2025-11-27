@@ -26,6 +26,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
+import PointEventButton from "@/components/PointEventButton";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -160,13 +161,34 @@ interface GuesserRowProps {
 	};
 	assignment: AssignmentWithRelations;
 	admins: Admin[];
+	seasonId: string | null;
+	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
 }
 
 const GuesserRow: React.FC<GuesserRowProps> = ({
 	guesser,
 	assignment,
-	admins
+	admins,
+	seasonId,
+	onAddPointForGuess
 }) => {
+
+	// Calculate total points
+	const totalPoints = admins.reduce((acc, admin) => (
+		acc +
+		assignment.assignmentReviews?.reduce((acc2, ar) => (
+			acc2 + (
+				(ar.Review.userId !== admin.id) ? 0 : ar.guesses?.reduce((acc3, g) => (
+					acc3 + (
+						(g.userId === guesser.id
+							&& ar.Review.ratingId == g.Rating.id)
+							? 1 : 0
+					)
+				), 0)
+			)
+		), 0)
+	), 0);
+
 	return (
 		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
 			<td className="p-2">{guesser.name}</td>
@@ -181,11 +203,26 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 							{guess ? (
 								<div className="flex items-center gap-1">
 									<span><RatingIcon value={guess.Rating.value} /></span>
-									<span className="text-xs text-gray-400">{guess.points 
-											|| (
-												review?.Review?.ratingId == guess.Rating.id 
+									<span className="text-xs text-gray-400">{guess.points
+										|| (
+											review?.Review?.ratingId == guess.Rating.id
 												? 1 : 0)
-										} pts</span>
+									} pts</span>
+
+									<PointEventButton
+										point={guess.Point}
+										points={guess.points}
+										defaultReason="Guess"
+										onSave={({ points, reason }) => {
+											onAddPointForGuess({
+												userId: guesser.id,
+												seasonId: seasonId || guess.seasonId || "",
+												id: guess.id,
+												points,
+												reason,
+											});
+										}}
+									/>
 								</div>
 							) : (
 								<span className="text-gray-600">-</span>
@@ -194,26 +231,13 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 					</td>
 				);
 			})}
-			<td className="p-2">				
-				<span className="text-sm text-gray-400">{
-					admins.reduce((acc, admin) => (
-						acc + 
-						assignment.assignmentReviews?.reduce((acc2, ar) => (
-							acc2 + (
-								(ar.Review.userId !== admin.id) ? 0 : ar.guesses?.reduce((acc3, g) => (
-									acc3 + (
-										(g.userId === guesser.id
-										&& ar.Review.ratingId == g.Rating.id)
-										? 1 : 0
-									)
-								), 0)
-							)
-						), 0)
-					), 0)} pts
-				</span>
+			<td className="p-2">
+				<span className="text-sm text-gray-400">{totalPoints} pts</span>
 			</td>
 			<td className="p-2">
-
+					<Button size="icon" variant="ghost">
+						<PencilIcon />
+					</Button>
 			</td>
 		</tr >
 	);
@@ -293,9 +317,11 @@ interface AssignmentGridProps {
 	admins: Admin[];
 	ratings: Rating[];
 	users: User[];
+	seasonId: string | null;
 	onPointsChange: (id: string, points: number) => void;
 	onRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
 }
 
 const AssignmentGrid: React.FC<AssignmentGridProps> = ({
@@ -303,9 +329,11 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	admins,
 	ratings,
 	users,
+	seasonId,
 	onPointsChange,
 	onRatingChange,
-	onAddGuess
+	onAddGuess,
+	onAddPointForGuess
 }) => {
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
@@ -361,6 +389,8 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 							guesser={guesser}
 							assignment={assignment}
 							admins={admins}
+							seasonId={seasonId}
+							onAddPointForGuess={onAddPointForGuess}
 						/>
 					))}
 
@@ -443,6 +473,10 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		onSuccess: () => refetchRecordingData()
 	});
 
+	const { mutate: addPointForGuess } = trpc.guess.addPointForGuess.useMutation({
+		onSuccess: () => refetchRecordingData()
+	});
+
 	const handleAddGuess = (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => {
 		addOrUpdateGuessesForUser({ assignmentId, userId, guesses });
 	};
@@ -507,7 +541,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 					<Item variant="outline">
 						<ItemContent>
 							<ItemTitle>No episode ready to record</ItemTitle>
-						<ItemDescription>No episode ready to record. Please create a &quot;next&quot; episode first.</ItemDescription>
+							<ItemDescription>No episode ready to record. Please create a &quot;next&quot; episode first.</ItemDescription>
 						</ItemContent>
 					</Item>
 				)}
@@ -523,15 +557,15 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							</ItemContent>
 						</Item>
 
-					<Item variant="outline">
-						<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
-						<ItemContent>
-							<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
-							<ItemDescription>
-								{seasonData?.description} - {seasonData?.gameType?.description}
-							</ItemDescription>
-						</ItemContent>
-					</Item>
+						<Item variant="outline">
+							<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
+							<ItemContent>
+								<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
+								<ItemDescription>
+									{seasonData?.description} - {seasonData?.gameType?.description}
+								</ItemDescription>
+							</ItemContent>
+						</Item>
 
 						{/* Extras */}
 						{recordingData.extras && recordingData.extras.length > 0 && (
@@ -561,9 +595,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											admins={admins || []}
 											ratings={ratings || []}
 											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
+											seasonId={seasonData?.id || null}
 											onPointsChange={handlePointsChange}
 											onRatingChange={handleRatingChange}
 											onAddGuess={handleAddGuess}
+											onAddPointForGuess={addPointForGuess}
 										/>
 									))}
 								</div>

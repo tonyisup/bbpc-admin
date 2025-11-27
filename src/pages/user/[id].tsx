@@ -17,10 +17,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Table, TableCaption, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
-import { CheckCircle2, Save, Upload } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import Link from "next/link";
-import { PopoverClose } from "@radix-ui/react-popover";
+import PointEventButton from "@/components/PointEventButton";
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -51,7 +48,6 @@ export async function getServerSideProps(context: any) {
 const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   const { query } = useRouter();
   const id = query.id as string;
-  const [ reason, setReason ] = useState<string | null>(null);
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
   const { data: syllabus, refetch: refetchSyllabus } = trpc.user.getSyllabus.useQuery({ id });
@@ -236,28 +232,20 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                       <TableCell>{gamblingPoint.Assignment?.Episode?.number} - {gamblingPoint.Assignment?.Episode?.title ?? 'Unknown'}</TableCell>
                       <TableCell>{gamblingPoint.successful ? 'Won' : 'Lost'} {gamblingPoint.points} points</TableCell>
                       <TableCell>
-                        {gamblingPoint.Point?.reason ? <Link href={`/point/${gamblingPoint.Point.id}`}><CheckCircle2 /></Link> : <>
-                          <Popover>
-                            <PopoverTrigger><Button variant="outline"><Upload /></Button></PopoverTrigger>
-                            <PopoverContent>
-                              <Input type="text" placeholder="Reason" value={reason ?? 'Gambling'} onChange={(e) => setReason(e.target.value)} />
-                              <Input type="number" placeholder="Points" value={(gamblingPoint.successful ? 1 : -1) * gamblingPoint.points} />
-                              <PopoverClose>
-                                <Button size="icon" variant="ghost" onClick={() => {
-                                  addPointForGamblingPoint({ 
-                                    userId: id, 
-                                    seasonId: currentSeason?.id ?? '', 
-                                    id: gamblingPoint.id,
-                                    points: (gamblingPoint.successful ? 1 : -1) * gamblingPoint.points, 
-                                    reason: reason ?? 'Gambling',
-                                  });
-                                }}>
-                                  <Save />
-                                </Button>
-                              </PopoverClose>
-                            </PopoverContent>
-                          </Popover>
-                        </>}
+                        <PointEventButton
+                          point={gamblingPoint.Point}
+                          points={(gamblingPoint.successful ? 1 : -1) * gamblingPoint.points}
+                          defaultReason="Gambling"
+                          onSave={({ points, reason }) => {
+                            addPointForGamblingPoint({
+                              userId: id,
+                              seasonId: currentSeason?.id ?? '',
+                              id: gamblingPoint.id,
+                              points,
+                              reason,
+                            });
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -284,26 +272,20 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                       <TableCell>{guess.AssignmentReview.Assignment.Episode?.number} - {guess.AssignmentReview.Assignment.Episode?.title}</TableCell>
                       <TableCell>{guess.points}</TableCell>
                       <TableCell>
-                        {guess.Point?.reason ? <Link href={`/point/${guess.Point.id}`}><CheckCircle2 /></Link> : <>
-                          <Popover>
-                            <PopoverTrigger><Button variant="outline"><Upload /></Button></PopoverTrigger>
-                            <PopoverContent>
-                              <Input type="text" placeholder="Reason" value={reason ?? 'Guess'} onChange={(e) => setReason(e.target.value)} />
-                              <Input type="number" placeholder="Points" value={guess.points} />
-                              <Button size="icon" variant="ghost" onClick={() => {
-                                addPointForGuess({ 
-                                  userId: id, 
-                                  seasonId: currentSeason?.id ?? '', 
-                                  id: guess.id,
-                                  points: guess.points, 
-                                  reason: reason ?? 'Guess',
-                                });
-                              }}>
-                                <Save />
-                              </Button>
-                            </PopoverContent>
-                          </Popover>
-                        </>}
+                        <PointEventButton
+                          point={guess.Point}
+                          points={guess.points}
+                          defaultReason="Guess"
+                          onSave={({ points, reason }) => {
+                            addPointForGuess({
+                              userId: id,
+                              seasonId: currentSeason?.id ?? '',
+                              id: guess.id,
+                              points,
+                              reason,
+                            });
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

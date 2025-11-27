@@ -250,7 +250,8 @@ export const episodeRouter = router({
                   guesses: {
                     include: {
                       User: true,
-                      Rating: true
+                      Rating: true,
+                      Point: true
                     }
                   }
                 }
