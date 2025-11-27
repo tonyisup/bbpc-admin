@@ -88,9 +88,29 @@ export const userRouter = router({
       })
     }),
   getTotalPointsForSeason: publicProcedure
-    .input(z.object({ userId: z.string(), seasonId: z.string() }))
+    .input(z.object({ 
+      userId: z.string(), 
+      seasonId: z.string().optional()
+     }))
     .query(async ({ ctx, input }) => {
-      const { userId, seasonId } = input;
+      const { userId } = input;
+      let seasonId = input.seasonId ?? '';
+
+      if (!seasonId) {
+        const season = await ctx.prisma.season.findFirst({
+          orderBy: {
+            startedOn: 'desc',
+          },
+          where: {
+            endedOn: null,
+          },
+        });
+        seasonId = season?.id ?? '';
+      }
+      console.log("seasonId", seasonId);
+      if (!seasonId) {
+        return 0;
+      }
       return await calculateUserPoints(ctx.prisma, userId, seasonId);
     }),
   getPoints: publicProcedure
@@ -129,6 +149,37 @@ export const userRouter = router({
   removePoint: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
+      /* remove gambling points */
+      if (await req.ctx.prisma.gamblingPoints.findFirst({
+        where: {
+          pointsId: req.input.id
+        }
+      } )) {
+        await req.ctx.prisma.gamblingPoints.updateMany({
+          where: {
+            pointsId: req.input.id
+          },
+          data: {
+            pointsId: null
+          }
+        })
+      }
+      /* remove guess point */
+      if (await req.ctx.prisma.guess.findFirst({
+        where: {
+          pointsId: req.input.id
+        }
+      } )) {
+        await req.ctx.prisma.guess.updateMany({
+          where: {
+            pointsId: req.input.id
+          },
+          data: {
+            pointsId: null
+          }
+        })
+      }
+      /* remove point */
       return await req.ctx.prisma.point.delete({
         where: {
           id: req.input.id

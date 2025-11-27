@@ -1,6 +1,6 @@
 import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
-import { useRouter } from "next/router";
+import router, { useRouter } from "next/router";
 import { useState } from "react";
 import { HiX, HiTrash } from "react-icons/hi";
 import UserRoleModal from "../../components/UserRoleModal";
@@ -8,37 +8,77 @@ import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Form, useForm } from "react-hook-form";
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Item, ItemContent, ItemHeader, ItemTitle } from "@/components/ui/item";
+import { Table, TableCaption, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
+import { CheckCircle2, Save, Upload } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import Link from "next/link";
+import { PopoverClose } from "@radix-ui/react-popover";
+
+const formSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
 
 export async function getServerSideProps(context: any) {
-	const session = await getServerSession(context.req, context.res, authOptions);
+  const session = await getServerSession(context.req, context.res, authOptions);
 
-	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
-	console.log("session", session);
-	console.log("isAdmin", isAdmin);
-	if (!session || !isAdmin) {
-		return {
-			redirect: {
-				destionation: '/',
-				permanent: false,
-			}
-		}
-	}
+  const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+  console.log("session", session);
+  console.log("isAdmin", isAdmin);
+  if (!session || !isAdmin) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      }
+    }
+  }
 
-	return {
-		props: {
-			session
-		}
-	}
+  return {
+    props: {
+      session
+    }
+  }
 }
 const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
   const { query } = useRouter();
   const id = query.id as string;
+  const [ reason, setReason ] = useState<string | null>(null);
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
   const { data: syllabus, refetch: refetchSyllabus } = trpc.user.getSyllabus.useQuery({ id });
   const { data: seasons } = trpc.guess.seasons.useQuery();
-  const { data: points, refetch: refetchPoints } = trpc.user.getPoints.useQuery({ id });
+  const { data: currentSeason } = trpc.guess.currentSeason.useQuery();
 
+
+  const { data: totalPoints, refetch: refetchTotalPoints } = trpc.user.getTotalPointsForSeason.useQuery({ userId: id });
+  const { data: guesses, refetch: refetchGuesses } = trpc.guess.getForUser.useQuery({ userId: id });
+  const { data: gamblingPoints, refetch: refetchGamblingPoints } = trpc.gambling.getForUser.useQuery({ userId: id });
+
+  const { data: points, refetch: refetchPoints } = trpc.user.getPoints.useQuery({ id });
+  const [seasonForAddingPoints, setSeasonForAddingPoints] = useState<string | null>(currentSeason?.id ?? null);
+  const form = useForm<z.infer<typeof formSchema>>({
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? ''
+    },
+    resolver: zodResolver(formSchema),
+  });
+
+  const refreshAllPoints = () => {
+    refetchTotalPoints();
+    refetchPoints();
+    refetchGuesses();
+    refetchGamblingPoints();
+  }
   const { mutate: updateUser } = trpc.user.update.useMutation({
     onSuccess: () => {
       refetchUser();
@@ -52,10 +92,16 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     onSuccess: () => refetchSyllabus(),
   });
   const { mutate: addPoint } = trpc.user.addPoint.useMutation({
-    onSuccess: () => refetchPoints(),
+    onSuccess: () => refreshAllPoints(),
+  });
+  const { mutate: addPointForGamblingPoint } = trpc.gambling.addPointForGamblingPoint.useMutation({
+    onSuccess: () => refreshAllPoints(),
+  });
+  const { mutate: addPointForGuess } = trpc.guess.addPointForGuess.useMutation({
+    onSuccess: () => refreshAllPoints(),
   });
   const { mutate: removePoint } = trpc.user.removePoint.useMutation({
-    onSuccess: () => refetchPoints(),
+    onSuccess: () => refreshAllPoints(),
   });
 
   const [modalOpen, setModalOpen] = useState<boolean>(false)
@@ -63,14 +109,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
     onSuccess: () => refetchSyllabus(),
   });
-  
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const points = formData.get('points') as string;
-    updateUser({ id, name, email, points: parseFloat(points) });
+
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    updateUser({ id, name: data.name, email: data.email });
   }
 
   const handleAssignEpisode = (syllabusId: string, episodeNumber: number, assignmentType: string) => {
@@ -81,17 +122,8 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
     removeAssignment({ syllabusId });
   }
 
-  const handleAddPoint = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const seasonId = formData.get('seasonId') as string;
-    const value = parseInt(formData.get('value') as string);
-    const reason = formData.get('reason') as string;
-
-    if (seasonId && !isNaN(value) && reason) {
-      addPoint({ userId: id, seasonId, value, reason });
-      (e.target as HTMLFormElement).reset();
-    }
+  const handleCancelEdit = () => {
+    router.back();
   }
 
   return (
@@ -103,116 +135,182 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
       {modalOpen && user?.id && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
 
       <main className="flex w-full min-h-screen flex-col items-center">
-        <header className="flex my-6 px-6 w-full justify-center">
-          <h1 className="text-2xl font-semibold">
-            User {user?.name} - {user?.email} : {user?.points?.toString() ?? '0'}
-          </h1>
-        </header>
-        <div className="flex flex-col w-full max-w-2xl">
-          <form className="flex flex-col space-y-4 px-6 " onSubmit={handleSubmit}>
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                defaultValue={user?.name ?? ''}
-                className="border rounded-md p-2 text-black"
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                defaultValue={user?.email ?? ''}
-                className="border rounded-md p-2 text-black"
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="points" className="text-sm font-medium">
-                Points
-              </label>
-              <input 
-                type="number"
-                id="points"
-                name="points"
-                defaultValue={user?.points?.toString()  ?? ''}
-                className="border rounded-md p-2 text-black"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-violet-500 text-white p-2 rounded-md transition hover:bg-violet-400"
-            >
-              Save Changes
-            </button>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <FieldSet>
+                <FieldLegend>User {user?.name} - {user?.email} : {totalPoints ?? '0'}</FieldLegend>
+                <Field>
+                  <FieldLabel htmlFor="name">
+                    Name
+                  </FieldLabel>
+                  <Input
+                    type="text"
+                    id="name"
+                    name="name"
+                    defaultValue={user?.name ?? ''}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="email">
+                    Email
+                  </FieldLabel>
+                  <Input
+                    type="email"
+                    id="email"
+                    name="email"
+                    defaultValue={user?.email ?? ''}
+                  />
+                </Field>
+                <Field orientation="horizontal">
+                  <Button type="submit">
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                </Field>
+              </FieldSet>
+            </FieldGroup>
           </form>
-          <hr className="w-full my-6" />
-          <div className="flex my-6 px-6 w-full justify-between">
-            <h2 className="text-xl font-semibold">Roles</h2>
-            <button
-              type="button" 
-              onClick={() => setModalOpen(true)}
-              className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
-              Add Role
-            </button>
-          </div>
-          <ul className="flex flex-col space-y-2">
-            {userRoles?.map((userRole) => (
-              <li key={userRole.id}>
-                <span>{userRole.role.name}</span>                
-                <div className="flex justify-center">
-                  <HiX className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id})} />
-                </div>
-              </li>
-            ))}
-          </ul>
+        </Form>
+        <hr className="w-full my-6" />
+        <div className="flex my-6 px-6 w-full justify-between">
+          <h2 className="text-xl font-semibold">Roles</h2>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400">
+            Add Role
+          </button>
         </div>
+        <ul className="flex flex-col space-y-2">
+          {userRoles?.map((userRole) => (
+            <li key={userRole.id}>
+              <span>{userRole.role.name}</span>
+              <div className="flex justify-center">
+                <HiX className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id })} />
+              </div>
+            </li>
+          ))}
+        </ul>
 
         <hr className="w-full my-6" />
         <div className="flex my-6 px-6 w-full justify-between">
-          <h2 className="text-xl font-semibold">Points</h2>
+          <h2 className="text-xl font-semibold">Current Season Points: {totalPoints ?? '0'}</h2>
         </div>
         <div className="flex flex-col w-full px-6 max-w-2xl space-y-4">
-          <form className="flex space-x-2 items-end" onSubmit={handleAddPoint}>
-            <div className="flex flex-col space-y-1 flex-1">
-              <label htmlFor="seasonId" className="text-sm font-medium">Season</label>
-              <select name="seasonId" id="seasonId" className="border rounded-md p-2 text-black" required>
-                <option value="">Select Season</option>
-                {seasons?.map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col space-y-1 w-24">
-              <label htmlFor="value" className="text-sm font-medium">Value</label>
-              <input type="number" name="value" id="value" className="border rounded-md p-2 text-black" required />
-            </div>
-            <div className="flex flex-col space-y-1 flex-1">
-              <label htmlFor="reason" className="text-sm font-medium">Reason</label>
-              <input type="text" name="reason" id="reason" className="border rounded-md p-2 text-black" required />
-            </div>
-            <button type="submit" className="bg-violet-500 text-white p-2 rounded-md transition hover:bg-violet-400 mb-[1px]">Add</button>
-          </form>
-
-          <div className="space-y-2">
-            {points?.map((point) => (
-              <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md">
-                <div className="flex flex-col">
-                  <span className="font-semibold">{point.value} points</span>
-                  <span className="text-sm text-gray-400">{point.reason}</span>
-                  <span className="text-xs text-gray-500">{point.Season?.title} - {point.earnedOn.toLocaleDateString()}</span>
+          <Item variant="outline">
+            <ItemHeader>
+              <ItemTitle>Point Events</ItemTitle>
+            </ItemHeader>
+            <ItemContent>
+              {points?.map((point) => (
+                <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{point.value} points</span>
+                    <span className="text-sm text-gray-400">{point.reason}</span>
+                    <span className="text-xs text-gray-500">{point.Season?.title} - {point.earnedOn.toLocaleDateString()}</span>
+                  </div>
+                  <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />
                 </div>
-                <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />
-              </div>
-            ))}
-          </div>
+              ))}
+            </ItemContent>
+          </Item>
+          <Item variant="outline">
+            <ItemHeader>Gambling History</ItemHeader>
+            <ItemContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Movie</TableHead>
+                    <TableHead>Episode</TableHead>
+                    <TableHead>Points</TableHead>
+                    <TableHead>Points Event</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gamblingPoints?.map((gamblingPoint) => (
+                    <TableRow key={gamblingPoint.id}>
+                      <TableCell>{gamblingPoint.Assignment?.Movie?.title ?? 'Unknown'}</TableCell>
+                      <TableCell>{gamblingPoint.Assignment?.Episode?.number} - {gamblingPoint.Assignment?.Episode?.title ?? 'Unknown'}</TableCell>
+                      <TableCell>{gamblingPoint.successful ? 'Won' : 'Lost'} {gamblingPoint.points} points</TableCell>
+                      <TableCell>
+                        {gamblingPoint.Point?.reason ? <Link href={`/point/${gamblingPoint.Point.id}`}><CheckCircle2 /></Link> : <>
+                          <Popover>
+                            <PopoverTrigger><Button variant="outline"><Upload /></Button></PopoverTrigger>
+                            <PopoverContent>
+                              <Input type="text" placeholder="Reason" value={reason ?? 'Gambling'} onChange={(e) => setReason(e.target.value)} />
+                              <Input type="number" placeholder="Points" value={(gamblingPoint.successful ? 1 : -1) * gamblingPoint.points} />
+                              <PopoverClose>
+                                <Button size="icon" variant="ghost" onClick={() => {
+                                  addPointForGamblingPoint({ 
+                                    userId: id, 
+                                    seasonId: currentSeason?.id ?? '', 
+                                    id: gamblingPoint.id,
+                                    points: (gamblingPoint.successful ? 1 : -1) * gamblingPoint.points, 
+                                    reason: reason ?? 'Gambling',
+                                  });
+                                }}>
+                                  <Save />
+                                </Button>
+                              </PopoverClose>
+                            </PopoverContent>
+                          </Popover>
+                        </>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ItemContent>
+          </Item>
+          <Item variant="outline">
+            <ItemHeader>Guess History</ItemHeader>
+            <ItemContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Movie</TableHead>
+                    <TableHead>Episode</TableHead>
+                    <TableHead>Points</TableHead>
+                    <TableHead>Points Event</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {guesses?.map((guess) => (
+                    <TableRow key={guess.id}>
+                      <TableCell>{guess.AssignmentReview.Assignment.Movie.title}</TableCell>
+                      <TableCell>{guess.AssignmentReview.Assignment.Episode?.number} - {guess.AssignmentReview.Assignment.Episode?.title}</TableCell>
+                      <TableCell>{guess.points}</TableCell>
+                      <TableCell>
+                        {guess.Point?.reason ? <Link href={`/point/${guess.Point.id}`}><CheckCircle2 /></Link> : <>
+                          <Popover>
+                            <PopoverTrigger><Button variant="outline"><Upload /></Button></PopoverTrigger>
+                            <PopoverContent>
+                              <Input type="text" placeholder="Reason" value={reason ?? 'Guess'} onChange={(e) => setReason(e.target.value)} />
+                              <Input type="number" placeholder="Points" value={guess.points} />
+                              <Button size="icon" variant="ghost" onClick={() => {
+                                addPointForGuess({ 
+                                  userId: id, 
+                                  seasonId: currentSeason?.id ?? '', 
+                                  id: guess.id,
+                                  points: guess.points, 
+                                  reason: reason ?? 'Guess',
+                                });
+                              }}>
+                                <Save />
+                              </Button>
+                            </PopoverContent>
+                          </Popover>
+                        </>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ItemContent>
+          </Item>
         </div>
 
         <hr className="w-full my-6" />
@@ -235,22 +333,22 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                   )}
                   {!item.Assignment && (
                     <div className="flex items-center space-x-2">
-                      <input 
-                        type="number" 
-                        placeholder="Episode Number" 
+                      <input
+                        type="number"
+                        placeholder="Episode Number"
                         className="border rounded-md p-2 text-black"
                         id={`episode-${item.id}`}
                       />
-                      <select 
+                      <select
                         className="border rounded-md p-2 text-black"
                         id={`assignment-type-${item.id}`}
                       >
                         <option value="HOMEWORK">Homework</option>
                         <option value="EXTRA_CREDIT">Extra Credit</option>
                         <option value="BONUS">Bonus</option>
-                      </select> 
-                      
-                      <button 
+                      </select>
+
+                      <button
                         className="bg-violet-500 text-white text-sm p-2 rounded-md transition hover:bg-violet-400"
                         onClick={() => {
                           const input = document.getElementById(`episode-${item.id}`) as HTMLInputElement;
@@ -271,7 +369,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
             </div>
           ))}
         </div>
-      </main>    
+      </main>
     </>
   );
 };

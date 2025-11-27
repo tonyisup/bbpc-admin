@@ -200,6 +200,43 @@ export const guessRouter = router({
 				}
 			})
     }),
+
+	getForUser: publicProcedure
+		.input(z.object({ 
+			userId: z.string(),
+			seasonId: z.string().optional()
+		 }))
+		.query(async (req) => {
+			let seasonId = req.input.seasonId ?? '';
+			if (!seasonId) {
+				const season = await req.ctx.prisma.season.findFirst({
+					orderBy: {
+						startedOn: 'desc',
+					},
+					where: { endedOn: null }
+				});
+				seasonId = season?.id ?? '';
+			}
+			return await req.ctx.prisma.guess.findMany({
+				where: { 
+					userId: req.input.userId, 
+					seasonId: seasonId 
+				},
+				include: {
+					AssignmentReview: {
+						include: {
+							Assignment: {
+								include: {
+									Episode: true,
+									Movie: true
+								}
+							}
+						}
+					},
+					Point: true
+				}
+			})
+		}),
   getAll: publicProcedure
     .query(async (req) => {
       return await req.ctx.prisma.guess.findMany();
@@ -207,5 +244,70 @@ export const guessRouter = router({
 	seasons: publicProcedure
 		.query(async (req) => {
 			return await req.ctx.prisma.season.findMany()
+		}),
+
+	currentSeason: publicProcedure
+		.query(async (req) => {
+			return await req.ctx.prisma.season.findFirst({
+				orderBy: {
+					startedOn: 'desc',
+				},
+				where: {
+					endedOn: null,
+				},
+				include: {
+					gameType: true
+				}
+			})
+		}),
+
+		/* we should always create a new season when we end the current season */
+	endSeason: publicProcedure
+		.input(z.object({ 
+			endedSeasonId: z.string(),
+			newSeasonTitle: z.string(),
+			newSeasonDescription: z.string(),
+			newSeasonGameTypeId: z.number()
+		}))
+		.mutation(async (req) => {
+			await req.ctx.prisma.season.update({
+				where: { id: req.input.endedSeasonId },
+				data: { endedOn: new Date() }
+			})
+
+			/* create new season */
+			return await req.ctx.prisma.season.create({
+				data: {
+					title: req.input.newSeasonTitle,
+					description: req.input.newSeasonDescription,
+					gameTypeId: req.input.newSeasonGameTypeId,
+					startedOn: new Date()
+				}
+			})
+		}),
+
+	addPointForGuess: publicProcedure
+		.input(z.object({
+			userId: z.string(),
+			seasonId: z.string(),
+			id: z.string(),
+			points: z.number(),
+			reason: z.string(),
+		}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.point.create({
+				data: {
+					userId: req.input.userId,
+					seasonId: req.input.seasonId,
+					value: req.input.points,
+					reason: req.input.reason,
+					earnedOn: new Date(),
+					Guess: {
+						connect: {
+							id: req.input.id
+						}
+					}
+				}
+			})
 		}),
 })

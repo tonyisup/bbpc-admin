@@ -21,9 +21,11 @@ import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
 import { User, Rating } from "@prisma/client";
-import { PencilIcon, SaveIcon, XIcon } from "lucide-react";
+import { Mic2Icon, PencilIcon, SaveIcon, XIcon } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -414,6 +416,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		{ enabled: !!(currentEpisodeId || recordingEpisode?.id) }
 	);
 
+	const { data: seasonData } = trpc.guess.currentSeason.useQuery();
+
 	// Mutations
 	const { mutate: updateStatus } = trpc.episode.updateStatus.useMutation({
 		onSuccess: () => {
@@ -478,37 +482,56 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	return (
 		<>
 			<Head>
-				<title>Recording Panel - Bad Boys Podcast Admin</title>
+				<title>Recording {recordingData?.number} - Bad Boys Podcast Admin</title>
 			</Head>
 			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8">
-				<h1 className="text-3xl font-bold">Recording Panel</h1>
-
 				{/* Start Recording Section */}
 				{!recordingData && !pendingEpisode && nextEpisode && (
-					<Card className="w-full max-w-6xl p-6">
-						<h2 className="text-2xl font-semibold mb-4">Ready to Record</h2>
-						<p className="mb-4">
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Mic2Icon />
+							</EmptyMedia>
+						</EmptyHeader>
+						<EmptyTitle>Ready to Record</EmptyTitle>
+						<EmptyDescription className="mb-4">
 							Next Episode: {nextEpisode.number} - {nextEpisode.title}
-						</p>
-						<Button onClick={handleStartRecording}>Start Recording</Button>
-					</Card>
+						</EmptyDescription>
+						<EmptyContent>
+							<Button onClick={handleStartRecording}>Start Recording</Button>
+						</EmptyContent>
+					</Empty>
 				)}
 
 				{!recordingData && !pendingEpisode && !nextEpisode && (
-					<Card className="w-full max-w-6xl p-6">
-						<p>No episode ready to record. Please create a &quot;next&quot; episode first.</p>
-					</Card>
+					<Item variant="outline">
+						<ItemContent>
+							<ItemTitle>No episode ready to record</ItemTitle>
+						<ItemDescription>No episode ready to record. Please create a &quot;next&quot; episode first.</ItemDescription>
+						</ItemContent>
+					</Item>
 				)}
 
 				{/* Recording Session */}
 				{recordingData && (
 					<>
-						<Card className="w-full max-w-6xl p-6">
-							<h2 className="text-2xl font-semibold mb-2">
-								Recording: Episode {recordingData.number} - {recordingData.title}
-							</h2>
-							<p className="text-gray-400">Status: {recordingData.status}</p>
-						</Card>
+						<Item variant="outline">
+							<ItemHeader>Episode {recordingData.number}</ItemHeader>
+							<ItemContent>
+								<ItemTitle>{recordingData.title}</ItemTitle>
+								<ItemDescription>Status: {recordingData.status}</ItemDescription>
+							</ItemContent>
+						</Item>
+
+					<Item variant="outline">
+						<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
+						<ItemContent>
+							<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
+							<ItemDescription>
+								{seasonData?.description} - {seasonData?.gameType?.description}
+							</ItemDescription>
+						</ItemContent>
+					</Item>
 
 						{/* Extras */}
 						{recordingData.extras && recordingData.extras.length > 0 && (
