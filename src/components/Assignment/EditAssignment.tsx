@@ -62,7 +62,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 	const { mutate: removeAudioMessage } = trpc.assignment.removeAudioMessage.useMutation()
 	return <div className="flex gap-4 w-full px-6 items-center justify-between">
 		<a className="text-blue-500 underline" href={audioMessage.url} target="_blank" rel="noreferrer">
-			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()} 
+			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()}
 		</a>
 		<span>
 			<Link href={"/user/" + audioMessage.User?.id}>
@@ -96,9 +96,6 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 	const { mutate: removeGuess } = trpc.guess.remove.useMutation({
 		onSuccess: () => refreshAssignmentReviews()
 	})
-	const { mutate: setPointsForGuess } = trpc.guess.setPointsForGuess.useMutation({
-		onSuccess: () => refreshAssignmentReviews()
-	})
 	const { mutate: addGamblingPoints } = trpc.gambling.add.useMutation({
 		onSuccess: () => refreshGamblingPoints()
 	})
@@ -108,29 +105,19 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 	const { mutate: removeGamblingPoints } = trpc.gambling.remove.useMutation({
 		onSuccess: () => refreshGamblingPoints()
 	})
-	
+
 	const deleteReview = function (id: string) {
 		removeAssignmentReview({ id })
 	}
 	const deleteGuess = function (id: string) {
 		removeGuess({ id })
 	}
-	const handleAddPointToGuess = function (guess: any) {
-		return function () {
-			setPointsForGuess({ id: guess.id, points: guess.points + 1 })
-		}
-	}
-	const handleRemovePointFromGuess = function (guess: any) {
-		return function () {
-			setPointsForGuess({ id: guess.id, points: guess.points - 1 })
-		}
-	}
-	
+
 	// Group guesses by user
 	const guessesByUser = new Map<string, { user: User, guesses: Array<{ guess: any, assignmentReview: any }> }>();
-	
+
 	assignmentReviews?.forEach(assignmentReview => {
-		assignmentReview.guesses?.forEach(guess => {
+		assignmentReview.Guesses?.forEach(guess => {
 			const userId = guess.User.id;
 			if (!guessesByUser.has(userId)) {
 				guessesByUser.set(userId, { user: guess.User, guesses: [] });
@@ -141,7 +128,7 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 			}
 		});
 	});
-	
+
 	return <div className="flex flex-col w-full px-6 items-center">
 		<h2>Reviews</h2>
 
@@ -149,7 +136,7 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 			{Array.from(guessesByUser.values()).map((userData) => {
 				// Find gambling points for this user
 				const userGamblingPoints = gamblingPoints?.find(gp => gp.userId === userData.user.id);
-				
+
 				return (
 					<div className="flex items-center w-full" key={userData.user.id}>
 						<div className="flex justify-between items-center gap-2 w-full bg-gray-700 p-2">

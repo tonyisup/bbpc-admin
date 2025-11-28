@@ -8,18 +8,44 @@ type PrismaTransactionClient = Omit<
 export const calculateUserPoints = async (
   prisma: PrismaTransactionClient,
   userId: string,
-  seasonId: string
+  seasonId: string | null | undefined
 ) => {
+  let seasonIdToUse = seasonId;
+  if (!seasonIdToUse) {
+    const season = await prisma.season.findFirst({
+      orderBy: {
+        startedOn: 'desc',
+      },
+      where: { endedOn: null }
+    });
+    seasonIdToUse = season?.id ?? '';
+  }
 
-  const pointsResult = await prisma.point.aggregate({
+  const adjustmentResult = await prisma.point.aggregate({
     _sum: {
-      value: true,
+      adjustment: true,
     },
     where: {
       userId,
-      seasonId,
+      seasonId: seasonIdToUse,
     },
   });
 
-  return pointsResult._sum.value ?? 0;
+  /* points to sum are in the linked gamepoint.points table */
+
+  const pointsResult = await prisma.gamePoint.aggregate({
+    _sum: {
+      points: true,
+    },
+    where: {
+      Point: {
+        every: {
+          userId,
+          seasonId: seasonIdToUse,
+        },
+      },
+    },
+  });
+  return (pointsResult._sum.points ?? 0)
+    + (adjustmentResult._sum.adjustment ?? 0);
 };

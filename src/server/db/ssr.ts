@@ -2,22 +2,22 @@ import { z } from "zod";
 import { prisma } from "./client";
 
 export const ssr = {
-	isAdmin: async function(userId: string) {
+	isAdmin: async function (userId: string) {
 		const role = await prisma.userRole.findFirst({
 			where: {
 				userId: userId,
 			},
 			include: {
-				role: {
+				Role: {
 					select: {
 						admin: true
 					}
 				}
 			}
 		})
-		return role?.role.admin ?? false;
+		return role?.Role.admin ?? false;
 	},
-	getEpisode: async function(episodeId: string) {
+	getEpisode: async function (episodeId: string) {
 		return await prisma.episode.findUnique({
 			where: {
 				id: episodeId

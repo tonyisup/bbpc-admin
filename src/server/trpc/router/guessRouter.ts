@@ -3,18 +3,6 @@ import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
 export const guessRouter = router({
-	setPointsForGuess: publicProcedure
-		.input(z.object({ id: z.string(), points: z.number() }))
-		.mutation(async (req) => {
-			return await req.ctx.prisma.guess.update({
-				where: {
-					id: req.input.id
-				},
-				data: {
-					points: req.input.points
-				}
-			})
-		}),
 	addOrUpdateGuessesForUser: protectedProcedure
 		.input(z.object({
 			assignmentId: z.string(),
@@ -30,9 +18,9 @@ export const guessRouter = router({
 			// Check if user is an admin
 			const userRoles = await ctx.prisma.userRole.findMany({
 				where: { userId: ctx.session.user.id },
-				include: { role: true },
+				include: { Role: true },
 			});
-			const isAdmin = userRoles.some(userRole => userRole.role.admin);
+			const isAdmin = userRoles.some(userRole => userRole.Role.admin);
 			if (!isAdmin) {
 				throw new TRPCError({ code: 'UNAUTHORIZED' });
 			}
@@ -109,7 +97,6 @@ export const guessRouter = router({
 								assignmntReviewId: assignmentReview.id,
 								ratingId: ratingId,
 								seasonId: latestSeason.id,
-								points: 0, // Default points to 0
 								created: new Date(),
 							},
 						});
@@ -121,7 +108,6 @@ export const guessRouter = router({
 		}),
 	add: publicProcedure
 		.input(z.object({
-			points: z.number(),
 			userId: z.string(),
 			assignmentReviewId: z.string(),
 			ratingId: z.string(),
@@ -130,7 +116,6 @@ export const guessRouter = router({
 		.mutation(async (req) => {
 			return await req.ctx.prisma.guess.create({
 				data: {
-					points: req.input.points,
 					created: new Date(),
 					userId: req.input.userId,
 					assignmntReviewId: req.input.assignmentReviewId,
@@ -142,24 +127,24 @@ export const guessRouter = router({
 
 	remove: publicProcedure
 		.input(z.object({ id: z.string() }))
-    .mutation(async (req) => {
-      return await req.ctx.prisma.guess.delete({
-        where: {
-          id: req.input.id
-        }
-      })
-    }),
-  get: publicProcedure
-    .input(z.object({id: z.string()}))
-    .query(async (req) => {
-      return await req.ctx.prisma.guess.findUnique({
-        where: {
-          id: req.input.id
-        }
-      })
-    }),
+		.mutation(async (req) => {
+			return await req.ctx.prisma.guess.delete({
+				where: {
+					id: req.input.id
+				}
+			})
+		}),
+	get: publicProcedure
+		.input(z.object({ id: z.string() }))
+		.query(async (req) => {
+			return await req.ctx.prisma.guess.findUnique({
+				where: {
+					id: req.input.id
+				}
+			})
+		}),
 	getForAssignment: publicProcedure
-		.input(z.object({assignmentId: z.string()}))
+		.input(z.object({ assignmentId: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany({
 				include: {
@@ -179,10 +164,10 @@ export const guessRouter = router({
 				}
 			})
 		}),
-  getForEpisode: publicProcedure
-    .input(z.object({episodeId: z.string()}))
-    .query(async (req) => {
-      return await req.ctx.prisma.guess.findMany({
+	getForEpisode: publicProcedure
+		.input(z.object({ episodeId: z.string() }))
+		.query(async (req) => {
+			return await req.ctx.prisma.guess.findMany({
 				where: {
 					AssignmentReview: {
 						is: {
@@ -199,13 +184,13 @@ export const guessRouter = router({
 					}
 				}
 			})
-    }),
+		}),
 
 	getForUser: publicProcedure
-		.input(z.object({ 
+		.input(z.object({
 			userId: z.string(),
 			seasonId: z.string().optional()
-		 }))
+		}))
 		.query(async (req) => {
 			let seasonId = req.input.seasonId ?? '';
 			if (!seasonId) {
@@ -218,9 +203,9 @@ export const guessRouter = router({
 				seasonId = season?.id ?? '';
 			}
 			return await req.ctx.prisma.guess.findMany({
-				where: { 
-					userId: req.input.userId, 
-					seasonId: seasonId 
+				where: {
+					userId: req.input.userId,
+					seasonId: seasonId
 				},
 				include: {
 					AssignmentReview: {
@@ -237,10 +222,10 @@ export const guessRouter = router({
 				}
 			})
 		}),
-  getAll: publicProcedure
-    .query(async (req) => {
-      return await req.ctx.prisma.guess.findMany();
-    }),
+	getAll: publicProcedure
+		.query(async (req) => {
+			return await req.ctx.prisma.guess.findMany();
+		}),
 	seasons: publicProcedure
 		.query(async (req) => {
 			return await req.ctx.prisma.season.findMany()
@@ -256,14 +241,14 @@ export const guessRouter = router({
 					endedOn: null,
 				},
 				include: {
-					gameType: true
+					GameType: true
 				}
 			})
 		}),
 
-		/* we should always create a new season when we end the current season */
+	/* we should always create a new season when we end the current season */
 	endSeason: publicProcedure
-		.input(z.object({ 
+		.input(z.object({
 			endedSeasonId: z.string(),
 			newSeasonTitle: z.string(),
 			newSeasonDescription: z.string(),
@@ -291,16 +276,29 @@ export const guessRouter = router({
 			userId: z.string(),
 			seasonId: z.string(),
 			id: z.string(),
-			points: z.number(),
+			adjustment: z.number(),
 			reason: z.string(),
+			gamePointId: z.number().optional(),
 		}))
 		.mutation(async (req) => {
+			if (!req.input.gamePointId) {
+				const gamePoint = await req.ctx.prisma.gamePoint.findFirst({
+					where: {
+						lookupID: 'guess',
+					}
+				})
+				if (!gamePoint) {
+					throw new Error('Game point not found');
+				}
+				req.input.gamePointId = gamePoint.id;
+			}
 			return await req.ctx.prisma.point.create({
 				data: {
 					userId: req.input.userId,
 					seasonId: req.input.seasonId,
-					value: req.input.points,
+					adjustment: req.input.adjustment,
 					reason: req.input.reason,
+					gamePointId: req.input.gamePointId,
 					earnedOn: new Date(),
 					Guess: {
 						connect: {

@@ -50,7 +50,7 @@ export async function getServerSideProps(context: any) {
 
 // --- Types ---
 type Admin = User;
-type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number];
+type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['Assignments'][number];
 
 // --- Components ---
 interface HostRatingRowProps {
@@ -72,7 +72,7 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 	const handleEdit = () => {
 		const initialRatings: Record<string, string> = {};
 		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
 			if (review?.Review?.ratingId) {
 				initialRatings[admin.id] = review.Review.ratingId;
 			}
@@ -83,7 +83,7 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 
 	const handleSave = () => {
 		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
 			const newRatingId = editedRatings[admin.id];
 
 			// Only save if changed or new
@@ -103,7 +103,7 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 		<tr className="border-b border-gray-700 bg-gray-800/50">
 			<td className="p-2 font-semibold">Host Ratings</td>
 			{admins.map(admin => {
-				const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+				const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
 				const currentRatingId = isEditing ? editedRatings[admin.id] : review?.Review?.ratingId;
 				const currentRating = ratings.find(r => r.id === currentRatingId);
 
@@ -164,7 +164,7 @@ interface GuesserRowProps {
 	seasonId: string | null;
 	ratings: Rating[];
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
-	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
+	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
 
 const GuesserRow: React.FC<GuesserRowProps> = ({
@@ -187,8 +187,8 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	const handleEdit = () => {
 		const initialRatings: Record<string, string> = {};
 		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
 			if (guess?.Rating.id) {
 				initialRatings[admin.id] = guess.Rating.id;
 			}
@@ -198,8 +198,8 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	};
 	const handleSave = () => {
 		admins.forEach(admin => {
-			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
 			const newRatingId = editedRatings[admin.id];
 
 			// Only save if changed or new
@@ -213,9 +213,9 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	// Calculate total points
 	const totalPoints = admins.reduce((acc, admin) => (
 		acc +
-		assignment.assignmentReviews?.reduce((acc2, ar) => (
+		assignment.AssignmentReviews?.reduce((acc2, ar) => (
 			acc2 + (
-				(ar.Review.userId !== admin.id) ? 0 : ar.guesses?.reduce((acc3, g) => (
+				(ar.Review.userId !== admin.id) ? 0 : ar.Guesses?.reduce((acc3, g) => (
 					acc3 + (
 						(g.userId === guesser.id
 							&& ar.Review.ratingId == g.Rating.id)
@@ -230,8 +230,8 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
 			<td className="p-2">{guesser.name}</td>
 			{admins.map(admin => {
-				const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-				const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+				const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+				const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
 				const isBlurred = !review?.Review?.ratingId;
 				const currentRatingId = isEditing ? editedRatings[admin.id] : guess?.Rating.id;
 				const currentRating = ratings.find(r => r.id === currentRatingId);
@@ -259,22 +259,21 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 							{!isEditing && guess && (
 								<div className="flex items-center gap-1">
 									<span><RatingIcon value={currentRating?.value || 0} /></span>
-									<span className="text-xs text-gray-400">{guess.points
-										|| (
-											review?.Review?.ratingId == guess.Rating.id
-												? 1 : 0)
+									<span className="text-xs text-gray-400">{(
+										review?.Review?.ratingId == guess.Rating.id
+											? 1 : 0)
 									} pts</span>
 
 									<PointEventButton
 										point={guess.Point}
-										points={guess.points}
+										points={1} /* TODO: replace with proper gamepoint lookup */
 										defaultReason="Guess"
 										onSave={({ points, reason }) => {
 											onAddPointForGuess({
 												userId: guesser.id,
 												seasonId: seasonId || guess.seasonId || "",
 												id: guess.id,
-												points,
+												adjustment: 0,
 												reason,
 											});
 										}}
@@ -387,7 +386,7 @@ interface AssignmentGridProps {
 	onGuessRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
-	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
+	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
 
 const AssignmentGrid: React.FC<AssignmentGridProps> = ({
@@ -403,13 +402,13 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 }) => {
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
-	assignment.assignmentReviews?.forEach((ar: any) => {
-		ar.guesses?.forEach((g: any) => guesserIds.add(g.userId));
+	assignment.AssignmentReviews?.forEach((ar: any) => {
+		ar.Guesses?.forEach((g: any) => guesserIds.add(g.userId));
 	});
 	const guessers = Array.from(guesserIds).map(id => {
 		// Find user object from one of the guesses
-		for (const ar of assignment.assignmentReviews || []) {
-			const guess = ar.guesses?.find((g: any) => g.userId === id);
+		for (const ar of assignment.AssignmentReviews || []) {
+			const guess = ar.Guesses?.find((g: any) => g.userId === id);
 			if (guess) return guess.User;
 		}
 		return { id, name: "Unknown" };
@@ -525,9 +524,6 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	});
 
 	const { mutate: createEpisode } = trpc.episode.add.useMutation();
-	const { mutate: setGuessPoints } = trpc.guess.setPointsForGuess.useMutation({
-		onSuccess: () => refetchRecordingData()
-	});
 
 	const { mutate: setReviewRating } = trpc.review.setReviewRating.useMutation({
 		onSuccess: () => refetchRecordingData()
@@ -565,7 +561,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		} else {
 			// Create new review for this assignment
 			// We need the movie ID from the assignment
-			const assignment = recordingData?.assignments.find(a => a.id === assignmentId);
+			const assignment = recordingData?.Assignments.find(a => a.id === assignmentId);
 			if (assignment) {
 				addToAssignment({
 					assignmentId,
@@ -626,21 +622,21 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						</Item>
 
 						<Item variant="outline">
-							<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
+							<ItemHeader>Season {seasonData?.title} - {seasonData?.GameType?.title}</ItemHeader>
 							<ItemContent>
 								<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
 								<ItemDescription>
-									{seasonData?.description} - {seasonData?.gameType?.description}
+									{seasonData?.description} - {seasonData?.GameType?.description}
 								</ItemDescription>
 							</ItemContent>
 						</Item>
 
 						{/* Extras */}
-						{recordingData.extras && recordingData.extras.length > 0 && (
+						{recordingData.Extras && recordingData.Extras.length > 0 && (
 							<Card className="w-full max-w-6xl p-6">
-								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.extras.length})</h3>
+								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.Extras.length})</h3>
 								<div className="space-y-4">
-									{recordingData.extras.map((extra) => {
+									{recordingData.Extras.map((extra) => {
 										if (extra.Review.Movie) return <div key={extra.id} className="flex flex-col items-center gap-2"><MovieCard movie={extra.Review.Movie} />{extra.Review.User?.name}</div>
 										if (extra.Review.Show) return <div key={extra.id} className="flex flex-col items-center gap-2"><ShowCard show={extra.Review.Show} />{extra.Review.User?.name}</div>
 										return null;
@@ -650,13 +646,13 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						{/* Assignments Grid */}
-						{recordingData.assignments && recordingData.assignments.length > 0 && (
+						{recordingData.Assignments && recordingData.Assignments.length > 0 && (
 							<Card className="w-full max-w-[95vw] p-6">
 								<h3 className="text-xl font-semibold mb-4">
-									Assignments ({recordingData.assignments.length})
+									Assignments ({recordingData.Assignments.length})
 								</h3>
 								<div className="space-y-8">
-									{recordingData.assignments.map((assignment) => (
+									{recordingData.Assignments.map((assignment) => (
 										<AssignmentGrid
 											key={assignment.id}
 											assignment={assignment}

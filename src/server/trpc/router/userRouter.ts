@@ -83,15 +83,15 @@ export const userRouter = router({
           userId: req.input.id
         },
         include: {
-          role: true
+          Role: true
         }
       })
     }),
   getTotalPointsForSeason: publicProcedure
-    .input(z.object({ 
-      userId: z.string(), 
+    .input(z.object({
+      userId: z.string(),
       seasonId: z.string().optional()
-     }))
+    }))
     .query(async ({ ctx, input }) => {
       const { userId } = input;
       let seasonId = input.seasonId ?? '';
@@ -140,7 +140,7 @@ export const userRouter = router({
         data: {
           userId: req.input.userId,
           seasonId: req.input.seasonId,
-          value: req.input.value,
+          adjustment: req.input.value,
           reason: req.input.reason,
           earnedOn: new Date(),
         }
@@ -154,7 +154,7 @@ export const userRouter = router({
         where: {
           pointsId: req.input.id
         }
-      } )) {
+      })) {
         await req.ctx.prisma.gamblingPoints.updateMany({
           where: {
             pointsId: req.input.id
@@ -169,7 +169,7 @@ export const userRouter = router({
         where: {
           pointsId: req.input.id
         }
-      } )) {
+      })) {
         await req.ctx.prisma.guess.updateMany({
           where: {
             pointsId: req.input.id
@@ -218,9 +218,9 @@ export const userRouter = router({
     .query(async ({ ctx }) => {
       return await ctx.prisma.user.findMany({
         where: {
-          roles: {
+          UserRoles: {
             some: {
-              role: {
+              Role: {
                 admin: true
               }
             }
