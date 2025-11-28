@@ -20,7 +20,7 @@ import MovieCard from "../../components/MovieCard";
 import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
-import { User, Rating } from "@prisma/client";
+import { User, Rating, Guess } from "@prisma/client";
 import { Mic2Icon, PencilIcon, SaveIcon, XIcon } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
@@ -162,6 +162,8 @@ interface GuesserRowProps {
 	assignment: AssignmentWithRelations;
 	admins: Admin[];
 	seasonId: string | null;
+	ratings: Rating[];
+	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
 }
 
@@ -170,8 +172,43 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	assignment,
 	admins,
 	seasonId,
+	ratings,
+	onRatingChange,
 	onAddPointForGuess
 }) => {
+
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
+
+	const handleCancel = () => {
+		setIsEditing(false);
+		setEditedRatings({});
+	};
+	const handleEdit = () => {
+		const initialRatings: Record<string, string> = {};
+		admins.forEach(admin => {
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+			if (guess?.Rating.id) {
+				initialRatings[admin.id] = guess.Rating.id;
+			}
+		});
+		setEditedRatings(initialRatings);
+		setIsEditing(true);
+	};
+	const handleSave = () => {
+		admins.forEach(admin => {
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+			const newRatingId = editedRatings[admin.id];
+
+			// Only save if changed or new
+			if (newRatingId !== guess?.Rating.id && newRatingId) {
+				onRatingChange(assignment.id, guesser.id, admin.id, newRatingId);
+			}
+		});
+		setIsEditing(false);
+	};
 
 	// Calculate total points
 	const totalPoints = admins.reduce((acc, admin) => (
@@ -196,13 +233,32 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				const review = assignment.assignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
 				const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
 				const isBlurred = !review?.Review?.ratingId;
+				const currentRatingId = isEditing ? editedRatings[admin.id] : guess?.Rating.id;
+				const currentRating = ratings.find(r => r.id === currentRatingId);
 
 				return (
 					<td key={admin.id} className="p-2">
 						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none" : ""}`}>
-							{guess ? (
+							{isEditing && (
+								<Select
+									value={currentRatingId || undefined}
+									onValueChange={(value) => setEditedRatings(prev => ({ ...prev, [admin.id]: value }))}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Select..." />
+									</SelectTrigger>
+									<SelectContent>
+										{ratings.map(r => (
+											<SelectItem key={r.id} value={r.id}>
+												<RatingIcon value={r.value} />
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							)}
+							{!isEditing && guess && (
 								<div className="flex items-center gap-1">
-									<span><RatingIcon value={guess.Rating.value} /></span>
+									<span><RatingIcon value={currentRating?.value || 0} /></span>
 									<span className="text-xs text-gray-400">{guess.points
 										|| (
 											review?.Review?.ratingId == guess.Rating.id
@@ -224,8 +280,6 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 										}}
 									/>
 								</div>
-							) : (
-								<span className="text-gray-600">-</span>
 							)}
 						</div>
 					</td>
@@ -235,9 +289,20 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				<span className="text-sm text-gray-400">{totalPoints} pts</span>
 			</td>
 			<td className="p-2">
-					<Button size="icon" variant="ghost">
+				{isEditing ? (
+					<ButtonGroup>
+						<Button size="icon" variant="ghost" onClick={handleCancel}>
+							<XIcon />
+						</Button>
+						<Button size="icon" variant="ghost" onClick={handleSave}>
+							<SaveIcon />
+						</Button>
+					</ButtonGroup>
+				) : (
+					<Button size="icon" variant="ghost" onClick={handleEdit}>
 						<PencilIcon />
 					</Button>
+				)}
 			</td>
 		</tr >
 	);
@@ -248,14 +313,15 @@ interface QuickAddGuessRowProps {
 	admins: Admin[];
 	ratings: Rating[];
 	assignment: AssignmentWithRelations;
-	onAddGuess: (userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
 }
 
 const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
 	users,
 	admins,
 	ratings,
-	onAddGuess,
+	assignment,
+	onAddOrUpdateGuess,
 }) => {
 	const [selectedUserId, setSelectedUserId] = useState<string>("");
 	const [guesses, setGuesses] = useState<Record<string, string>>({});
@@ -263,7 +329,7 @@ const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
 	const handleSave = () => {
 		if (!selectedUserId) return;
 		const guessData = Object.entries(guesses).map(([adminId, ratingId]) => ({ adminId, ratingId }));
-		onAddGuess(selectedUserId, guessData);
+		onAddOrUpdateGuess(assignment.id, selectedUserId, guessData);
 		setSelectedUserId("");
 		setGuesses({});
 	};
@@ -318,9 +384,9 @@ interface AssignmentGridProps {
 	ratings: Rating[];
 	users: User[];
 	seasonId: string | null;
-	onPointsChange: (id: string, points: number) => void;
-	onRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
-	onAddGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+	onGuessRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
+	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
+	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; points: number; reason: string }) => void;
 }
 
@@ -330,9 +396,9 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	ratings,
 	users,
 	seasonId,
-	onPointsChange,
-	onRatingChange,
-	onAddGuess,
+	onGuessRatingChange,
+	onAdminRatingChange,
+	onAddOrUpdateGuess,
 	onAddPointForGuess
 }) => {
 	// Get all unique users who made guesses
@@ -379,7 +445,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 						assignment={assignment}
 						admins={admins}
 						ratings={ratings}
-						onRatingChange={onRatingChange}
+						onRatingChange={onAdminRatingChange}
 					/>
 
 					{/* Guesser Rows */}
@@ -390,6 +456,8 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 							assignment={assignment}
 							admins={admins}
 							seasonId={seasonId}
+							ratings={ratings}
+							onRatingChange={onGuessRatingChange}
 							onAddPointForGuess={onAddPointForGuess}
 						/>
 					))}
@@ -400,7 +468,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 						admins={admins}
 						ratings={ratings}
 						assignment={assignment}
-						onAddGuess={(userId, guesses) => onAddGuess(assignment.id, userId, guesses)}
+						onAddOrUpdateGuess={onAddOrUpdateGuess}
 					/>
 				</tbody>
 			</table >
@@ -477,7 +545,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		onSuccess: () => refetchRecordingData()
 	});
 
-	const handleAddGuess = (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => {
+	const handleAddOrUpdateGuess = (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => {
 		addOrUpdateGuessesForUser({ assignmentId, userId, guesses });
 	};
 
@@ -491,11 +559,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		}
 	};
 
-	const handlePointsChange = (id: string, points: number) => {
-		setGuessPoints({ id, points });
-	};
-
-	const handleRatingChange = (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => {
+	const handleAdminRatingChange = (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => {
 		if (reviewId) {
 			setReviewRating({ reviewId, ratingId });
 		} else {
@@ -511,6 +575,10 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				});
 			}
 		}
+	};
+
+	const handleGuessRatingChange = (assignmentId: string, userId: string, adminId: string, ratingId: string) => {
+		addOrUpdateGuessesForUser({ assignmentId, userId, guesses: [{ adminId, ratingId }] });
 	};
 
 	return (
@@ -596,9 +664,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											ratings={ratings || []}
 											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
 											seasonId={seasonData?.id || null}
-											onPointsChange={handlePointsChange}
-											onRatingChange={handleRatingChange}
-											onAddGuess={handleAddGuess}
+											onGuessRatingChange={handleGuessRatingChange}
+											onAdminRatingChange={handleAdminRatingChange}
+											onAddOrUpdateGuess={handleAddOrUpdateGuess}
 											onAddPointForGuess={addPointForGuess}
 										/>
 									))}

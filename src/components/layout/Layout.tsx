@@ -11,7 +11,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { data: session, status } = useSession()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // We don't strictly enforce auth here because the pages do it via getServerSideProps
   // But visually we can control the layout.
@@ -43,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
       )}
 
       {/* Desktop Toggle Button */}
-      <div className="hidden md:block fixed top-4 left-4 z-50" style={{ left: sidebarOpen ? '272px' : '16px' }}>
+      <div className="block fixed top-4 left-4 z-50" style={{ left: sidebarOpen ? '272px' : '16px' }}>
         <Button
           variant="outline"
           size="icon"
