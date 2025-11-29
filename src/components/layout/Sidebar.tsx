@@ -36,6 +36,12 @@ export function Sidebar({ className }: SidebarProps) {
       active: pathname.startsWith("/user"),
     },
     {
+      label: "Seasons",
+      icon: Mic,
+      href: "/season",
+      active: pathname.startsWith("/season"),
+    },
+    {
       label: "About",
       icon: FileText,
       href: "/about",

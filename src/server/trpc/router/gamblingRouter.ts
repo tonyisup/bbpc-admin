@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
+import { calculateUserPoints } from "../utils/points";
 
 export const gamblingRouter = router({
   getForAssignment: publicProcedure
@@ -14,36 +15,80 @@ export const gamblingRouter = router({
         }
       });
     }),
-  
+
   getForUser: publicProcedure
-    .input(z.object({ userId: z.string() }))
+    .input(z.object({
+      userId: z.string(),
+      seasonId: z.string().optional()
+    }))
     .query(async (req) => {
+      let seasonId = req.input.seasonId ?? '';
+      if (!seasonId) {
+        const season = await req.ctx.prisma.season.findFirst({
+          orderBy: {
+            startedOn: 'desc',
+          },
+          where: { endedOn: null }
+        });
+        seasonId = season?.id ?? '';
+      }
       return await req.ctx.prisma.gamblingPoints.findMany({
         where: {
-          userId: req.input.userId
+          userId: req.input.userId,
+          seasonId: seasonId
         },
         include: {
-          Assignment: true
+          Assignment: {
+            include: {
+              Episode: true,
+              Movie: true
+            }
+          },
+          Point: true
         }
       });
     }),
-  
+
   add: publicProcedure
     .input(z.object({
       userId: z.string(),
       assignmentId: z.string(),
-      points: z.number()
+      points: z.number(),
+      seasonId: z.string().optional(),
     }))
-    .mutation(async (req) => {
-      return await req.ctx.prisma.gamblingPoints.create({
-        data: {
-          userId: req.input.userId,
-          assignmentId: req.input.assignmentId,
-          points: req.input.points
+    .mutation(async ({ ctx, input }) => {
+      const { userId, seasonId, points, assignmentId } = input;
+
+      if (!seasonId) {
+        const season = await ctx.prisma.season.findFirst({
+          orderBy: {
+            startedOn: 'desc',
+          },
+          where: { endedOn: null }
+        });
+        input.seasonId = season?.id ?? '';
+      }
+
+      return await ctx.prisma.$transaction(async (prisma) => {
+        const userTotalPoints = await calculateUserPoints(prisma, userId, seasonId);
+
+        if (userTotalPoints < points) {
+          throw new Error("Not enough points to gamble");
         }
+
+        const newGamble = await prisma.gamblingPoints.create({
+          data: {
+            userId,
+            assignmentId,
+            points,
+            seasonId,
+          },
+        });
+
+        return newGamble;
       });
     }),
-  
+
   update: publicProcedure
     .input(z.object({
       id: z.string(),
@@ -59,7 +104,7 @@ export const gamblingRouter = router({
         }
       });
     }),
-  
+
   remove: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
@@ -68,5 +113,30 @@ export const gamblingRouter = router({
           id: req.input.id
         }
       });
-    })
+    }),
+
+  addPointForGamblingPoint: publicProcedure
+    .input(z.object({
+      userId: z.string(),
+      seasonId: z.string(),
+      id: z.string(),
+      points: z.number(),
+      reason: z.string(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.point.create({
+        data: {
+          userId: req.input.userId,
+          seasonId: req.input.seasonId,
+          adjustment: req.input.points,
+          reason: req.input.reason,
+          earnedOn: new Date(),
+          GamblingPoints: {
+            connect: {
+              id: req.input.id
+            }
+          }
+        }
+      });
+    }),
 }); 

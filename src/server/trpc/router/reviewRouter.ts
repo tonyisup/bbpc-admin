@@ -33,7 +33,7 @@ export const reviewRouter = router({
 					movieId: req.input.movieId,
 					showId: req.input.showId,
 					ratingId: req.input.ratingId,
-					extraReviews: {
+					ExtraReviews: {
 						create: {
 							episodeId: req.input.episodeId
 						}
@@ -51,13 +51,13 @@ export const reviewRouter = router({
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.create({
 				include: {
-					assignmentReviews: true
+					AssignmentReviews: true
 				},
 				data: {
 					userId: req.input.userId,
 					movieId: req.input.movieId,
 					ratingId: req.input.ratingId,
-					assignmentReviews: {
+					AssignmentReviews: {
 						create: {
 							assignmentId: req.input.assignmentId
 						}
@@ -84,16 +84,16 @@ export const reviewRouter = router({
 				},
 				include: {
 					Review: true,
-					guesses: true
+					Guesses: true
 				}
 			})
 		}),
 	getExtrasForEpisode: publicProcedure
-		.input(z.object({episodeId: z.string()}))
+		.input(z.object({ episodeId: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.review.findMany({
 				where: {
-					extraReviews: {
+					ExtraReviews: {
 						some: {
 							episodeId: req.input.episodeId
 						}
@@ -107,12 +107,12 @@ export const reviewRouter = router({
 			})
 		}),
 	getForAssignment: protectedProcedure
-		.input(z.object({assignmentId: z.string()}))
+		.input(z.object({ assignmentId: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.assignmentReview.findMany({
 				where: {
-						assignmentId: req.input.assignmentId
-					},
+					assignmentId: req.input.assignmentId
+				},
 				include: {
 					Review: {
 						include: {
@@ -121,7 +121,7 @@ export const reviewRouter = router({
 							Rating: true,
 						}
 					},
-					guesses: {
+					Guesses: {
 						include: {
 							User: true,
 							Rating: true,
@@ -132,10 +132,10 @@ export const reviewRouter = router({
 		}),
 	getRatings: publicProcedure
 		.query(async (req) => {
-			return await req.ctx.prisma.rating.findMany()
+			return await req.ctx.prisma.rating.findMany({ orderBy: { value: 'desc' } })
 		}),
 	setReviewRating: protectedProcedure
-		.input(z.object({reviewId: z.string(), ratingId: z.string().nullish()}))
+		.input(z.object({ reviewId: z.string(), ratingId: z.string().nullish() }))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.update({
 				where: {
@@ -145,5 +145,5 @@ export const reviewRouter = router({
 					ratingId: req.input.ratingId
 				}
 			})
-		}),	
+		}),
 });
