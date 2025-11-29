@@ -147,12 +147,12 @@ const Home: NextPage = () => {
                   {stats.latestEpisode.description || "No description available."}
                 </p>
                 <div className="flex gap-2 justify-around">
-                  {stats.latestEpisode.assignments?.map((assignment) => (
+                  {stats.latestEpisode.Assignments?.map((assignment) => (
                     <AssignmentCard key={assignment.id} assignment={assignment} />
                   ))}
                 </div>
                 <div className="flex gap-2 justify-around">
-                  {stats.latestEpisode.extras?.map((extra) => (
+                  {stats.latestEpisode.Extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
@@ -194,12 +194,12 @@ const Home: NextPage = () => {
                   {stats.upcomingEpisode.description || "No description available."}
                 </p>
                 <div className="flex gap-2 justify-around">
-                  {stats.upcomingEpisode.assignments?.map((assignment) => (
+                  {stats.upcomingEpisode.Assignments?.map((assignment) => (
                     <AssignmentCard key={assignment.id} assignment={assignment} />
                   ))}
                 </div>
                 <div className="flex gap-2 justify-around">
-                  {stats.upcomingEpisode.extras?.map((extra) => (
+                  {stats.upcomingEpisode.Extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
