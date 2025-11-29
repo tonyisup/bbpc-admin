@@ -25,7 +25,7 @@ export const userRouter = router({
         }
       })
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({
       id: z.string(),
       name: z.string(),
@@ -67,11 +67,21 @@ export const userRouter = router({
       })
     }),
   get: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.string().optional() }))
     .query(async (req) => {
+      if (!req.input.id) {
+        return;
+      }
       return await req.ctx.prisma.user.findUnique({
         where: {
           id: req.input.id
+        },
+        include: {
+          UserRoles: {
+            include: {
+              Role: true
+            }
+          }
         }
       })
     }),
