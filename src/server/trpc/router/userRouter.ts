@@ -260,6 +260,21 @@ export const userRouter = router({
         }
       });
     }),
+  reorderSyllabus: protectedProcedure
+    .input(z.array(z.object({
+      id: z.string(),
+      order: z.number()
+    })))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.$transaction(
+        input.map((item) =>
+          ctx.prisma.syllabus.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+    }),
   getAdmins: publicProcedure
     .query(async ({ ctx }) => {
       return await ctx.prisma.user.findMany({

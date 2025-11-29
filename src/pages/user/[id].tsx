@@ -2,13 +2,12 @@ import { InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import router, { useRouter } from "next/router";
 import { useState } from "react";
-import { HiX, HiTrash } from "react-icons/hi";
+import { HiX, HiTrash, HiArrowUp, HiArrowDown } from "react-icons/hi";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Form, useForm } from "react-hook-form";
 import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -16,8 +15,7 @@ import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@/components/ui/item";
-import { Table, TableCaption, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
-import PointEventButton from "@/components/PointEventButton";
+import { Table, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
 import { AddPointPopover } from "@/components/AddPointPopover";
 
 const formSchema = z.object({
@@ -106,6 +104,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
     onSuccess: () => refetchSyllabus(),
   });
+  const { mutate: reorderSyllabus } = trpc.user.reorderSyllabus.useMutation({
+    onSuccess: () => refetchSyllabus(),
+  });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     updateUser({ id, name: data.name, email: data.email });
@@ -118,6 +119,30 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   const handleRemoveAssignment = (syllabusId: string) => {
     removeAssignment({ syllabusId });
   }
+
+  const handleMoveUp = (index: number) => {
+    if (!syllabus || index === 0) return;
+    const itemToMove = syllabus[index];
+    const itemAbove = syllabus[index - 1];
+
+    if (!itemToMove || !itemAbove) return;
+    reorderSyllabus([
+      { id: itemToMove.id, order: itemAbove.order },
+      { id: itemAbove.id, order: itemToMove.order }
+    ]);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (!syllabus || index === syllabus.length - 1) return;
+    const itemToMove = syllabus[index];
+    const itemBelow = syllabus[index + 1];
+
+    if (!itemToMove || !itemBelow) return;
+    reorderSyllabus([
+      { id: itemToMove.id, order: itemBelow.order },
+      { id: itemBelow.id, order: itemToMove.order }
+    ]);
+  };
 
   const handleCancelEdit = () => {
     router.back();
@@ -407,9 +432,25 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
           <h2 className="text-xl font-semibold">Syllabus</h2>
         </div>
         <div className="flex flex-col w-full px-6 space-y-4">
-          {syllabus?.map((item) => (
+          {syllabus?.map((item, index) => (
             <div key={item.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-md">
               <div className="flex items-center space-x-4">
+                <div className="flex flex-col space-y-1">
+                  <button
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                    className="p-1 hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <HiArrowUp />
+                  </button>
+                  <button
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === (syllabus?.length || 0) - 1}
+                    className="p-1 hover:bg-gray-700 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <HiArrowDown />
+                  </button>
+                </div>
                 <span className="text-gray-400">#{item.order}</span>
                 <div>
                   <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
