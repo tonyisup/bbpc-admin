@@ -201,17 +201,142 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               <ItemTitle>Point Events</ItemTitle>
             </ItemHeader>
             <ItemContent>
-              {points?.map((point) => (
-                <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md">
-                  <div className="flex flex-col">
-                    <span className="font-semibold">{((point.GamePointType?.points ?? 0) + point.adjustment)} points</span>
-                    <span className="text-sm text-gray-400">{point.reason}</span>
-                    <span className="text-xs text-gray-400">{point.GamePointType?.title}</span>
-                    <span className="text-xs text-gray-500">{point.Season?.title} - {point.earnedOn.toLocaleDateString()}</span>
+              {(() => {
+                const groupedPoints = points?.reduce((acc: any, point) => {
+                  const episode = point.Guess?.[0]?.AssignmentReview?.Assignment?.Episode
+                    || point.GamblingPoints?.[0]?.Assignment?.Episode
+                    || point.assignmentPoints?.[0]?.Assignment?.Episode;
+
+                  const assignment = point.Guess?.[0]?.AssignmentReview?.Assignment
+                    || point.GamblingPoints?.[0]?.Assignment
+                    || point.assignmentPoints?.[0]?.Assignment;
+
+                  if (episode) {
+                    if (!acc[episode.id]) {
+                      acc[episode.id] = {
+                        episode,
+                        assignments: {},
+                        otherPoints: []
+                      };
+                    }
+
+                    if (assignment) {
+                      if (!acc[episode.id].assignments[assignment.id]) {
+                        acc[episode.id].assignments[assignment.id] = {
+                          assignment,
+                          points: []
+                        };
+                      }
+                      acc[episode.id].assignments[assignment.id].points.push(point);
+                    } else {
+                      acc[episode.id].otherPoints.push(point);
+                    }
+                  } else {
+                    if (!acc['general']) {
+                      acc['general'] = {
+                        otherPoints: []
+                      };
+                    }
+                    acc['general'].otherPoints.push(point);
+                  }
+                  return acc;
+                }, { general: { otherPoints: [] } });
+
+                // Add un-pointed guesses
+                guesses?.filter(g => !g.Point).forEach(guess => {
+                  const episode = guess.AssignmentReview.Assignment.Episode;
+                  const assignment = guess.AssignmentReview.Assignment;
+
+                  if (episode) {
+                    if (!groupedPoints[episode.id]) {
+                      groupedPoints[episode.id] = {
+                        episode,
+                        assignments: {},
+                        otherPoints: []
+                      };
+                    }
+                    if (assignment) {
+                      if (!groupedPoints[episode.id].assignments[assignment.id]) {
+                        groupedPoints[episode.id].assignments[assignment.id] = {
+                          assignment,
+                          points: []
+                        };
+                      }
+                      // Add a "fake" point object for display purposes
+                      groupedPoints[episode.id].assignments[assignment.id].points.push({
+                        id: `guess-${guess.id}`,
+                        isGuess: true,
+                        guess: guess,
+                        earnedOn: guess.created,
+                        reason: 'Pending Guess',
+                        GamePointType: { points: 0, title: 'Guess' },
+                        adjustment: 0
+                      });
+                    }
+                  }
+                });
+
+                const sortedEpisodeKeys = Object.keys(groupedPoints || {})
+                  .filter(k => k !== 'general')
+                  .sort((a, b) => {
+                    return (groupedPoints?.[b]?.episode?.number ?? 0) - (groupedPoints?.[a]?.episode?.number ?? 0);
+                  });
+
+                const renderPoint = (point: any) => (
+                  <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md mb-2">
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{point.isGuess ? 'Pending' : `${(point.GamePointType?.points ?? 0) + point.adjustment} points`}</span>
+                      <span className="text-sm text-gray-400">{point.reason}</span>
+                      <span className="text-xs text-gray-400">{point.GamePointType?.title}</span>
+                      <span className="text-xs text-gray-500">{point.Season?.title} {point.earnedOn ? `- ${point.earnedOn.toLocaleDateString()}` : ''}</span>
+                    </div>
+                    {!point.isGuess && <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />}
                   </div>
-                  <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />
-                </div>
-              ))}
+                );
+
+                return (
+                  <div className="space-y-6">
+                    {sortedEpisodeKeys.map(episodeId => {
+                      const group = groupedPoints[episodeId];
+                      return (
+                        <div key={episodeId} className="border-l-2 border-violet-500 pl-4">
+                          <h3 className="text-lg font-bold mb-3 text-violet-400">Episode {group.episode.number}: {group.episode.title}</h3>
+
+                          {Object.values(group.assignments).map((assignmentGroup: any) => (
+                            <div key={assignmentGroup.assignment.id} className="ml-2 mb-4">
+                              <h4 className="text-md font-semibold mb-2 text-gray-300 flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded bg-gray-700 text-xs">{assignmentGroup.assignment.type}</span>
+                                {assignmentGroup.assignment.Movie?.title}
+                              </h4>
+                              <div className="pl-2">
+                                {assignmentGroup.points.map(renderPoint)}
+                              </div>
+                            </div>
+                          ))}
+
+                          {group.otherPoints.length > 0 && (
+                            <div className="ml-2 mb-4">
+                              <h4 className="text-md font-semibold mb-2 text-gray-300">Other</h4>
+                              <div className="pl-2">
+                                {group.otherPoints.map(renderPoint)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+
+                    {groupedPoints?.['general']?.otherPoints?.length > 0 && (
+                      <div className="border-l-2 border-gray-500 pl-4">
+                        <h3 className="text-lg font-bold mb-3 text-gray-400">General / Other</h3>
+                        <div className="pl-2">
+                          {groupedPoints['general'].otherPoints.map(renderPoint)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </ItemContent>
           </Item>
           <Item variant="outline">
@@ -259,7 +384,6 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                       <TableCell>{guess.AssignmentReview.Assignment.Episode?.number} - {guess.AssignmentReview.Assignment.Episode?.title}</TableCell>
                       <TableCell>{guess.Point?.GamePointType?.points}</TableCell>
                       <TableCell>
-
                       </TableCell>
                     </TableRow>
                   ))}
@@ -325,7 +449,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
             </div>
           ))}
         </div>
-      </main>
+      </main >
     </>
   );
 };
