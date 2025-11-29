@@ -9,6 +9,14 @@ export const gameRouter = router({
 		return await req.ctx.prisma.gameType.findMany();
 	}),
 
+	getAllGamePointTypes: publicProcedure.query(async (req) => {
+		return await req.ctx.prisma.gamePointType.findMany({
+			orderBy: {
+				title: 'asc'
+			}
+		});
+	}),
+
 	getGamePointsForGameType: publicProcedure
 		.input(z.object({ gameTypeId: z.number() }))
 		.query(async (req) => {

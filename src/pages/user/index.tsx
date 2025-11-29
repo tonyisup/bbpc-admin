@@ -99,7 +99,11 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
               {filteredItems?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/user/${encodeURIComponent(item.id)}`} className="hover:underline">
+                      {item.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     <Link href={`/user/${encodeURIComponent(item.id)}`} className="hover:underline">
                       {item.email}

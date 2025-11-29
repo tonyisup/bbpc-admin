@@ -33,20 +33,16 @@ export const calculateUserPoints = async (
 
   /* points to sum are in the linked gamepoint.points table */
 
-  const pointsResult = await prisma.gamePointType.aggregate({
-    _sum: {
-      points: true,
-    },
-    where: {
-      Point: {
-        every: {
-          userId,
-          seasonId: seasonIdToUse,
-        },
-      },
-    },
-  });
-  return (pointsResult._sum.points ?? 0)
+  const pointsResult = await prisma.$queryRaw<{ sum: number }[]>
+    `select [sum] = sum([b].[points])
+from [dbo].[point] [a]
+join [dbo].[gamepointtype] [b]
+	on [a].[gamepointtypeid] = [b].[id]
+where [a].[userid] = ${userId}
+and [a].[seasonid] = ${seasonIdToUse}
+`;
+
+  return (pointsResult[0]?.sum ?? 0)
     + (adjustmentResult._sum.adjustment ?? 0);
 };
 

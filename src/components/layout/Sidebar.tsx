@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { useRouter } from "next/router"
-import { LayoutDashboard, Mic2, Users, FileText, Beaker, LogOut, Mic } from "lucide-react"
+import { useEffect } from "react"
+import { LayoutDashboard, Mic2, Users, FileText, Beaker, LogOut, Mic, Sun } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { signOut, useSession } from "next-auth/react"
@@ -55,6 +56,22 @@ export function Sidebar({ className }: SidebarProps) {
     },
   ]
 
+  useEffect(() => {
+    const isDark = localStorage.getItem("theme") === "dark" ||
+      (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
+
+    if (isDark) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [])
+
+  function toggleTheme(): void {
+    const isDark = document.documentElement.classList.toggle("dark")
+    localStorage.setItem("theme", isDark ? "dark" : "light")
+  }
+
   return (
     <div className={cn("pb-12 h-screen border-r bg-card", className)}>
       <div className="space-y-4 py-4 h-full flex flex-col">
@@ -105,15 +122,26 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
             </div>
           )}
-          <Button
-            variant="destructive"
-            className="w-full justify-start"
-            onClick={() => signOut()}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log Out
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              className="w-full justify-start"
+              onClick={() => signOut()}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => toggleTheme()}
+            >
+              <Sun className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
       </div>
     </div>
   )

@@ -178,6 +178,7 @@ export const userRouter = router({
       seasonId: z.string(),
       value: z.number(),
       reason: z.string(),
+      gamePointTypeId: z.number().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.point.create({
@@ -187,6 +188,7 @@ export const userRouter = router({
           adjustment: req.input.value,
           reason: req.input.reason,
           earnedOn: new Date(),
+          gamePointTypeId: req.input.gamePointTypeId,
         }
       })
     }),

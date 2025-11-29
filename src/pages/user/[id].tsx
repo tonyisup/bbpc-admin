@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Table, TableCaption, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
 import PointEventButton from "@/components/PointEventButton";
+import { AddPointPopover } from "@/components/AddPointPopover";
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -125,7 +126,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
   return (
     <>
       <Head>
-        <title>User {user?.name ?? user?.email} - Bad Boys Podcast Admin</title>
+        <title>{user?.name ?? user?.email} - Bad Boys Podcast Admin</title>
       </Head>
 
       {modalOpen && user?.id && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refresh} />}
@@ -192,9 +193,17 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         </ul>
 
         <hr className="w-full my-6" />
-        <div className="flex my-6 px-6 w-full justify-between">
+        <div className="flex my-6 px-6 w-full justify-between items-center">
           <h2 className="text-xl font-semibold">Current Season Points: {totalPoints ?? '0'}</h2>
+          {currentSeason && (
+            <AddPointPopover
+              userId={id}
+              seasonId={currentSeason.id}
+              onSuccess={refreshAllPoints}
+            />
+          )}
         </div>
+
         <div className="flex flex-col w-full px-6 max-w-2xl space-y-4">
           <Item variant="outline">
             <ItemHeader>
