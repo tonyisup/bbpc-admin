@@ -26,7 +26,8 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
-import PointEventButton from "@/components/PointEventButton";
+import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
+import BonusPointEventButton from "@/components/BonusPointEventButton";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -161,7 +162,6 @@ interface GuesserRowProps {
 	};
 	assignment: AssignmentWithRelations;
 	admins: Admin[];
-	seasonId: string | null;
 	ratings: Rating[];
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
@@ -171,15 +171,17 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	guesser,
 	assignment,
 	admins,
-	seasonId,
 	ratings,
 	onRatingChange,
-	onAddPointForGuess
 }) => {
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
-
+	const { mutateAsync: setPointForGuess } = trpc.guess.setPointForGuess.useMutation();
+	const { data: bonusPoints, refetch: refetchBonusPoints } = trpc.game.getUserPointTotalForAssignment.useQuery({
+		userId: guesser.id,
+		assignmentId: assignment.id
+	});
 	const handleCancel = () => {
 		setIsEditing(false);
 		setEditedRatings({});
@@ -209,26 +211,11 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 		});
 		setIsEditing(false);
 	};
-
-	// Calculate total points
-	const totalPoints = admins.reduce((acc, admin) => (
-		acc +
-		assignment.AssignmentReviews?.reduce((acc2, ar) => (
-			acc2 + (
-				(ar.Review.userId !== admin.id) ? 0 : ar.Guesses?.reduce((acc3, g) => (
-					acc3 + (
-						(g.userId === guesser.id
-							&& ar.Review.ratingId == g.Rating.id)
-							? 1 : 0
-					)
-				), 0)
-			)
-		), 0)
-	), 0);
-
 	return (
 		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
-			<td className="p-2">{guesser.name}</td>
+			<td className="p-2">
+				<Link href={`/user/${guesser.id}`}>{guesser.name}</Link>
+			</td>
 			{admins.map(admin => {
 				const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
 				const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
@@ -264,20 +251,22 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 											? 1 : 0)
 									} pts</span>
 
-									<PointEventButton
-										point={guess.Point}
-										points={1} /* TODO: replace with proper gamepoint lookup */
-										defaultReason="Guess"
-										onSave={({ points, reason }) => {
-											onAddPointForGuess({
-												userId: guesser.id,
-												seasonId: seasonId || guess.seasonId || "",
+									{!guess.pointsId && (review?.Review?.ratingId == guess.Rating.id) && <PointEventButton
+										userId={guesser.id}
+										event={{
+											gamePointLookupId: 'guess',
+											reason: "",
+											adjustment: 0,
+										}}
+										onSaved={(pointEvent) => {
+											setPointForGuess({
 												id: guess.id,
-												adjustment: 0,
-												reason,
-											});
+												gamePointId: pointEvent.id,
+											})
+											guess.pointsId = pointEvent.id;
 										}}
 									/>
+									}
 								</div>
 							)}
 						</div>
@@ -285,7 +274,19 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				);
 			})}
 			<td className="p-2">
-				<span className="text-sm text-gray-400">{totalPoints} pts</span>
+				<span className="text-sm text-gray-400">{bonusPoints} pts</span>
+				<BonusPointEventButton
+					userId={guesser.id}
+					assignmentId={assignment.id}
+					event={{
+						gamePointLookupId: 'bonus',
+						reason: "",
+						adjustment: 0,
+					}}
+					onSaved={(pointEvent) => {
+						refetchBonusPoints();
+					}}
+				/>
 			</td>
 			<td className="p-2">
 				{isEditing ? (
@@ -298,9 +299,11 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 						</Button>
 					</ButtonGroup>
 				) : (
-					<Button size="icon" variant="ghost" onClick={handleEdit}>
-						<PencilIcon />
-					</Button>
+					<ButtonGroup>
+						<Button size="icon" variant="ghost" onClick={handleEdit}>
+							<PencilIcon />
+						</Button>
+					</ButtonGroup>
 				)}
 			</td>
 		</tr >
@@ -329,6 +332,11 @@ const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
 		if (!selectedUserId) return;
 		const guessData = Object.entries(guesses).map(([adminId, ratingId]) => ({ adminId, ratingId }));
 		onAddOrUpdateGuess(assignment.id, selectedUserId, guessData);
+		setSelectedUserId("");
+		setGuesses({});
+	};
+
+	const handleCancel = () => {
 		setSelectedUserId("");
 		setGuesses({});
 	};
@@ -362,16 +370,23 @@ const QuickAddGuessRow: React.FC<QuickAddGuessRowProps> = ({
 						</SelectTrigger>
 						<SelectContent>
 							{ratings.map(r => (
-								<SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+								<SelectItem key={r.id} value={r.id}>
+									<RatingIcon value={r.value} />
+								</SelectItem>
 							))}
 						</SelectContent>
 					</Select>
 				</td>
 			))}
 			<td className="p-2">
-				<Button size="icon" variant="outline" onClick={handleSave} disabled={!selectedUserId || Object.keys(guesses).length === 0}>
-					<SaveIcon />
-				</Button>
+				<ButtonGroup>
+					<Button size="icon" variant="outline" onClick={handleSave} disabled={!selectedUserId || Object.keys(guesses).length === 0}>
+						<SaveIcon />
+					</Button>
+					<Button size="icon" variant="outline" onClick={handleCancel}>
+						<XIcon />
+					</Button>
+				</ButtonGroup>
 			</td>
 		</tr>
 	);
@@ -454,7 +469,6 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 							guesser={guesser}
 							assignment={assignment}
 							admins={admins}
-							seasonId={seasonId}
 							ratings={ratings}
 							onRatingChange={onGuessRatingChange}
 							onAddPointForGuess={onAddPointForGuess}

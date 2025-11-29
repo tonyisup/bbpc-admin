@@ -107,7 +107,6 @@ export const userRouter = router({
         });
         seasonId = season?.id ?? '';
       }
-      console.log("seasonId", seasonId);
       if (!seasonId) {
         return 0;
       }
@@ -122,6 +121,7 @@ export const userRouter = router({
         },
         include: {
           Season: true,
+          GamePointType: true,
         },
         orderBy: {
           earnedOn: "desc",

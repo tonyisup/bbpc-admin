@@ -105,6 +105,17 @@ model Assignment {
   AudioMessage      AudioMessage[]
   GamblingPoints    GamblingPoints[]
   Syllabus          Syllabus[]
+  assignmentPoints  AssignmentPoints[]
+}
+
+model AssignmentPoints {
+  id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  assignmentId String     @db.UniqueIdentifier
+  userId       String
+  pointsId     String     @db.UniqueIdentifier
+  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  Point        Point      @relation(fields: [pointsId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  User         User       @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: NoAction)
 }
 
 model Banger {
@@ -186,6 +197,7 @@ model User {
   Sessions            Session[]
   Syllabus            Syllabus[]
   UserRoles           UserRole[]
+  assignmentPoints    AssignmentPoints[]
 }
 
 model Guess {
@@ -217,14 +229,15 @@ model Season {
 }
 
 model GameType {
-  id          Int         @id @default(autoincrement()) @db.TinyInt
+  id          Int             @id @default(autoincrement()) @db.TinyInt
+  lookupID    String          @unique
   title       String
   description String?
   Seasons     Season[]
-  GamePoint   GamePoint[]
+  GamePoint   GamePointType[]
 }
 
-model GamePoint {
+model GamePointType {
   id          Int      @id @default(autoincrement()) @db.TinyInt
   lookupID    String   @unique
   title       String
@@ -236,18 +249,19 @@ model GamePoint {
 }
 
 model Point {
-  id             String           @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  userId         String
-  seasonId       String           @db.UniqueIdentifier
-  adjustment     Int              @default(0) @db.SmallInt
-  reason         String
-  earnedOn       DateTime         @db.DateTime
-  gamePointId    Int?             @db.TinyInt
-  GamePoint      GamePoint?       @relation(fields: [gamePointId], references: [id], onDelete: Cascade)
-  GamblingPoints GamblingPoints[]
-  Guess          Guess[]
-  Season         Season           @relation(fields: [seasonId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User           User             @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  id               String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  userId           String
+  seasonId         String             @db.UniqueIdentifier
+  adjustment       Int                @default(0) @db.SmallInt
+  reason           String?
+  earnedOn         DateTime           @db.DateTime
+  gamePointTypeId  Int?               @db.TinyInt
+  GamePointType    GamePointType?     @relation(fields: [gamePointTypeId], references: [id], onDelete: Cascade)
+  GamblingPoints   GamblingPoints[]
+  Guess            Guess[]
+  Season           Season             @relation(fields: [seasonId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  User             User               @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  assignmentPoints AssignmentPoints[]
 }
 
 model AudioMessage {

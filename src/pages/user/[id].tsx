@@ -183,7 +183,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         <ul className="flex flex-col space-y-2">
           {userRoles?.map((userRole) => (
             <li key={userRole.id}>
-              <span>{userRole.role.name}</span>
+              <span>{userRole.Role?.name}</span>
               <div className="flex justify-center">
                 <HiX className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id })} />
               </div>
@@ -204,8 +204,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
               {points?.map((point) => (
                 <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md">
                   <div className="flex flex-col">
-                    <span className="font-semibold">{point.value} points</span>
+                    <span className="font-semibold">{((point.GamePointType?.points ?? 0) + point.adjustment)} points</span>
                     <span className="text-sm text-gray-400">{point.reason}</span>
+                    <span className="text-xs text-gray-400">{point.GamePointType?.title}</span>
                     <span className="text-xs text-gray-500">{point.Season?.title} - {point.earnedOn.toLocaleDateString()}</span>
                   </div>
                   <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />
@@ -232,20 +233,6 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                       <TableCell>{gamblingPoint.Assignment?.Episode?.number} - {gamblingPoint.Assignment?.Episode?.title ?? 'Unknown'}</TableCell>
                       <TableCell>{gamblingPoint.successful ? 'Won' : 'Lost'} {gamblingPoint.points} points</TableCell>
                       <TableCell>
-                        <PointEventButton
-                          point={gamblingPoint.Point}
-                          points={(gamblingPoint.successful ? 1 : -1) * gamblingPoint.points}
-                          defaultReason="Gambling"
-                          onSave={({ points, reason }) => {
-                            addPointForGamblingPoint({
-                              userId: id,
-                              seasonId: currentSeason?.id ?? '',
-                              id: gamblingPoint.id,
-                              points,
-                              reason,
-                            });
-                          }}
-                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -270,22 +257,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                     <TableRow key={guess.id}>
                       <TableCell>{guess.AssignmentReview.Assignment.Movie.title}</TableCell>
                       <TableCell>{guess.AssignmentReview.Assignment.Episode?.number} - {guess.AssignmentReview.Assignment.Episode?.title}</TableCell>
-                      <TableCell>{guess.points}</TableCell>
+                      <TableCell>{guess.Point?.GamePointType?.points}</TableCell>
                       <TableCell>
-                        <PointEventButton
-                          point={guess.Point}
-                          points={guess.points}
-                          defaultReason="Guess"
-                          onSave={({ points, reason }) => {
-                            addPointForGuess({
-                              userId: id,
-                              seasonId: currentSeason?.id ?? '',
-                              id: guess.id,
-                              points,
-                              reason,
-                            });
-                          }}
-                        />
+
                       </TableCell>
                     </TableRow>
                   ))}

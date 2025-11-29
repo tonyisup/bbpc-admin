@@ -33,7 +33,7 @@ export const calculateUserPoints = async (
 
   /* points to sum are in the linked gamepoint.points table */
 
-  const pointsResult = await prisma.gamePoint.aggregate({
+  const pointsResult = await prisma.gamePointType.aggregate({
     _sum: {
       points: true,
     },
@@ -48,4 +48,14 @@ export const calculateUserPoints = async (
   });
   return (pointsResult._sum.points ?? 0)
     + (adjustmentResult._sum.adjustment ?? 0);
+};
+
+export const getCurrentSeasonID = async (prisma: PrismaTransactionClient) => {
+  const season = await prisma.season.findFirst({
+    orderBy: {
+      startedOn: 'desc',
+    },
+    where: { endedOn: null }
+  });
+  return season?.id ?? '';
 };

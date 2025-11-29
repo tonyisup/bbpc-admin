@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { GamePointLookup } from "../../../utils/enums";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { getCurrentSeasonID } from "../utils/points";
 
 export const guessRouter = router({
 	addOrUpdateGuessesForUser: protectedProcedure
@@ -143,6 +145,36 @@ export const guessRouter = router({
 				}
 			})
 		}),
+	update: publicProcedure
+		.input(z.object({
+			id: z.string(),
+			ratingId: z.string()
+		}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.guess.update({
+				where: {
+					id: req.input.id
+				},
+				data: {
+					ratingId: req.input.ratingId
+				}
+			})
+		}),
+	setPointForGuess: publicProcedure
+		.input(z.object({
+			id: z.string(),
+			gamePointId: z.string(),
+		}))
+		.mutation(async (req) => {
+			return await req.ctx.prisma.guess.update({
+				where: {
+					id: req.input.id
+				},
+				data: {
+					pointsId: req.input.gamePointId
+				}
+			})
+		}),
 	getForAssignment: publicProcedure
 		.input(z.object({ assignmentId: z.string() }))
 		.query(async (req) => {
@@ -194,13 +226,7 @@ export const guessRouter = router({
 		.query(async (req) => {
 			let seasonId = req.input.seasonId ?? '';
 			if (!seasonId) {
-				const season = await req.ctx.prisma.season.findFirst({
-					orderBy: {
-						startedOn: 'desc',
-					},
-					where: { endedOn: null }
-				});
-				seasonId = season?.id ?? '';
+				seasonId = await getCurrentSeasonID(req.ctx.prisma);
 			}
 			return await req.ctx.prisma.guess.findMany({
 				where: {
@@ -218,7 +244,11 @@ export const guessRouter = router({
 							}
 						}
 					},
-					Point: true
+					Point: {
+						include: {
+							GamePointType: true
+						}
+					}
 				}
 			})
 		}),
@@ -282,9 +312,9 @@ export const guessRouter = router({
 		}))
 		.mutation(async (req) => {
 			if (!req.input.gamePointId) {
-				const gamePoint = await req.ctx.prisma.gamePoint.findFirst({
+				const gamePoint = await req.ctx.prisma.gamePointType.findFirst({
 					where: {
-						lookupID: 'guess',
+						lookupID: GamePointLookup.GUESS,
 					}
 				})
 				if (!gamePoint) {
@@ -298,7 +328,7 @@ export const guessRouter = router({
 					seasonId: req.input.seasonId,
 					adjustment: req.input.adjustment,
 					reason: req.input.reason,
-					gamePointId: req.input.gamePointId,
+					gamePointTypeId: req.input.gamePointId,
 					earnedOn: new Date(),
 					Guess: {
 						connect: {
@@ -308,4 +338,5 @@ export const guessRouter = router({
 				}
 			})
 		}),
+
 })

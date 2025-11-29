@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Save, Undo, Upload, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,27 +9,46 @@ import { GamePointType, Point } from "@prisma/client";
 import { trpc } from "@/utils/trpc";
 import { FieldGroup } from "./ui/field";
 
-export type PendingPointEvent = {
+export type PendingBonusPointEvent = {
 	adjustment: number;
 	gamePointLookupId: string;
 	reason: string;
 }
-export interface PointEventButtonProps {
+export interface BonusPointEventButtonProps {
 	userId: string;
 	seasonId?: string;
-	event: PendingPointEvent;
+	assignmentId: string;
+	event: PendingBonusPointEvent;
 	onSaved?: (pointEvent: Point & { GamePointType: GamePointType | null }) => void;
 }
 
-export default function PointEventButton({
+export default function BonusPointEventButton({
 	userId,
 	seasonId,
+	assignmentId,
 	event,
 	onSaved
-}: PointEventButtonProps) {
-	const [pendingPointEvent, setPendingPointEvent] = useState<PendingPointEvent>(event);
+}: BonusPointEventButtonProps) {
+	const [pendingPointEvent, setPendingPointEvent] = useState<PendingBonusPointEvent>(event);
 	const [pointEvent, setPointEvent] = useState<Point & { GamePointType: GamePointType | null } | null>(null);
-	const { mutateAsync: addPointEvent } = trpc.game.addPointEvent.useMutation(
+
+	// Local state for immediate input feedback
+	const [reason, setReason] = useState(event.reason);
+	const [adjustment, setAdjustment] = useState(event.adjustment);
+
+	const debouncedReason = useDebounce(reason, 500);
+	const debouncedAdjustment = useDebounce(adjustment, 500);
+
+	// Sync debounced values to pendingPointEvent
+	useEffect(() => {
+		setPendingPointEvent(prev => ({
+			...prev,
+			reason: debouncedReason,
+			adjustment: debouncedAdjustment
+		}));
+	}, [debouncedReason, debouncedAdjustment]);
+
+	const { mutateAsync: addBonusPointEvent } = trpc.game.addAssignmentPointEvent.useMutation(
 		{
 			onSuccess: (point) => {
 				setPointEvent(point);
@@ -38,8 +58,9 @@ export default function PointEventButton({
 	);
 
 	const handleSave = async () => {
-		addPointEvent({
+		addBonusPointEvent({
 			userId,
+			assignmentId,
 			seasonId,
 			gamePointLookupId: pendingPointEvent.gamePointLookupId,
 			adjustment: pendingPointEvent.adjustment,
@@ -49,6 +70,16 @@ export default function PointEventButton({
 
 	const handleReset = () => {
 		setPendingPointEvent(event);
+		setReason(event.reason);
+		setAdjustment(event.adjustment);
+	};
+
+	const handleReasonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setReason(e.target.value);
+	};
+
+	const handleAdjustmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setAdjustment(parseInt(e.target.value) || 0);
 	};
 
 	return (
@@ -65,11 +96,8 @@ export default function PointEventButton({
 							<Input
 								type="text"
 								placeholder="Reason"
-								value={pendingPointEvent.reason}
-								onChange={(e) => {
-									pendingPointEvent.reason = e.target.value;
-									setPendingPointEvent(pendingPointEvent);
-								}}
+								value={reason}
+								onChange={handleReasonChange}
 							/>
 						</div>
 						<div className="flex gap-2 items-center">
@@ -77,11 +105,8 @@ export default function PointEventButton({
 							<Input
 								type="number"
 								placeholder="Adjustment"
-								value={event.adjustment}
-								onChange={(e) => {
-									event.adjustment = parseInt(e.target.value);
-									setPendingPointEvent(event);
-								}}
+								value={adjustment}
+								onChange={handleAdjustmentChange}
 							/>
 						</div>
 					</div>
