@@ -12,7 +12,10 @@ export const SeasonsList = ({ seasons }: SeasonsListProps) => {
       {seasons?.map((season) => (
         <li key={season.id}>
           <Link href={`/season/${season.id}`}>
-            <p>{season.title}</p>
+            <div className="flex gap-2">
+              <p>{season.title}</p>
+              <p>{season.description}</p>
+            </div>
           </Link>
         </li>
       ))}

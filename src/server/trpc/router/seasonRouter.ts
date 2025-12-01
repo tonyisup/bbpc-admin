@@ -32,6 +32,40 @@ export const seasonRouter = router({
             include: {
               User: true,
               GamePointType: true,
+              Guess: {
+                include: {
+                  AssignmentReview: {
+                    include: {
+                      Assignment: {
+                        include: {
+                          Episode: true,
+                          Movie: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              assignmentPoints: {
+                include: {
+                  Assignment: {
+                    include: {
+                      Episode: true,
+                      Movie: true,
+                    },
+                  },
+                },
+              },
+              GamblingPoints: {
+                include: {
+                  Assignment: {
+                    include: {
+                      Episode: true,
+                      Movie: true,
+                    },
+                  },
+                },
+              },
             },
           },
           GamblingPoints: {
