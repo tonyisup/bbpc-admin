@@ -1,6 +1,6 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -8,6 +8,7 @@ import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -54,6 +55,7 @@ type Admin = User;
 type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['Assignments'][number];
 
 // --- Components ---
+
 interface HostRatingRowProps {
 	assignment: AssignmentWithRelations;
 	admins: Admin[];
@@ -506,6 +508,64 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	);
 };
 
+interface EpisodeHeaderEditorProps {
+	episode: NonNullable<RouterOutputs['episode']['getRecordingData']>;
+	onUpdate: () => void;
+}
+
+const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUpdate }) => {
+	const [title, setTitle] = useState(episode.title);
+	const [description, setDescription] = useState(episode.description || "");
+
+	const { mutate: updateDetails, isLoading } = trpc.episode.updateDetails.useMutation({
+		onSuccess: () => {
+			onUpdate();
+		}
+	});
+
+	useEffect(() => {
+		setTitle(episode.title);
+		setDescription(episode.description || "");
+	}, [episode.id, episode.title, episode.description]);
+
+	const handleSave = () => {
+		updateDetails({
+			id: episode.id,
+			title,
+			description
+		});
+	};
+
+	return (
+		<Item variant="outline">
+			<ItemHeader>
+				<div className="w-full flex flex-row items-center justify-between">
+					<span>Episode {episode.number}</span>
+					<Button size="sm" onClick={handleSave} disabled={isLoading}>
+						{isLoading ? "Saving..." : "Save Details"}
+					</Button>
+				</div>
+			</ItemHeader>
+			<ItemContent className="space-y-4">
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Title</label>
+					<Input value={title} onChange={e => setTitle(e.target.value)} />
+				</div>
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Description</label>
+					<Textarea
+						value={description}
+						onChange={e => setDescription(e.target.value)}
+						placeholder="Episode description..."
+						rows={3}
+					/>
+				</div>
+				<div className="text-sm text-muted-foreground">Status: {episode.status}</div>
+			</ItemContent>
+		</Item>
+	);
+};
+
 const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
 	const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
 	const [newEpisodeTitle, setNewEpisodeTitle] = useState("");
@@ -627,13 +687,10 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				{/* Recording Session */}
 				{recordingData && (
 					<>
-						<Item variant="outline">
-							<ItemHeader>Episode {recordingData.number}</ItemHeader>
-							<ItemContent>
-								<ItemTitle>{recordingData.title}</ItemTitle>
-								<ItemDescription>Status: {recordingData.status}</ItemDescription>
-							</ItemContent>
-						</Item>
+						<EpisodeHeaderEditor
+							episode={recordingData}
+							onUpdate={refetchRecordingData}
+						/>
 
 						<Item variant="outline">
 							<ItemHeader>Season {seasonData?.title} - {seasonData?.GameType?.title}</ItemHeader>
