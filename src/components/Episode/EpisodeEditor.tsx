@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
 import { trpc } from "../../utils/trpc";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
 
 interface Episode {
 	id: string;
@@ -45,7 +57,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setTitle(e.target.value);
 	};
-	const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setDescription(e.target.value);
 	};
 	const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,8 +66,8 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const handleRecordingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setRecording(e.target.value);
 	};
-	const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setStatus(e.target.value);
+	const handleStatusChange = (value: string) => {
+		setStatus(value);
 	};
 	const handleSave = () => {
 		if (!episode.id) return;
@@ -72,78 +84,74 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	};
 
 	return (
-		<section>
-			<h2 className="text-xl font-semibold">Episode Details</h2>
-			<div className="flex flex-col gap-2">
-				<div className="flex flex-col gap-2">
-					<label htmlFor="number">Number</label>
-					<input
-						className="bg-gray-800 text-gray-300"
+		<Card className="w-full max-w-2xl">
+			<CardHeader>
+				<CardTitle>Episode Details</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<div className="space-y-2">
+					<Label htmlFor="number">Number</Label>
+					<Input
 						id="number"
 						type="number"
 						value={number}
 						onChange={handleNumberChange}
 					/>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="title">Title</label>
-					<input
-						className="bg-gray-800 text-gray-300"
+				<div className="space-y-2">
+					<Label htmlFor="title">Title</Label>
+					<Input
 						id="title"
 						type="text"
 						value={title}
 						onChange={handleTitleChange}
 					/>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="desc">Description</label>
-					<input
-						className="bg-gray-800 text-gray-300"
+				<div className="space-y-2">
+					<Label htmlFor="desc">Description</Label>
+					<Textarea
 						id="desc"
-						type="text"
 						value={description}
 						onChange={handleDescriptionChange}
+						className="min-h-[100px]"
 					/>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="date">Date</label>
-					<input
-						className="bg-gray-800 text-gray-300"
+				<div className="space-y-2">
+					<Label htmlFor="date">Date</Label>
+					<Input
 						id="date"
 						type="date"
-						value={date?.toISOString().slice(0, 10) ?? undefined}
+						value={date?.toISOString().slice(0, 10) ?? ""}
 						onChange={handleDateChange}
 					/>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="url">Recording Url</label>
-					<input
-						className="bg-gray-800 text-gray-300"
+				<div className="space-y-2">
+					<Label htmlFor="url">Recording Url</Label>
+					<Input
 						id="url"
 						type="text"
 						value={recording}
 						onChange={handleRecordingChange}
 					/>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="status">Status</label>
-					<select
-						className="bg-gray-800 text-gray-300"
-						id="status"
-						value={status ?? ""}
-						onChange={handleStatusChange}
-					>
-						<option value="">Select Status</option>
-						<option value="next">Next</option>
-						<option value="recording">Recording</option>
-						<option value="published">Published</option>
-					</select>
+				<div className="space-y-2">
+					<Label htmlFor="status">Status</Label>
+					<Select value={status ?? ""} onValueChange={handleStatusChange}>
+						<SelectTrigger id="status">
+							<SelectValue placeholder="Select Status" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="next">Next</SelectItem>
+							<SelectItem value="recording">Recording</SelectItem>
+							<SelectItem value="published">Published</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
-				<button className="bg-slate-500 rounded-sm" onClick={handleSave}>
-					Save
-				</button>
-			</div>
-		</section>
+			</CardContent>
+			<CardFooter>
+				<Button onClick={handleSave}>Save</Button>
+			</CardFooter>
+		</Card>
 	);
 };
 
