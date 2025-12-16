@@ -12,7 +12,7 @@ export const episodeRouter = router({
           id: req.input.id
         },
         select: {
-          links: true
+          Links: true
         }
       })
     }),
@@ -102,13 +102,13 @@ export const episodeRouter = router({
           id: req.input.id
         },
         include: {
-          assignments: {
+          Assignments: {
             include: {
               User: true,
               Movie: true
             }
           },
-          extras: {
+          Extras: {
             include: {
               Review: {
                 include: {
@@ -129,13 +129,13 @@ export const episodeRouter = router({
           number: req.input.number
         },
         include: {
-          assignments: {
+          Assignments: {
             include: {
               User: true,
               Movie: true
             }
           },
-          extras: {
+          Extras: {
             include: {
               Review: {
                 include: {
@@ -208,6 +208,21 @@ export const episodeRouter = router({
         data: { status: req.input.status, title: req.input.title }
       });
     }),
+  updateDetails: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string().optional(),
+      description: z.string().optional()
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.episode.update({
+        where: { id: req.input.id },
+        data: {
+          title: req.input.title,
+          description: req.input.description
+        }
+      })
+    }),
   getByStatus: publicProcedure
     .input(z.object({ status: z.string() }))
     .query(async (req) => {
@@ -222,7 +237,7 @@ export const episodeRouter = router({
       const episode = await req.ctx.prisma.episode.findUnique({
         where: { id: req.input.episodeId },
         include: {
-          extras: {
+          Extras: {
             include: {
               Review: {
                 include: {
@@ -234,11 +249,11 @@ export const episodeRouter = router({
               }
             }
           },
-          assignments: {
+          Assignments: {
             include: {
               User: true,
               Movie: true,
-              assignmentReviews: {
+              AssignmentReviews: {
                 include: {
                   Review: {
                     include: {
@@ -247,10 +262,11 @@ export const episodeRouter = router({
                       Rating: true
                     }
                   },
-                  guesses: {
+                  Guesses: {
                     include: {
                       User: true,
-                      Rating: true
+                      Rating: true,
+                      Point: true
                     }
                   }
                 }

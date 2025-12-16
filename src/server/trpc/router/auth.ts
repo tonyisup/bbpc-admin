@@ -13,13 +13,13 @@ export const authRouter = router({
         userId: ctx.session.user.id,
       },
       include: {
-        role: {
+        Role: {
           select: {
             admin: true
           }
         }
       }
     })
-    return role?.role.admin;
+    return role?.Role.admin;
   })
 });

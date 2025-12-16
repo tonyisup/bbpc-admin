@@ -36,7 +36,7 @@ export const assignmentRouter = router({
       })
     }),
   remove: protectedProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.delete({
         where: {
@@ -45,7 +45,7 @@ export const assignmentRouter = router({
       })
     }),
   get: publicProcedure
-    .input(z.object({id: z.string()}))
+    .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findUnique({
         where: {
@@ -54,14 +54,14 @@ export const assignmentRouter = router({
       })
     }),
   getForEpisode: publicProcedure
-    .input(z.object({episodeId: z.string()}))
+    .input(z.object({ episodeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany({
         where: {
           episodeId: req.input.episodeId
-        }, 
+        },
         include: {
-          assignmentReviews: true,
+          AssignmentReviews: true,
           Movie: true,
           User: true
         }
@@ -72,39 +72,39 @@ export const assignmentRouter = router({
       return await req.ctx.prisma.assignment.findMany();
     }),
   getAudioMessages: protectedProcedure
-    .input(z.object({assignmentId: z.string()}))
+    .input(z.object({ assignmentId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.audioMessage.findMany({
         where: { assignmentId: req.input.assignmentId },
         include: {
           User: true
-        } 
+        }
       })
     }),
   removeAudioMessage: protectedProcedure
     .input(z.object({
-        id: z.number(),
-      }))
-      .mutation(async (req) => {
-        const audioMessage = await req.ctx.prisma.audioMessage.findUnique({
-            where: { id: req.input.id },
-              });
-    
-          if (!audioMessage) {
-            throw new Error("Audio message not found");
-          }
-    
-          if (!audioMessage.fileKey) {
-            throw new Error("Audio message not found");
-          }
-          // Delete from UploadThing
-          await utapi.deleteFiles([audioMessage.fileKey]);
-    
-          // Delete from Prisma database
-          await req.ctx.prisma.audioMessage.delete({
-            where: { id: req.input.id },
-          });
-    
-        return { success: true };
-      }),
+      id: z.number(),
+    }))
+    .mutation(async (req) => {
+      const audioMessage = await req.ctx.prisma.audioMessage.findUnique({
+        where: { id: req.input.id },
+      });
+
+      if (!audioMessage) {
+        throw new Error("Audio message not found");
+      }
+
+      if (!audioMessage.fileKey) {
+        throw new Error("Audio message not found");
+      }
+      // Delete from UploadThing
+      await utapi.deleteFiles([audioMessage.fileKey]);
+
+      // Delete from Prisma database
+      await req.ctx.prisma.audioMessage.delete({
+        where: { id: req.input.id },
+      });
+
+      return { success: true };
+    }),
 })
