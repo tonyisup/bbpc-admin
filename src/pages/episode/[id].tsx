@@ -11,6 +11,7 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { ssr } from "../../server/db/ssr";
 import EpisodeAudioMessages from "../../components/Episode/EpisodeAudioMessages";
 import EpisodeEditor from "../../components/Episode/EpisodeEditor";
+import EpisodePlainView from "../../components/Episode/EpisodePlainView";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -56,15 +57,14 @@ const Episode: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> 
             Episode {episode?.number} - {episode?.title}
           </h1>
 
-          {episode?.id && <Link href={`/episode/plain/${encodeURIComponent(episode?.id)}`}>
-            View
-          </Link>}
+          <div />
         </header>
         {episode && <EpisodeEditor episode={episode} onEpisodeUpdated={refetch} />}
         {episode && <EpisodeAssignments episode={episode} />}
         {episode && <EpisodeExtras episode={episode} />}
         {episode && <EpisodeLinks episode={episode} />}
         {episode && <EpisodeAudioMessages episode={episode} />}
+        {episode && <EpisodePlainView episodeId={episode.id} episodeNumber={episode.number} />}
       </main>
     </>
   );
