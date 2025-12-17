@@ -30,9 +30,9 @@ import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/com
 import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
 import BonusPointEventButton from "@/components/BonusPointEventButton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import Pusher, { Members } from "pusher-js";
-import SimplePeer, { Instance as PeerInstance } from "simple-peer";
 import { useRouter } from "next/router";
+import { useAudioSession } from "../../hooks/useAudioSession";
+import AudioStream from "../../components/AudioStream";
 
 // --- Types ---
 type Admin = User;
@@ -620,18 +620,19 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	const router = useRouter();
 
 	// Audio Session State
-	const [isAudioSessionActive, setIsAudioSessionActive] = useState(false);
 	const [showGuestNameDialog, setShowGuestNameDialog] = useState(false);
 	const [guestName, setGuestName] = useState("");
-	const [connectedUsers, setConnectedUsers] = useState<ConnectedUser[]>([]);
-	const [pusher, setPusher] = useState<Pusher | null>(null);
-	const [myStream, setMyStream] = useState<MediaStream | null>(null);
-	const [isMuted, setIsMuted] = useState(false);
 
-	const peersRef = useRef<{ [key: string]: PeerInstance }>({});
-	const userRef = useRef<ConnectedUser | null>(null);
-	const channelRef = useRef<any>(null);
-	const streamRef = useRef<MediaStream | null>(null);
+	const {
+		isAudioSessionActive,
+		connectedUsers,
+		initializeAudioSession,
+		toggleMute,
+		isMuted,
+		remoteStreams,
+		me
+	} = useAudioSession();
+
 
 	// Queries
 	const { data: pendingEpisode } = trpc.episode.getByStatus.useQuery({ status: "pending" });
@@ -702,7 +703,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		} else {
 			// Create new review for this assignment
 			// We need the movie ID from the assignment
-		const assignment = recordingData?.Assignments?.find(a => a.id === assignmentId);
+			const assignment = recordingData?.Assignments?.find(a => a.id === assignmentId);
 			if (assignment) {
 				addToAssignment({
 					assignmentId,
@@ -719,155 +720,6 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	};
 
 	// --- Audio Session Logic ---
-
-	const initializeAudioSession = async (name: string) => {
-		try {
-			// 1. Get Microphone Access
-			const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-			setMyStream(stream);
-			streamRef.current = stream;
-
-			// 2. Initialize Pusher
-			// Use the provided keys
-			const pusherInstance = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "3b866ed15192e27f32fe", {
-				cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "us3",
-				authEndpoint: "/api/pusher/auth",
-				auth: {
-					params: {
-						username: name
-					}
-				}
-			});
-
-			setPusher(pusherInstance);
-
-			// 3. Subscribe to Presence Channel
-			const channel = pusherInstance.subscribe("presence-audio");
-			channelRef.current = channel;
-
-			channel.bind("pusher:subscription_succeeded", (members: Members) => {
-				const activeUsers: ConnectedUser[] = [];
-				members.each((member: any) => {
-					if (member.id !== members.me.id) {
-						activeUsers.push({ id: member.id, info: member.info });
-					}
-				});
-				setConnectedUsers(activeUsers);
-				userRef.current = { id: members.me.id, info: members.me.info };
-
-				// WE DO NOT INITIATE CALLS HERE to avoid collision or double calling.
-				// We wait for 'member_added' event for new people, OR we rely on a convention.
-				// Convention: The NEW person initiates to everyone already there?
-				// Or Old people initiate to new person?
-				// Let's do: EXISTING members call the NEW member.
-				// So if I just joined, I do nothing but wait for offers.
-			});
-
-			channel.bind("pusher:member_added", (member: any) => {
-				setConnectedUsers((prev) => [...prev, { id: member.id, info: member.info }]);
-
-				// I am an existing member. A new member joined. I should call them.
-				createPeer(member.id, userRef.current!.id, stream);
-			});
-
-			channel.bind("pusher:member_removed", (member: any) => {
-				setConnectedUsers((prev) => prev.filter((u) => u.id !== member.id));
-				const peer = peersRef.current[member.id];
-				if (peer) {
-					peer.destroy();
-					delete peersRef.current[member.id];
-				}
-			});
-
-			// Handle Signaling
-			channel.bind("signal", (data: any) => {
-				// data: { signal, to, from }
-				// If this signal is for me
-				if (data.to === userRef.current?.id) {
-					const peer = peersRef.current[data.from];
-					if (peer) {
-						// Existing peer, signal them
-						peer.signal(data.signal);
-					} else {
-						// Incoming call from someone I haven't established a peer with yet
-						// This happens when THEY called ME (I am the new member, they are the old member)
-						addPeer(data.signal, data.from, stream);
-					}
-				}
-			});
-
-			setIsAudioSessionActive(true);
-
-		} catch (err) {
-			console.error("Failed to initialize audio session:", err);
-			alert("Could not access microphone or connect to server.");
-		}
-	};
-
-	const createPeer = (targetId: string, myId: string, stream: MediaStream) => {
-		const peer = new SimplePeer({
-			initiator: true,
-			trickle: false,
-			stream: stream,
-		});
-
-		peer.on("signal", (signal) => {
-			// Send signal to target via Pusher API
-			fetch("/api/pusher/signal", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					signal,
-					to: targetId,
-					from: myId,
-				}),
-			});
-		});
-
-		peer.on("stream", (remoteStream) => {
-			addAudioElement(targetId, remoteStream);
-		});
-
-		peersRef.current[targetId] = peer;
-	};
-
-	const addPeer = (incomingSignal: any, callerId: string, stream: MediaStream) => {
-		const peer = new SimplePeer({
-			initiator: false,
-			trickle: false,
-			stream: stream,
-		});
-
-		peer.on("signal", (signal) => {
-			// Send answer back to caller
-			fetch("/api/pusher/signal", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					signal,
-					to: callerId,
-					from: userRef.current?.id,
-				}),
-			});
-		});
-
-		peer.on("stream", (remoteStream) => {
-			addAudioElement(callerId, remoteStream);
-		});
-
-		peer.signal(incomingSignal);
-		peersRef.current[callerId] = peer;
-	};
-
-	const addAudioElement = (peerId: string, stream: MediaStream) => {
-		const audio = document.createElement("audio");
-		audio.srcObject = stream;
-		audio.id = `audio-${peerId}`;
-		audio.autoplay = true;
-		// Do not append to body visibly, maybe hidden container?
-		// Or just manage them in React state if we wanted UI, but direct DOM is easier for dynamic streams
-		document.getElementById("audio-container")?.appendChild(audio);
-	};
 
 	const handleStartSessionClick = () => {
 		// Check for name
@@ -887,30 +739,6 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		}
 	};
 
-	const toggleMute = () => {
-		if (streamRef.current) {
-			streamRef.current.getAudioTracks().forEach(track => {
-				track.enabled = !track.enabled;
-			});
-			const firstTrack = streamRef.current.getAudioTracks()[0];
-			if (firstTrack) {
-				setIsMuted(!firstTrack.enabled);
-			}
-		}
-	};
-
-	useEffect(() => {
-		// Cleanup on unmount
-		return () => {
-			if (channelRef.current && pusher) {
-				channelRef.current.unsubscribe();
-			}
-			Object.values(peersRef.current).forEach(peer => peer.destroy());
-			if (streamRef.current) {
-				streamRef.current.getTracks().forEach(track => track.stop());
-			}
-		};
-	}, []);
 
 	return (
 		<>
@@ -919,7 +747,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 			</Head>
 			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8 relative">
 				{/* Audio Container for Remote Streams */}
-				<div id="audio-container" className="hidden"></div>
+				<div className="hidden">
+					{remoteStreams.map(rs => (
+						<AudioStream key={rs.peerId} stream={rs.stream} />
+					))}
+				</div>
 
 				{/* Guest Name Dialog */}
 				<Dialog open={showGuestNameDialog} onOpenChange={setShowGuestNameDialog}>
@@ -976,7 +808,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						<div className="flex gap-3 flex-wrap">
 							<div className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
 								<div className="w-2 h-2 rounded-full bg-green-500"></div>
-								<span className="text-sm font-medium">{userRef.current?.info.name || "You"} (Me)</span>
+								<span className="text-sm font-medium">{me?.info.name || "You"} (Me)</span>
 							</div>
 							{connectedUsers.map(u => (
 								<div key={u.id} className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">

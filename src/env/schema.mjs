@@ -31,6 +31,7 @@ export const serverSchema = z.object({
   AUDIO_CHAPTERIZER_WEBHOOK_URL: z.string().url(),
   PUSHER_APP_ID: z.string(),
   PUSHER_SECRET: z.string(),
+  AZURE_STORAGE_ACCOUNT_CONNECTION_STRING: z.string(),
 });
 
 /**
