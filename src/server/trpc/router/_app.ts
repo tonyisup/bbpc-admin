@@ -14,6 +14,7 @@ import { seasonRouter } from "./seasonRouter";
 
 import { dashboardRouter } from "./dashboardRouter";
 import { gameRouter } from "./gameRouter";
+import { azureRouter } from "./azureRouter";
 
 export const appRouter = router({
   review: reviewRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   dashboard: dashboardRouter,
   season: seasonRouter,
   game: gameRouter,
+  azure: azureRouter,
 });
 
 // export type definition of API
