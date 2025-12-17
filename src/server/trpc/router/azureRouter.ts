@@ -54,4 +54,41 @@ export const azureRouter = router({
 				nextContinuationToken: segment.continuationToken,
 			};
 		}),
+
+	triggerUploadWorkflow: protectedProcedure
+		.input(z.object({
+			containerName: z.string(),
+			blobName: z.string(),
+		}))
+		.mutation(async ({ input }) => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containerClient = blobServiceClient.getContainerClient(input.containerName);
+			const blobClient = containerClient.getBlobClient(input.blobName);
+
+			const response = await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ fileUrl: blobClient.url }),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to trigger workflow: ${response.statusText}`);
+			}
+
+			return { success: true };
+		}),
+
+	getBlobUrl: protectedProcedure
+		.input(z.object({
+			containerName: z.string(),
+			blobName: z.string(),
+		}))
+		.query(async ({ input }) => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containerClient = blobServiceClient.getContainerClient(input.containerName);
+			const blobClient = containerClient.getBlobClient(input.blobName);
+			return { url: blobClient.url };
+		}),
 });
