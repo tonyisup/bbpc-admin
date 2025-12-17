@@ -12,7 +12,9 @@ const TestAudioPage = () => {
 		initializeAudioSession,
 		toggleMute,
 		isMuted,
-		remoteStreams
+		remoteStreams,
+		disconnect,
+		kickUser
 	} = useAudioSession();
 
 	const [name, setName] = useState("");
@@ -50,9 +52,14 @@ const TestAudioPage = () => {
 								<span className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
 								<span className="font-semibold text-green-400">Session Active</span>
 							</div>
-							<Button onClick={toggleMute} variant={isMuted ? "destructive" : "secondary"}>
-								{isMuted ? "Unmute Microphone" : "Mute Microphone"}
-							</Button>
+							<div className="flex gap-2">
+								<Button onClick={toggleMute} variant={isMuted ? "destructive" : "secondary"}>
+									{isMuted ? "Unmute Microphone" : "Mute Microphone"}
+								</Button>
+								<Button onClick={disconnect} variant="destructive">
+									End Session
+								</Button>
+							</div>
 						</div>
 
 						<div className="grid gap-6 md:grid-cols-2">
@@ -69,8 +76,18 @@ const TestAudioPage = () => {
 												<div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center font-bold">
 													{user.info.name.charAt(0).toUpperCase()}
 												</div>
-												<span>{user.info.name}</span>
-												{user.info.isGuest && <span className="text-xs text-gray-400">(Guest)</span>}
+												<div className="flex-1">
+													<span>{user.info.name}</span>
+													{user.info.isGuest && <span className="text-xs text-gray-400 ml-2">(Guest)</span>}
+												</div>
+												<Button
+													size="sm"
+													variant="ghost"
+													className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
+													onClick={() => kickUser(user.id)}
+												>
+													Remove
+												</Button>
 											</li>
 										))}
 									</ul>

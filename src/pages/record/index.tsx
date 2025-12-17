@@ -630,7 +630,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		toggleMute,
 		isMuted,
 		remoteStreams,
-		me
+		me,
+		disconnect,
+		kickUser
 	} = useAudioSession();
 
 
@@ -792,6 +794,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								<Button size="icon" variant="ghost" className="h-6 w-6 rounded-full ml-2" onClick={toggleMute}>
 									{isMuted ? <MicOffIcon className="w-3 h-3" /> : <MicIcon className="w-3 h-3" />}
 								</Button>
+								<Button size="sm" variant="ghost" className="h-6 px-2 rounded-full ml-1 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200" onClick={disconnect}>
+									End
+								</Button>
 							</div>
 						) : (
 							<Button onClick={handleStartSessionClick} variant="outline" className="gap-2">
@@ -814,6 +819,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								<div key={u.id} className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
 									<div className="w-2 h-2 rounded-full bg-blue-500"></div>
 									<span className="text-sm font-medium">{u.info.name}</span>
+									<button onClick={() => kickUser(u.id)} className="ml-2 text-xs text-red-400 hover:text-red-300">
+										<XIcon className="w-3 h-3" />
+									</button>
 								</div>
 							))}
 						</div>

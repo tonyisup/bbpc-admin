@@ -42,6 +42,54 @@ export const useAudioSession = () => {
 		setRemoteStreams(prev => prev.filter(s => s.peerId !== peerId));
 	}, []);
 
+	const disconnect = useCallback(() => {
+		if (channelRef.current && pusherRef.current) {
+			channelRef.current.unsubscribe();
+			channelRef.current = null;
+		}
+		Object.values(peersRef.current).forEach(peer => peer.destroy());
+		peersRef.current = {};
+
+		if (streamRef.current) {
+			streamRef.current.getTracks().forEach(track => track.stop());
+			streamRef.current = null;
+		}
+
+		setMyStream(null);
+		setConnectedUsers([]);
+		setRemoteStreams([]);
+		setIsAudioSessionActive(false);
+		setMe(null);
+	}, []);
+
+	const kickUser = useCallback((targetId: string) => {
+		// 1. Send signal to target to disconnect themselves
+		if (userRef.current?.id) {
+			try {
+				fetch("/api/pusher/signal", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						signal: "kick",
+						to: targetId,
+						from: userRef.current.id,
+					}),
+				});
+			} catch (err) {
+				console.error("Failed to send kick signal", err);
+			}
+		}
+
+		// 2. Disconnect them locally
+		const peer = peersRef.current[targetId];
+		if (peer) {
+			peer.destroy();
+			delete peersRef.current[targetId];
+		}
+		setConnectedUsers(prev => prev.filter(u => u.id !== targetId));
+		removeRemoteStream(targetId);
+	}, [removeRemoteStream]);
+
 	const createPeer = (targetId: string, myId: string, stream: MediaStream) => {
 		const peer = new SimplePeer({
 			initiator: true,
@@ -151,6 +199,12 @@ export const useAudioSession = () => {
 			// Handle Signaling
 			channel.bind("signal", (data: any) => {
 				if (data.to === userRef.current?.id) {
+					if (data.signal === 'kick') {
+						alert("You have been removed from the session.");
+						disconnect();
+						return;
+					}
+
 					const peer = peersRef.current[data.from];
 					if (peer) {
 						peer.signal(data.signal);
@@ -183,15 +237,9 @@ export const useAudioSession = () => {
 	useEffect(() => {
 		// Cleanup on unmount
 		return () => {
-			if (channelRef.current && pusherRef.current) {
-				channelRef.current.unsubscribe();
-			}
-			Object.values(peersRef.current).forEach(peer => peer.destroy());
-			if (streamRef.current) {
-				streamRef.current.getTracks().forEach(track => track.stop());
-			}
+			disconnect();
 		};
-	}, []);
+	}, [disconnect]);
 
 	return {
 		isAudioSessionActive,
@@ -201,6 +249,8 @@ export const useAudioSession = () => {
 		remoteStreams,
 		initializeAudioSession,
 		toggleMute,
-		me
+		me,
+		disconnect,
+		kickUser
 	};
 };
