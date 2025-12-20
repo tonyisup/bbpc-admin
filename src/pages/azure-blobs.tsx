@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
 import { trpc } from '../utils/trpc';
 import { Button } from '../components/ui/button';
@@ -107,10 +107,13 @@ export default function AzureBlobsPage() {
 	// Determine effective container list
 	const containerList = useMemo(() => containers || [], [containers]);
 
+
 	// Set default container if none selected and list is loaded
-	if (!selectedContainer && containerList.length > 0 && containerList[0] !== undefined) {
-		setSelectedContainer(containerList[0]);
-	}
+	useEffect(() => {
+		if (!selectedContainer && containerList.length > 0 && containerList[0] !== undefined) {
+			setSelectedContainer(containerList[0]);
+		}
+	}, [selectedContainer, containerList]);
 
 	return (
 		<div className="min-h-screen bg-gray-900 text-gray-100 p-8">
@@ -239,14 +242,14 @@ export default function AzureBlobsPage() {
 													{formatBytes(blob.contentLength ?? 0)}
 												</TableCell>
 												<TableCell className="text-gray-400 text-right text-xs">
-													{format(new Date(blob.lastModified), 'MMM d, yyyy HH:mm')}
+													{blob.lastModified ? format(new Date(blob.lastModified), 'MMM d, yyyy HH:mm') : '—'}
 												</TableCell>
 											</TableRow>
 										))
 									) : (
 										!isLoadingBlobs && (
 											<TableRow className="border-gray-700">
-												<TableCell colSpan={4} className="h-24 text-center text-gray-500">
+												<TableCell colSpan={5} className="h-24 text-center text-gray-500">
 													No blobs found in this container.
 												</TableCell>
 											</TableRow>

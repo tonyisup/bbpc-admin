@@ -1,10 +1,9 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
-import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
