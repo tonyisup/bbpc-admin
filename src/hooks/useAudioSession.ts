@@ -7,6 +7,7 @@ export interface ConnectedUser {
 	info: {
 		name: string;
 		isGuest: boolean;
+		isAdmin?: boolean;
 	};
 }
 
@@ -63,22 +64,27 @@ export const useAudioSession = () => {
 	}, []);
 
 	const kickUser = useCallback((targetId: string) => {
+		// Authorization Check
+		if (!userRef.current?.info?.isAdmin) {
+			console.error("Kick attempt blocked: User is not an admin.");
+			alert("Only admins can kick users.");
+			return;
+		}
+
 		// 1. Send signal to target to disconnect themselves
 		const currentUserId = userRef.current?.id;
 		if (currentUserId) {
-			try {
-				fetch("/api/pusher/signal", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						signal: "kick",
-						to: targetId,
-						from: currentUserId,
-					}),
-				});
-			} catch (err) {
+			fetch("/api/pusher/signal", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					signal: "kick",
+					to: targetId,
+					from: currentUserId,
+				}),
+			}).catch(err => {
 				console.error("Failed to send kick signal", err);
-			}
+			});
 		}
 
 		// 2. Disconnect them locally

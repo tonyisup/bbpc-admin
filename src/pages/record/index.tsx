@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
+import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -560,41 +561,10 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
 
-	// Allow guest access if they have a name in query params?
-	// The original logic required admin for this page.
-	// We might need to relax this for "guests" invited to record, or handle them differently.
-	// For now, let's assume guests use the same page but might not see all admin controls?
-	// OR, the prompt implies they are just here for audio.
-	// If the user wants "friends" to join, they probably don't have accounts.
-	// So we should relax the check or allow a specific "guest mode".
-
-	// However, the original code had:
-	/*
 	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
-	if (!session || !isAdmin) {
-		return { redirect: ... }
-	}
-	*/
+	const isGuest = context.query.guest === 'true';
 
-	// If we want to allow guests, we should check if they are "invited" (maybe checking query param?)
-	// But strictly, if this page is ADMIN ONLY for data entry, maybe guests shouldn't see all this data.
-	// But the requirement says "on the recording page, add a start recording... invite friends over to".
-	// This implies guests WILL visit this page.
-
-	// Let's relax the check for now to allow anyone, but maybe hide sensitive stuff?
-	// Or better, just return the session (even if null) and let the component handle UI.
-	// But wait, existing logic redirects.
-	// We will keep the admin check for "managing" data, but maybe allow access if `?guest=true`?
-	// The user said: "They can be guests. Iterate later on users".
-
-	// For simplicity, I will COMMENT OUT the strict redirect for now to allow testing the audio feature
-	// without needing a full admin login for every guest, OR I'll assume the user will give them credentials.
-	// actually, let's just make it accessible to everyone for now as requested.
-
-	/*
-	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
-
-	if (!session || !isAdmin) {
+	if (!session || (!isAdmin && !isGuest)) {
 		return {
 			redirect: {
 				destination: '/',
@@ -602,17 +572,16 @@ export async function getServerSideProps(context: any) {
 			}
 		}
 	}
-	*/
 
 	return {
 		props: {
 			session,
-			// Pass initial env vars if needed, but they are public
+			isAdmin: !!isAdmin
 		}
 	}
 }
 
-const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session }) => {
+const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session, isAdmin }) => {
 	const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
 	const [newEpisodeTitle, setNewEpisodeTitle] = useState("");
 
@@ -818,9 +787,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								<div key={u.id} className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
 									<div className="w-2 h-2 rounded-full bg-blue-500"></div>
 									<span className="text-sm font-medium">{u.info.name}</span>
-									<button onClick={() => kickUser(u.id)} className="ml-2 text-xs text-red-400 hover:text-red-300">
-										<XIcon className="w-3 h-3" />
-									</button>
+									{isAdmin && (
+										<button type="button" onClick={() => kickUser(u.id)} className="ml-2 text-xs text-red-400 hover:text-red-300">
+											<XIcon className="w-3 h-3" />
+										</button>
+									)}
 								</div>
 							))}
 						</div>
@@ -828,7 +799,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				)}
 
 				{/* Start Recording Section */}
-				{!recordingData && !pendingEpisode && nextEpisode && (
+				{!recordingData && !pendingEpisode && nextEpisode && isAdmin && (
 					<Empty>
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
@@ -857,10 +828,12 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				{/* Recording Session */}
 				{recordingData && (
 					<>
-						<EpisodeHeaderEditor
-							episode={recordingData}
-							onUpdate={refetchRecordingData}
-						/>
+						{isAdmin && (
+							<EpisodeHeaderEditor
+								episode={recordingData}
+								onUpdate={refetchRecordingData}
+							/>
+						)}
 
 						<Item variant="outline">
 							<ItemHeader>Season {seasonData?.title} - {seasonData?.GameType?.title}</ItemHeader>
@@ -887,7 +860,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						{/* Assignments Grid */}
-						{recordingData.Assignments && recordingData.Assignments.length > 0 && (
+						{recordingData.Assignments && recordingData.Assignments.length > 0 && isAdmin && (
 							<Card className="w-full max-w-[95vw] p-6">
 								<h3 className="text-xl font-semibold mb-4">
 									Assignments ({recordingData.Assignments.length})
@@ -932,8 +905,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 					</>
 				)}
 
-				{pendingEpisode && <EpisodeEditor episode={pendingEpisode} />}
-				{pendingEpisode && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
+				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
+				{pendingEpisode && isAdmin && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
 			</main>
 		</>
 	);

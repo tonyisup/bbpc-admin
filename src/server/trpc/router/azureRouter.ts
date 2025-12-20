@@ -65,18 +65,30 @@ export const azureRouter = router({
 			const containerClient = blobServiceClient.getContainerClient(input.containerName);
 			const blobClient = containerClient.getBlobClient(input.blobName);
 
-			const response = await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ fileUrl: blobClient.url }),
-			});
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-			if (!response.ok) {
-				throw new Error(`Failed to trigger workflow: ${response.statusText}`);
+			try {
+				const response = await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ fileUrl: blobClient.url }),
+					signal: controller.signal,
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to trigger workflow: ${response.statusText}`);
+				}
+			} catch (error: any) {
+				if (error.name === 'AbortError') {
+					throw new Error('Workflow trigger timed out after 10000ms');
+				}
+				throw error;
+			} finally {
+				clearTimeout(timeoutId);
 			}
-
 			return { success: true };
 		}),
 

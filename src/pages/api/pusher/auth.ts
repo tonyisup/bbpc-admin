@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { pusher } from "../../../lib/pusher";
+import { ssr } from "../../../server/db/ssr";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../api/auth/[...nextauth]";
 
@@ -26,13 +27,16 @@ export default async function handler(
   let user_info = {
     name: "Guest",
     isGuest: true,
+    isAdmin: false,
   };
 
   if (session && session.user) {
     user_id = session.user.id;
+    const isAdmin = await ssr.isAdmin(session.user.id);
     user_info = {
       name: session.user.name || "User",
       isGuest: false,
+      isAdmin,
     };
   } else {
     // If guest, try to get name from body if passed (handled by client logic calling auth endpoint?)
