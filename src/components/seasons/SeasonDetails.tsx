@@ -1,4 +1,15 @@
+import Link from "next/link";
 import { useMemo } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { type RouterOutputs } from "@/utils/trpc";
 
 type SeasonDetailsProps = {
@@ -6,8 +17,8 @@ type SeasonDetailsProps = {
 };
 
 export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
-  const { groupedPoints, otherPoints } = useMemo(() => {
-    if (!season) return { groupedPoints: [], otherPoints: [] };
+  const { groupedPoints, otherPoints, userSummary, chartData } = useMemo(() => {
+    if (!season) return { groupedPoints: [], otherPoints: [], userSummary: [], chartData: [] };
 
     const episodesMap = new Map<
       string,
@@ -17,8 +28,14 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
       }
     >();
     const others: any[] = [];
+    const userPointsMap = new Map<string, { user: any; total: number }>();
 
     season.Point.forEach((point) => {
+      if (!userPointsMap.has(point.User.id)) {
+        userPointsMap.set(point.User.id, { user: point.User, total: 0 });
+      }
+      const gamePointPoints = point.GamePointType?.points ?? 0;
+      userPointsMap.get(point.User.id)!.total += point.adjustment + gamePointPoints;
       let episode = null;
       let assignment = null;
 
@@ -65,8 +82,46 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         assignments: Array.from(ep.assignmentsMap.values()),
       }));
 
-    return { groupedPoints: sortedEpisodes, otherPoints: others };
+    const userSummary = Array.from(userPointsMap.values()).sort(
+      (a, b) => b.total - a.total
+    );
+
+    // Chart Data Calculation
+    const pointsByDate = [...season.Point].sort(
+      (a, b) => new Date(a.earnedOn).getTime() - new Date(b.earnedOn).getTime()
+    );
+
+    const chartDataPointMap = new Map<string, Record<string, any>>();
+    const runningTotals: Record<string, number> = {};
+
+    // Initialize totals for all users found in summary
+    userSummary.forEach(u => {
+      runningTotals[u.user.id] = 0;
+    });
+
+    pointsByDate.forEach((point) => {
+      const dateKey = new Date(point.earnedOn).toLocaleDateString();
+      const points = point.adjustment + (point.GamePointType?.points ?? 0);
+
+      runningTotals[point.User.id] = (runningTotals[point.User.id] || 0) + points;
+
+      // We overwrite/update the entry for this date with new current totals
+      // This ensures if multiple points happen on same day, we take the EOD state
+      // Actually, we want to capture the state *after* this point, effectively.
+      // But simpler is just to have one entry per day representing EOD totals.
+      chartDataPointMap.set(dateKey, {
+        date: dateKey,
+        ...runningTotals
+      });
+    });
+
+    const chartData = Array.from(chartDataPointMap.values());
+
+    return { groupedPoints: sortedEpisodes, otherPoints: others, userSummary, chartData };
   }, [season]);
+
+  const COLORS = ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#a855f7', '#ec4899', '#6366f1'];
+
 
   if (!season) return null;
 
@@ -76,6 +131,61 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         <h1 className="text-3xl font-bold">{season.title}</h1>
         <p className="text-gray-400">{season.description}</p>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {userSummary.map(({ user, total }) => (
+          <Link
+            href={`/user/${user.id}`}
+            key={user.id}
+            className="block rounded-lg border border-gray-700 bg-gray-800 p-4 transition-colors hover:bg-gray-700"
+          >
+            <div className="text-sm text-gray-400">Total Points</div>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-xl font-bold">{user.name}</span>
+              <span className="text-2xl font-bold text-blue-500">{total}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {chartData.length > 0 && (
+        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+          <h2 className="mb-4 text-xl font-bold">Points Over Time</h2>
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: '#f3f4f6' }}
+                  itemStyle={{ color: '#e5e7eb' }}
+                />
+                <Legend />
+                {userSummary.map((u, index) => (
+                  <Line
+                    key={u.user.id}
+                    type="monotone"
+                    dataKey={u.user.id}
+                    name={u.user.name ?? "User"}
+                    stroke={COLORS[index % COLORS.length]}
+                    activeDot={{ r: 8 }}
+                    strokeWidth={2}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="space-y-4">
@@ -140,8 +250,8 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                               </span>
                               <span
                                 className={`font-bold ${point.adjustment > 0
-                                    ? "text-green-500"
-                                    : "text-red-500"
+                                  ? "text-green-500"
+                                  : "text-red-500"
                                   }`}
                               >
                                 {point.adjustment > 0 ? "+" : ""}
@@ -174,8 +284,8 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                           </span>
                           <span
                             className={`font-bold ${point.adjustment > 0
-                                ? "text-green-500"
-                                : "text-red-500"
+                              ? "text-green-500"
+                              : "text-red-500"
                               }`}
                           >
                             {point.adjustment > 0 ? "+" : ""}
