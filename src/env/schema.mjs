@@ -29,6 +29,9 @@ export const serverSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   UPLOADTHING_TOKEN: z.string().optional(),
   AUDIO_CHAPTERIZER_WEBHOOK_URL: z.string().url(),
+  PUSHER_APP_ID: z.string(),
+  PUSHER_SECRET: z.string(),
+  AZURE_STORAGE_ACCOUNT_CONNECTION_STRING: z.string(),
 });
 
 /**
@@ -37,7 +40,8 @@ export const serverSchema = z.object({
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
-  // NEXT_PUBLIC_CLIENTVAR: z.string(),
+  NEXT_PUBLIC_PUSHER_KEY: z.string(),
+  NEXT_PUBLIC_PUSHER_CLUSTER: z.string(),
 });
 
 /**
@@ -47,5 +51,6 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
-  // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
+  NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
 };

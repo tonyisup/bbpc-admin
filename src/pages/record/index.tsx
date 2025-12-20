@@ -22,37 +22,29 @@ import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
 import { User, Rating, Guess } from "@prisma/client";
-import { Mic2Icon, PencilIcon, SaveIcon, XIcon } from "lucide-react";
+import { Mic2Icon, PencilIcon, SaveIcon, XIcon, MicIcon, MicOffIcon, HeadphonesIcon, RadioIcon } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
 import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
 import BonusPointEventButton from "@/components/BonusPointEventButton";
-
-export async function getServerSideProps(context: any) {
-	const session = await getServerSession(context.req, context.res, authOptions);
-	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
-
-	if (!session || !isAdmin) {
-		return {
-			redirect: {
-				destination: '/',
-				permanent: false,
-			}
-		}
-	}
-
-	return {
-		props: {
-			session
-		}
-	}
-}
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/router";
+import { useAudioSession } from "../../hooks/useAudioSession";
+import AudioStream from "../../components/AudioStream";
 
 // --- Types ---
 type Admin = User;
 type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['Assignments'][number];
+
+interface ConnectedUser {
+	id: string;
+	info: {
+		name: string;
+		isGuest: boolean;
+	};
+}
 
 // --- Components ---
 
@@ -566,9 +558,51 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 	);
 };
 
-const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (session) => {
+export async function getServerSideProps(context: any) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+	const isGuest = context.query.guest === 'true';
+
+	if (!session || (!isAdmin && !isGuest)) {
+		return {
+			redirect: {
+				destination: '/',
+				permanent: false,
+			}
+		}
+	}
+
+	return {
+		props: {
+			session,
+			isAdmin: !!isAdmin
+		}
+	}
+}
+
+const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session, isAdmin }) => {
 	const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
 	const [newEpisodeTitle, setNewEpisodeTitle] = useState("");
+
+	const router = useRouter();
+
+	// Audio Session State
+	const [showGuestNameDialog, setShowGuestNameDialog] = useState(false);
+	const [guestName, setGuestName] = useState("");
+
+	const {
+		isAudioSessionActive,
+		connectedUsers,
+		initializeAudioSession,
+		toggleMute,
+		isMuted,
+		remoteStreams,
+		me,
+		disconnect,
+		kickUser
+	} = useAudioSession();
+
 
 	// Queries
 	const { data: pendingEpisode } = trpc.episode.getByStatus.useQuery({ status: "pending" });
@@ -597,7 +631,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		}
 	});
 
-	const { mutate: createEpisode } = trpc.episode.add.useMutation();
+	const { mutate: createEpisode } = trpc.episode.add.useMutation({
+		onSuccess: () => {
+			// Do nothing special, handled by state update
+		}
+	});
 
 	const { mutate: setReviewRating } = trpc.review.setReviewRating.useMutation({
 		onSuccess: () => refetchRecordingData()
@@ -635,7 +673,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		} else {
 			// Create new review for this assignment
 			// We need the movie ID from the assignment
-			const assignment = recordingData?.Assignments.find(a => a.id === assignmentId);
+			const assignment = recordingData?.Assignments?.find(a => a.id === assignmentId);
 			if (assignment) {
 				addToAssignment({
 					assignmentId,
@@ -651,14 +689,117 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		addOrUpdateGuessesForUser({ assignmentId, userId, guesses: [{ adminId, ratingId }] });
 	};
 
+	// --- Audio Session Logic ---
+
+	const handleStartSessionClick = () => {
+		// Check for name
+		if (session?.user?.name) {
+			initializeAudioSession(session.user.name);
+		} else if (router.query.name) {
+			initializeAudioSession(router.query.name as string);
+		} else {
+			setShowGuestNameDialog(true);
+		}
+	};
+
+	const handleDialogJoin = () => {
+		if (guestName.trim()) {
+			setShowGuestNameDialog(false);
+			initializeAudioSession(guestName);
+		}
+	};
+
+
 	return (
 		<>
 			<Head>
 				<title>Recording {recordingData?.number} - Bad Boys Podcast Admin</title>
 			</Head>
-			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8">
+			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8 relative">
+				{/* Audio Container for Remote Streams */}
+				<div className="hidden">
+					{remoteStreams.map(rs => (
+						<AudioStream key={rs.peerId} stream={rs.stream} />
+					))}
+				</div>
+
+				{/* Guest Name Dialog */}
+				<Dialog open={showGuestNameDialog} onOpenChange={setShowGuestNameDialog}>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Enter your name</DialogTitle>
+							<DialogDescription>
+								Please enter your name to join the audio session.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="grid gap-4 py-4">
+							<Input
+								id="name"
+								value={guestName}
+								onChange={(e) => setGuestName(e.target.value)}
+								placeholder="Guest Name"
+							/>
+						</div>
+						<DialogFooter>
+							<Button onClick={handleDialogJoin}>Join Session</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+
+				{/* Header Actions: Audio Session */}
+				<div className="w-full max-w-6xl flex justify-between items-center mb-4">
+					<h1 className="text-2xl font-bold">Podcast Studio</h1>
+					<div className="flex gap-2 items-center">
+						{isAudioSessionActive ? (
+							<div className="flex items-center gap-2 bg-green-900/50 p-2 rounded-full px-4 border border-green-700">
+								<RadioIcon className="text-red-500 animate-pulse w-4 h-4" />
+								<span className="text-sm font-medium text-green-100">Live Audio</span>
+								<div className="h-4 w-px bg-green-700 mx-1"></div>
+								<span className="text-xs text-green-300 flex items-center gap-1">
+									<HeadphonesIcon className="w-3 h-3" />
+									{connectedUsers.length + 1}
+								</span>
+								<Button size="icon" variant="ghost" className="h-6 w-6 rounded-full ml-2" onClick={toggleMute}>
+									{isMuted ? <MicOffIcon className="w-3 h-3" /> : <MicIcon className="w-3 h-3" />}
+								</Button>
+								<Button size="sm" variant="ghost" className="h-6 px-2 rounded-full ml-1 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200" onClick={disconnect}>
+									End
+								</Button>
+							</div>
+						) : (
+							<Button onClick={handleStartSessionClick} variant="outline" className="gap-2">
+								<MicIcon className="w-4 h-4" /> Start Audio Session
+							</Button>
+						)}
+					</div>
+				</div>
+
+				{/* Connected Users List (Only when active) */}
+				{isAudioSessionActive && (
+					<Card className="w-full max-w-6xl p-4 mb-4 bg-gray-900/50">
+						<h4 className="text-sm font-semibold mb-2 text-gray-400">Participants</h4>
+						<div className="flex gap-3 flex-wrap">
+							<div className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
+								<div className="w-2 h-2 rounded-full bg-green-500"></div>
+								<span className="text-sm font-medium">{me?.info.name || "You"} (Me)</span>
+							</div>
+							{connectedUsers.map(u => (
+								<div key={u.id} className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
+									<div className="w-2 h-2 rounded-full bg-blue-500"></div>
+									<span className="text-sm font-medium">{u.info.name}</span>
+									{isAdmin && (
+										<button type="button" onClick={() => kickUser(u.id)} className="ml-2 text-xs text-red-400 hover:text-red-300">
+											<XIcon className="w-3 h-3" />
+										</button>
+									)}
+								</div>
+							))}
+						</div>
+					</Card>
+				)}
+
 				{/* Start Recording Section */}
-				{!recordingData && !pendingEpisode && nextEpisode && (
+				{!recordingData && !pendingEpisode && nextEpisode && isAdmin && (
 					<Empty>
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
@@ -670,7 +811,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							Next Episode: {nextEpisode.number} - {nextEpisode.title}
 						</EmptyDescription>
 						<EmptyContent>
-							<Button onClick={handleStartRecording}>Start Recording</Button>
+							<Button onClick={handleStartRecording}>Start Episode Log</Button>
 						</EmptyContent>
 					</Empty>
 				)}
@@ -687,10 +828,12 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				{/* Recording Session */}
 				{recordingData && (
 					<>
-						<EpisodeHeaderEditor
-							episode={recordingData}
-							onUpdate={refetchRecordingData}
-						/>
+						{isAdmin && (
+							<EpisodeHeaderEditor
+								episode={recordingData}
+								onUpdate={refetchRecordingData}
+							/>
+						)}
 
 						<Item variant="outline">
 							<ItemHeader>Season {seasonData?.title} - {seasonData?.GameType?.title}</ItemHeader>
@@ -717,13 +860,13 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						{/* Assignments Grid */}
-						{recordingData.Assignments && recordingData.Assignments.length > 0 && (
+						{recordingData.Assignments && recordingData.Assignments.length > 0 && isAdmin && (
 							<Card className="w-full max-w-[95vw] p-6">
 								<h3 className="text-xl font-semibold mb-4">
 									Assignments ({recordingData.Assignments.length})
 								</h3>
 								<div className="space-y-8">
-									{recordingData.Assignments.map((assignment) => (
+									{recordingData.Assignments?.map((assignment) => (
 										<AssignmentGrid
 											key={assignment.id}
 											assignment={assignment}
@@ -762,8 +905,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 					</>
 				)}
 
-				{pendingEpisode && <EpisodeEditor episode={pendingEpisode} />}
-				{pendingEpisode && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
+				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
+				{pendingEpisode && isAdmin && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
 			</main>
 		</>
 	);
