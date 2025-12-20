@@ -64,7 +64,8 @@ export const useAudioSession = () => {
 
 	const kickUser = useCallback((targetId: string) => {
 		// 1. Send signal to target to disconnect themselves
-		if (userRef.current?.id) {
+		const currentUserId = userRef.current?.id;
+		if (currentUserId) {
 			try {
 				fetch("/api/pusher/signal", {
 					method: "POST",
@@ -72,7 +73,7 @@ export const useAudioSession = () => {
 					body: JSON.stringify({
 						signal: "kick",
 						to: targetId,
-						from: userRef.current.id,
+						from: currentUserId,
 					}),
 				});
 			} catch (err) {
@@ -151,8 +152,15 @@ export const useAudioSession = () => {
 			streamRef.current = stream;
 
 			// 2. Initialize Pusher
-			const pusherInstance = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "3b866ed15192e27f32fe", {
-				cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "us3",
+			const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+			const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+			if (!pusherKey || !pusherCluster) {
+				throw new Error("Pusher configuration is missing. Check NEXT_PUBLIC_PUSHER_KEY and NEXT_PUBLIC_PUSHER_CLUSTER.");
+			}
+
+			const pusherInstance = new Pusher(pusherKey, {
+				cluster: pusherCluster,
 				authEndpoint: "/api/pusher/auth",
 				auth: {
 					params: {
@@ -183,7 +191,10 @@ export const useAudioSession = () => {
 			channel.bind("pusher:member_added", (member: any) => {
 				setConnectedUsers((prev) => [...prev, { id: member.id, info: member.info }]);
 				// Existing members call the new member
-				createPeer(member.id, userRef.current!.id, stream);
+				const currentUserId = userRef.current?.id;
+				if (currentUserId) {
+					createPeer(member.id, currentUserId, stream);
+				}
 			});
 
 			channel.bind("pusher:member_removed", (member: any) => {

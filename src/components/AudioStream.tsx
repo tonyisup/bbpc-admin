@@ -12,9 +12,14 @@ const AudioStream: React.FC<AudioStreamProps> = ({ stream, id }) => {
 		if (audioRef.current && stream) {
 			audioRef.current.srcObject = stream;
 		}
+		return () => {
+			if (audioRef.current) {
+				audioRef.current.srcObject = null;
+			}
+		};
 	}, [stream]);
 
-	return <audio ref={audioRef} id={id} autoPlay playsInline controls={false} style={{ display: "none" }} />;
+	return <audio ref={audioRef} id={id} autoPlay playsInline controls={false} style={{ display: "none" }} aria-hidden="true" />;
 };
 
 export default AudioStream;

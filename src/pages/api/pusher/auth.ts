@@ -23,11 +23,15 @@ export default async function handler(
   const socketId = req.body.socket_id;
   const channel = req.body.channel_name;
 
+  if (!socketId || !channel) {
+    return res.status(400).json({ message: "Missing socket_id or channel_name" });
+  }
+
   // Attempt to get user session
   const session = await getServerSession(req, res, authOptions);
 
   // Default guest data
-  let user_id = `guest-${Math.random().toString(36).substr(2, 9)}`;
+  let user_id = `guest-${Math.random().toString(36).substring(2, 9)}`;
   let user_info = {
     name: "Guest",
     isGuest: true,
@@ -46,7 +50,7 @@ export default async function handler(
     // but typically the client library just posts form data.
     // The client CAN pass extra params if configured in the Pusher constructor options `auth: { params: { ... } }`
     if (req.body.username) {
-       user_info.name = req.body.username;
+      user_info.name = req.body.username;
     }
   }
 

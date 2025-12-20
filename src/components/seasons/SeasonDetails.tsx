@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { type RouterOutputs } from "@/utils/trpc";
+import { format } from "date-fns";
 
 type SeasonDetailsProps = {
   season: RouterOutputs["season"]["getById"];
@@ -100,7 +101,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
     });
 
     pointsByDate.forEach((point) => {
-      const dateKey = new Date(point.earnedOn).toLocaleDateString();
+      const dateKey = format(new Date(point.earnedOn), "yyyy-MM-dd");
       const points = point.adjustment + (point.GamePointType?.points ?? 0);
 
       runningTotals[point.User.id] = (runningTotals[point.User.id] || 0) + points;
