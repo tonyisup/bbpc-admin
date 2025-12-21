@@ -8,14 +8,14 @@ export const ssr = {
 				userId: userId,
 			},
 			include: {
-				Role: {
+				role: {
 					select: {
 						admin: true
 					}
 				}
 			}
 		})
-		return role?.Role.admin ?? false;
+		return role?.role.admin ?? false;
 	},
 	getEpisode: async function (episodeId: string) {
 		return await prisma.episode.findUnique({
