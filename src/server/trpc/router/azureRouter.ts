@@ -1,0 +1,106 @@
+import { z } from "zod";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { env } from "../../../env/server.mjs";
+import { BlobServiceClient } from "@azure/storage-blob";
+
+export const azureRouter = router({
+	listContainers: protectedProcedure
+		.query(async () => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containers = [];
+			for await (const container of blobServiceClient.listContainers()) {
+				containers.push(container.name);
+			}
+			return containers;
+		}),
+
+	listBlobs: protectedProcedure
+		.input(z.object({
+			containerName: z.string(),
+			continuationToken: z.string().optional(),
+			pageSize: z.number().min(1).max(100).default(20),
+		}))
+		.query(async ({ input }) => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containerClient = blobServiceClient.getContainerClient(input.containerName);
+
+			// List blobs by page
+			const iterator = containerClient.listBlobsFlat().byPage({
+				maxPageSize: input.pageSize,
+				continuationToken: input.continuationToken,
+			});
+
+			const response = await iterator.next();
+
+			if (response.done) {
+				return {
+					blobs: [],
+					nextContinuationToken: undefined,
+				};
+			}
+
+			const segment = response.value;
+
+			const blobs = segment.segment.blobItems.map((blob) => ({
+				name: blob.name,
+				createdOn: blob.properties.createdOn,
+				lastModified: blob.properties.lastModified,
+				contentLength: blob.properties.contentLength,
+				contentType: blob.properties.contentType,
+			}));
+
+			return {
+				blobs,
+				nextContinuationToken: segment.continuationToken,
+			};
+		}),
+
+	triggerUploadWorkflow: protectedProcedure
+		.input(z.object({
+			containerName: z.string(),
+			blobName: z.string(),
+		}))
+		.mutation(async ({ input }) => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containerClient = blobServiceClient.getContainerClient(input.containerName);
+			const blobClient = containerClient.getBlobClient(input.blobName);
+
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+			try {
+				const response = await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ fileUrl: blobClient.url }),
+					signal: controller.signal,
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to trigger workflow: ${response.statusText}`);
+				}
+			} catch (error: any) {
+				if (error.name === 'AbortError') {
+					throw new Error('Workflow trigger timed out after 10000ms');
+				}
+				throw error;
+			} finally {
+				clearTimeout(timeoutId);
+			}
+			return { success: true };
+		}),
+
+	getBlobUrl: protectedProcedure
+		.input(z.object({
+			containerName: z.string(),
+			blobName: z.string(),
+		}))
+		.query(async ({ input }) => {
+			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
+			const containerClient = blobServiceClient.getContainerClient(input.containerName);
+			const blobClient = containerClient.getBlobClient(input.blobName);
+			return { url: blobClient.url };
+		}),
+});

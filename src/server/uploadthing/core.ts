@@ -1,6 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next-legacy";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "../../env/server.mjs";
+import { env } from "@/env/server.mjs";
 
 const f = createUploadthing();
 
@@ -24,6 +24,20 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
+
+      // Trigger n8n webhook
+      await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileUrl: file.url }),
+      })
+        .then((res) => {
+          if (!res.ok) console.error("Failed to trigger webhook:", res.statusText);
+          else console.log("Webhook triggered successfully");
+        })
+        .catch((err) => console.error("Error triggering webhook:", err));
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };

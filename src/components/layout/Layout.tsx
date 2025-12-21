@@ -1,7 +1,7 @@
-import React from "react"
+import React, { useState } from "react"
 import { Sidebar } from "./Sidebar"
 import { useSession } from "next-auth/react"
-import { Menu } from "lucide-react"
+import { Menu, PanelLeftClose, PanelLeft } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet"
 import { Button } from "../ui/button"
 
@@ -11,6 +11,8 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { data: session, status } = useSession()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   // We don't strictly enforce auth here because the pages do it via getServerSideProps
   // But visually we can control the layout.
 
@@ -33,8 +35,23 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden w-64 flex-col md:flex fixed inset-y-0 z-50">
-        <Sidebar />
+      {/* Desktop Sidebar */}
+      {sidebarOpen && (
+        <div className="hidden w-64 flex-col md:flex fixed inset-y-0 z-50">
+          <Sidebar />
+        </div>
+      )}
+
+      {/* Desktop Toggle Button */}
+      <div className="block fixed top-4 left-4 z-50" style={{ left: sidebarOpen ? '272px' : '16px' }}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="bg-background"
+        >
+          {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* Mobile Header */}
@@ -46,16 +63,19 @@ const Layout = ({ children }: LayoutProps) => {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-72">
-             <Sidebar className="border-none" />
+            <Sidebar className="border-none" />
           </SheetContent>
         </Sheet>
         <span className="ml-4 font-bold">BBPC Admin</span>
       </div>
 
-      <main className="flex-1 md:pl-64 pt-16 md:pt-0">
-         <div className="h-full p-8 space-y-6">
-           {children}
-         </div>
+      <main
+        className="flex-1 pt-16 md:pt-0 transition-all duration-300"
+        style={{ paddingLeft: sidebarOpen ? '256px' : '0px' }}
+      >
+        <div className="h-full p-8 space-y-6">
+          {children}
+        </div>
       </main>
     </div>
   )

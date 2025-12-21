@@ -7,7 +7,7 @@ import { z } from "zod";
  */
 export const serverSchema = z.object({
   TMDB_API_KEY: z.string(),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string(),
   NODE_ENV: z.enum(["development", "test", "production"]),
   NEXTAUTH_SECRET:
     process.env.NODE_ENV === "production"
@@ -20,15 +20,18 @@ export const serverSchema = z.object({
     // VERCEL_URL doesn't include `https` so it cant be validated as a URL
     process.env.VERCEL ? z.string() : z.string().url(),
   ),
-	EMAIL_SERVER_USER: z.string(),
-	EMAIL_SERVER_PASSWORD: z.string(),
-	EMAIL_SERVER_HOST: z.string(),
-	EMAIL_SERVER_PORT: z.string(),
-	EMAIL_FROM: z.string().email(),
+  EMAIL_SERVER_USER: z.string(),
+  EMAIL_SERVER_PASSWORD: z.string(),
+  EMAIL_SERVER_HOST: z.string(),
+  EMAIL_SERVER_PORT: z.string(),
+  EMAIL_FROM: z.string().email(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  UPLOADTHING_SECRET: z.string().optional(),
-  UPLOADTHING_APP_ID: z.string().optional(),
+  UPLOADTHING_TOKEN: z.string().optional(),
+  AUDIO_CHAPTERIZER_WEBHOOK_URL: z.string().url(),
+  PUSHER_APP_ID: z.string(),
+  PUSHER_SECRET: z.string(),
+  AZURE_STORAGE_ACCOUNT_CONNECTION_STRING: z.string(),
   AUDIO_UPOLOADER_URL: z.string(),
 });
 
@@ -38,7 +41,8 @@ export const serverSchema = z.object({
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
-  // NEXT_PUBLIC_CLIENTVAR: z.string(),
+  NEXT_PUBLIC_PUSHER_KEY: z.string(),
+  NEXT_PUBLIC_PUSHER_CLUSTER: z.string(),
 });
 
 /**
@@ -48,5 +52,6 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
-  // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
+  NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
 };
