@@ -19,14 +19,14 @@ const ExtraAdminCard: FC<ExtraAdminCardProps> = ({ extra, refreshExtras }) => {
 		<Card>
 			<CardHeader>
 				<CardTitle>
-					{extra.Movie?.title ?? extra.Show?.title ?? "Unknown"}
+					{extra.movie?.title ?? extra.show?.title ?? "Unknown"}
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-2 items-center">
-				{extra.Movie && <MovieCard movie={extra.Movie} showTitle={false} />}
-				{extra.Show && <ShowCard show={extra.Show} />}
+				{extra.movie && <MovieCard movie={extra.movie} showTitle={false} />}
+				{extra.show && <ShowCard show={extra.show} />}
 				<span className="text-sm">
-					{extra.User?.name ?? 'Unknown'}
+					{extra.user?.name ?? 'Unknown'}
 				</span>
 			</CardContent>
 			<CardFooter>

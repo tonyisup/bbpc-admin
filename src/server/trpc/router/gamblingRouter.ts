@@ -11,7 +11,7 @@ export const gamblingRouter = router({
           assignmentId: req.input.assignmentId
         },
         include: {
-          User: true
+          user: true
         }
       });
     }),
@@ -38,13 +38,13 @@ export const gamblingRouter = router({
           seasonId: seasonId
         },
         include: {
-          Assignment: {
+          assignment: {
             include: {
-              Episode: true,
-              Movie: true
+              episode: true,
+              movie: true
             }
           },
-          Point: true
+          point: true
         }
       });
     }),
@@ -131,7 +131,7 @@ export const gamblingRouter = router({
           adjustment: req.input.points,
           reason: req.input.reason,
           earnedOn: new Date(),
-          GamblingPoints: {
+          gamblingPoints: {
             connect: {
               id: req.input.id
             }

@@ -21,19 +21,19 @@ export const dashboardRouter = router({
         },
         orderBy: { date: 'desc' },
         include: {
-          Assignments: {
+          assignments: {
             include: {
-              Movie: true,
-              User: true
+              movie: true,
+              user: true
             }
           },
-          Extras: {
+          extras: {
             include: {
-              Review: {
+              review: {
                 include: {
-                  User: true,
-                  Movie: true,
-                  Show: true
+                  user: true,
+                  movie: true,
+                  show: true
                 }
               }
             }
@@ -45,8 +45,8 @@ export const dashboardRouter = router({
         take: 3,
         orderBy: { createdAt: 'desc' },
         include: {
-          User: true,
-          Movie: true
+          user: true,
+          movie: true
         }
       }),
       ctx.prisma.episode.findFirst({
@@ -55,19 +55,19 @@ export const dashboardRouter = router({
         },
         orderBy: { date: 'desc' },
         include: {
-          Assignments: {
+          assignments: {
             include: {
-              Movie: true,
-              User: true
+              movie: true,
+              user: true
             }
           },
-          Extras: {
+          extras: {
             include: {
-              Review: {
+              review: {
                 include: {
-                  User: true,
-                  Movie: true,
-                  Show: true
+                  user: true,
+                  movie: true,
+                  show: true
                 }
               }
             }
@@ -102,11 +102,11 @@ export const dashboardRouter = router({
         id: true,
         number: true,
         title: true,
-        Assignments: {
+        assignments: {
           select: {
-            AssignmentReviews: {
+            assignmentReviews: {
               select: {
-                Guesses: {
+                guesses: {
                   select: {
                     id: true
                   }
@@ -120,9 +120,9 @@ export const dashboardRouter = router({
 
     const data = episodes.map((ep) => {
       let guessCount = 0;
-      ep.Assignments.forEach((a) => {
-        a.AssignmentReviews.forEach((ar) => {
-          guessCount += ar.Guesses.length;
+      ep.assignments.forEach((a) => {
+        a.assignmentReviews.forEach((ar) => {
+          guessCount += ar.guesses.length;
         });
       });
       return {

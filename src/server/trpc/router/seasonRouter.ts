@@ -12,34 +12,34 @@ export const seasonRouter = router({
       return ctx.prisma.season.findUnique({
         where: { id: input.id },
         include: {
-          Guesses: {
+          guesses: {
             include: {
-              User: true,
-              Rating: true,
-              AssignmentReview: {
+              user: true,
+              rating: true,
+              assignmentReview: {
                 include: {
-                  Assignment: {
+                  assignment: {
                     include: {
-                      Movie: true,
-                      Episode: true,
+                      movie: true,
+                      episode: true,
                     },
                   },
                 },
               },
             },
           },
-          Point: {
+          points: {
             include: {
-              User: true,
-              GamePointType: true,
-              Guess: {
+              user: true,
+              gamePointType: true,
+              guesses: {
                 include: {
-                  AssignmentReview: {
+                  assignmentReview: {
                     include: {
-                      Assignment: {
+                      assignment: {
                         include: {
-                          Episode: true,
-                          Movie: true,
+                          episode: true,
+                          movie: true,
                         },
                       },
                     },
@@ -48,33 +48,33 @@ export const seasonRouter = router({
               },
               assignmentPoints: {
                 include: {
-                  Assignment: {
+                  assignment: {
                     include: {
-                      Episode: true,
-                      Movie: true,
+                      episode: true,
+                      movie: true,
                     },
                   },
                 },
               },
-              GamblingPoints: {
+              gamblingPoints: {
                 include: {
-                  Assignment: {
+                  assignment: {
                     include: {
-                      Episode: true,
-                      Movie: true,
+                      episode: true,
+                      movie: true,
                     },
                   },
                 },
               },
             },
           },
-          GamblingPoints: {
+          gamblingPoints: {
             include: {
-              User: true,
-              Assignment: {
+              user: true,
+              assignment: {
                 include: {
-                  Movie: true,
-                  Episode: true,
+                  movie: true,
+                  episode: true,
                 },
               },
             },

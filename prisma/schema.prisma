@@ -7,18 +7,18 @@ datasource db {
 }
 
 model Episode {
-  id                  String                @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  number              Int                   @db.SmallInt
-  title               String
-  recording           String?
-  date                DateTime?             @db.Date
-  description         String?
-  status              String?               @default("published")
-  Assignments         Assignment[]
-  AudioEpisodeMessage AudioEpisodeMessage[]
-  Bangers             Banger[]
-  Extras              ExtraReview[]
-  Links               Link[]
+  id                   String                @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  number               Int                   @db.SmallInt
+  title                String
+  recording            String?
+  date                 DateTime?             @db.Date
+  description          String?
+  status               String?               @default("published")
+  assignments          Assignment[]
+  audioEpisodeMessages AudioEpisodeMessage[]
+  bangers              Banger[]
+  extras               ExtraReview[]
+  links                Link[]
 }
 
 model Link {
@@ -26,7 +26,7 @@ model Link {
   url       String
   text      String
   episodeId String?  @db.UniqueIdentifier
-  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 }
 
 model Movie {
@@ -35,9 +35,10 @@ model Movie {
   year        Int          @db.SmallInt
   poster      String?
   url         String
-  Assignments Assignment[]
-  Reviews     Review[]
-  Syllabus    Syllabus[]
+  tmdbId      Int?
+  assignments Assignment[]
+  reviews     Review[]
+  syllabus    Syllabus[]
 }
 
 model Show {
@@ -46,7 +47,7 @@ model Show {
   year    Int      @db.SmallInt
   poster  String?
   url     String
-  Reviews Review[]
+  reviews Review[]
 }
 
 model Rating {
@@ -56,40 +57,40 @@ model Rating {
   sound    String?
   icon     String?
   category String?
-  Guesses  Guess[]
-  Reviews  Review[]
+  guesses  Guess[]
+  reviews  Review[]
 }
 
 model Review {
   id                String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId            String?
   movieId           String?            @db.UniqueIdentifier
-  showId            String?            @db.UniqueIdentifier
   ratingId          String?            @db.UniqueIdentifier
   ReviewdOn         DateTime?          @default(now(), map: "DF__Review__ReviewdO__0C1BC9F9") @db.DateTime
-  AssignmentReviews AssignmentReview[]
-  ExtraReviews      ExtraReview[]
-  Movie             Movie?             @relation(fields: [movieId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Show              Show?              @relation(fields: [showId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Rating            Rating?            @relation(fields: [ratingId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User              User?              @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  showId            String?            @db.UniqueIdentifier
+  assignmentReviews AssignmentReview[]
+  extraReviews      ExtraReview[]
+  movie             Movie?             @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  rating            Rating?            @relation(fields: [ratingId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  show              Show?              @relation(fields: [showId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model ExtraReview {
   id        String  @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   reviewId  String  @db.UniqueIdentifier
   episodeId String  @db.UniqueIdentifier
-  Episode   Episode @relation(fields: [episodeId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Review    Review  @relation(fields: [reviewId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  episode   Episode @relation(fields: [episodeId], references: [id], onUpdate: NoAction)
+  review    Review  @relation(fields: [reviewId], references: [id], onUpdate: NoAction)
 }
 
 model AssignmentReview {
   id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   assignmentId String     @db.UniqueIdentifier
   reviewId     String     @db.UniqueIdentifier
-  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Review       Review     @relation(fields: [reviewId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Guesses      Guess[]
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction)
+  review       Review     @relation(fields: [reviewId], references: [id], onUpdate: NoAction)
+  guesses      Guess[]
 }
 
 model Assignment {
@@ -98,24 +99,14 @@ model Assignment {
   episodeId         String             @db.UniqueIdentifier
   movieId           String             @db.UniqueIdentifier
   type              String             @default("HOMEWORK")
-  Episode           Episode            @relation(fields: [episodeId], references: [id])
-  Movie             Movie              @relation(fields: [movieId], references: [id])
-  User              User               @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  AssignmentReviews AssignmentReview[]
-  AudioMessage      AudioMessage[]
-  GamblingPoints    GamblingPoints[]
-  Syllabus          Syllabus[]
+  episode           Episode            @relation(fields: [episodeId], references: [id])
+  movie             Movie              @relation(fields: [movieId], references: [id])
+  user              User               @relation(fields: [userId], references: [id], onUpdate: NoAction)
   assignmentPoints  AssignmentPoints[]
-}
-
-model AssignmentPoints {
-  id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  assignmentId String     @db.UniqueIdentifier
-  userId       String
-  pointsId     String     @db.UniqueIdentifier
-  Assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Point        Point      @relation(fields: [pointsId], references: [id], onUpdate: NoAction, onDelete: Cascade)
-  User         User       @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  assignmentReviews AssignmentReview[]
+  audioMessages     AudioMessage[]
+  gamblingPoints    GamblingPoints[]
+  syllabus          Syllabus[]
 }
 
 model Banger {
@@ -125,8 +116,8 @@ model Banger {
   url       String
   episodeId String?  @db.UniqueIdentifier
   userId    String?
-  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  User      User?    @relation(fields: [userId], references: [id])
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model Role {
@@ -134,15 +125,15 @@ model Role {
   name        String
   description String
   admin       Boolean    @default(false)
-  UserRoles   UserRole[]
+  users       UserRole[]
 }
 
 model UserRole {
   id     String @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId String
   roleId Int    @db.TinyInt
-  Role   Role   @relation(fields: [roleId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User   User   @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onUpdate: NoAction)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Account {
@@ -180,24 +171,24 @@ model VerificationToken {
 }
 
 model User {
-  id                  String                @id @default(cuid())
-  name                String?
-  email               String?               @unique
-  emailVerified       DateTime?
-  image               String?
-  Accounts            Account[]
-  Assignments         Assignment[]
-  AudioEpisodeMessage AudioEpisodeMessage[]
-  AudioMessage        AudioMessage[]
-  Bangers             Banger[]
-  GamblingPoints      GamblingPoints[]
-  Guesses             Guess[]
-  Point               Point[]
-  Reviews             Review[]
-  Sessions            Session[]
-  Syllabus            Syllabus[]
-  UserRoles           UserRole[]
-  assignmentPoints    AssignmentPoints[]
+  id                   String                @id @default(cuid())
+  name                 String?
+  email                String?               @unique
+  emailVerified        DateTime?
+  image                String?
+  accounts             Account[]
+  assignments          Assignment[]
+  assignmentPoints     AssignmentPoints[]
+  audioEpisodeMessages AudioEpisodeMessage[]
+  audioMessages        AudioMessage[]
+  bangers              Banger[]
+  gamblingPoints       GamblingPoints[]
+  guesses              Guess[]
+  points               Point[]
+  reviews              Review[]
+  sessions             Session[]
+  syllabus             Syllabus[]
+  roles                UserRole[]
 }
 
 model Guess {
@@ -208,11 +199,11 @@ model Guess {
   assignmntReviewId String           @db.UniqueIdentifier
   seasonId          String           @db.UniqueIdentifier
   pointsId          String?          @db.UniqueIdentifier
-  Point             Point?           @relation(fields: [pointsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  AssignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Season            Season           @relation(fields: [seasonId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User              User             @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  assignmentReview  AssignmentReview @relation(fields: [assignmntReviewId], references: [id], onUpdate: NoAction)
+  point             Point?           @relation(fields: [pointsId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  rating            Rating           @relation(fields: [ratingId], references: [id], onUpdate: NoAction)
+  season            Season           @relation(fields: [seasonId], references: [id], onUpdate: NoAction)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Season {
@@ -222,46 +213,35 @@ model Season {
   gameTypeId     Int              @db.TinyInt
   endedOn        DateTime?        @db.DateTime
   startedOn      DateTime?        @db.DateTime
-  Guesses        Guess[]
-  Point          Point[]
-  GamblingPoints GamblingPoints[]
-  GameType       GameType         @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  gamblingPoints GamblingPoints[]
+  guesses        Guess[]
+  points         Point[]
+  gameType       GameType         @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
 }
 
 model GameType {
-  id          Int             @id @default(autoincrement()) @db.TinyInt
-  lookupID    String          @unique
-  title       String
-  description String?
-  Seasons     Season[]
-  GamePoint   GamePointType[]
-}
-
-model GamePointType {
-  id          Int      @id @default(autoincrement()) @db.TinyInt
-  lookupID    String   @unique
-  title       String
-  description String?
-  points      Int      @db.SmallInt
-  gameTypeId  Int      @db.TinyInt
-  Point       Point[]
-  GameType    GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  id             Int             @id @default(autoincrement()) @db.TinyInt
+  title          String
+  description    String?
+  lookupID       String          @unique
+  gamePointTypes GamePointType[]
+  seasons        Season[]
 }
 
 model Point {
   id               String             @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId           String
   seasonId         String             @db.UniqueIdentifier
-  adjustment       Int                @default(0) @db.SmallInt
   reason           String?
   earnedOn         DateTime           @db.DateTime
+  adjustment       Int?               @default(0) @db.SmallInt
   gamePointTypeId  Int?               @db.TinyInt
-  GamePointType    GamePointType?     @relation(fields: [gamePointTypeId], references: [id], onDelete: Cascade)
-  GamblingPoints   GamblingPoints[]
-  Guess            Guess[]
-  Season           Season             @relation(fields: [seasonId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User             User               @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
   assignmentPoints AssignmentPoints[]
+  gamblingPoints   GamblingPoints[]
+  guesses          Guess[]
+  gamePointType    GamePointType?     @relation(fields: [gamePointTypeId], references: [id], onDelete: Cascade)
+  season           Season             @relation(fields: [seasonId], references: [id], onUpdate: NoAction)
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model AudioMessage {
@@ -271,8 +251,8 @@ model AudioMessage {
   userId       String
   assignmentId String?     @db.UniqueIdentifier
   fileKey      String?
-  Assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  User         User        @relation(fields: [userId], references: [id], onUpdate: Cascade)
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User        @relation(fields: [userId], references: [id])
 }
 
 model AudioEpisodeMessage {
@@ -282,23 +262,24 @@ model AudioEpisodeMessage {
   fileKey   String?
   userId    String
   episodeId String?  @db.UniqueIdentifier
-  Episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  User      User     @relation(fields: [userId], references: [id], onUpdate: Cascade)
+  notes     String?
+  episode   Episode? @relation(fields: [episodeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model GamblingPoints {
-  id           String      @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId       String
-  assignmentId String      @db.UniqueIdentifier
-  seasonId     String?     @db.UniqueIdentifier
-  pointsId     String?     @db.UniqueIdentifier
+  assignmentId String     @db.UniqueIdentifier
   points       Int
-  createdAt    DateTime    @default(now()) @db.DateTime
-  successful   Boolean?    @default(false)
-  Assignment   Assignment? @relation(fields: [assignmentId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  User         User        @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
-  Season       Season?     @relation(fields: [seasonId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  Point        Point?      @relation(fields: [pointsId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  createdAt    DateTime   @default(now()) @db.DateTime
+  successful   Boolean?   @default(false)
+  seasonId     String?    @db.UniqueIdentifier
+  pointsId     String?    @db.UniqueIdentifier
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction)
+  point        Point?     @relation(fields: [pointsId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  season       Season?    @relation(fields: [seasonId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Syllabus {
@@ -309,7 +290,44 @@ model Syllabus {
   createdAt    DateTime    @default(now()) @db.DateTime
   assignmentId String?     @db.UniqueIdentifier
   notes        String?
-  Assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Movie        Movie       @relation(fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  User         User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  movie        Movie       @relation(fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AssignmentPoints {
+  id           String     @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  assignmentId String     @db.UniqueIdentifier
+  userId       String
+  pointsId     String     @db.UniqueIdentifier
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction)
+  point        Point      @relation(fields: [pointsId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         User       @relation(fields: [userId], references: [id], onUpdate: NoAction)
+}
+
+model GamePointType {
+  id          Int      @id @default(autoincrement()) @db.TinyInt
+  lookupID    String   @unique
+  title       String
+  description String?
+  points      Int      @db.SmallInt
+  gameTypeId  Int      @db.TinyInt
+  GameType    GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  Point       Point[]
+}
+
+model TagVote {
+  id        String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  tag       String
+  tmdbId    Int
+  isTag     Boolean?
+  createdAt DateTime @default(now())
+  sessionId String?
+}
+
+model Tag {
+  id          String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
 }

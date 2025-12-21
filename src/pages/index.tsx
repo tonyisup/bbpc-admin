@@ -147,12 +147,12 @@ const Home: NextPage = () => {
                   {stats.latestEpisode.description || "No description available."}
                 </p>
                 <div className="flex gap-2 justify-around">
-                  {stats.latestEpisode.Assignments?.map((assignment) => (
+                  {stats.latestEpisode.assignments?.map((assignment) => (
                     <AssignmentCard key={assignment.id} assignment={assignment} />
                   ))}
                 </div>
                 <div className="flex gap-2 justify-around">
-                  {stats.latestEpisode.Extras?.map((extra) => (
+                  {stats.latestEpisode.extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
@@ -194,12 +194,12 @@ const Home: NextPage = () => {
                   {stats.upcomingEpisode.description || "No description available."}
                 </p>
                 <div className="flex gap-2 justify-around">
-                  {stats.upcomingEpisode.Assignments?.map((assignment) => (
+                  {stats.upcomingEpisode.assignments?.map((assignment) => (
                     <AssignmentCard key={assignment.id} assignment={assignment} />
                   ))}
                 </div>
                 <div className="flex gap-2 justify-around">
-                  {stats.upcomingEpisode.Extras?.map((extra) => (
+                  {stats.upcomingEpisode.extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
@@ -232,8 +232,8 @@ const Home: NextPage = () => {
                   <span className="text-xs text-muted-foreground">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
-                  <MovieCard movie={item.Movie} showTitle={false} />
-                  <span className="text-xs text-muted-foreground">{item.User.name || "Unknown User"}</span>
+                  <MovieCard movie={item.movie} showTitle={false} />
+                  <span className="text-xs text-muted-foreground">{item.user.name || "Unknown User"}</span>
                 </div>
               ))}
               {(!stats?.latestSyllabus || stats.latestSyllabus.length === 0) && (

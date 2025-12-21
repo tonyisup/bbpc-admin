@@ -21,30 +21,30 @@ const EpisodePlainView: React.FC<EpisodePlainViewProps> = ({ episodeId, episodeN
 
   return (
     <section className="flex flex-col gap-2 w-full max-w-4xl p-4 border rounded-md">
-       <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Plain Text View</h2>
         <Button variant="ghost" size="icon" title="Copy to Clipboard" onClick={handleCopyToClipboard}>
-            <HiOutlineClipboardCopy className="h-4 w-4" />
+          <HiOutlineClipboardCopy className="h-4 w-4" />
         </Button>
       </div>
 
       <pre id="episode-data" className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-md overflow-x-auto font-mono">
-        {episode.Assignments.map(assignment => {
-            return <div key={assignment.id}>
-            {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
-            </div>
+        {episode.assignments.map(assignment => {
+          return <div key={assignment.id}>
+            {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.user.name}] {assignment.movie?.title} ({assignment.movie?.year})
+          </div>
         })} <br />
         Extras: <br />
-        {episode.Extras.map(extra => {
-            return <div key={extra.id}>
-            [{extra.Review.User?.name}] {extra.Review.Movie?.title} ({extra.Review.Movie?.year})
-            </div>
+        {episode.extras.map(extra => {
+          return <div key={extra.id}>
+            [{extra.review.user?.name}] {extra.review.movie?.title} ({extra.review.movie?.year})
+          </div>
         })} <br />
         {next?.title}:<br />
-        {next && next.Assignments.sort((a, b) => a.type === 'HOMEWORK' && b.type !== 'HOMEWORK' ? -1 : 1).map(assignment => {
-            return <div key={assignment.id}>
-            {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.User.name}] {assignment.Movie?.title} ({assignment.Movie?.year})
-            </div>
+        {next && next.assignments.sort((a, b) => a.type === 'HOMEWORK' && b.type !== 'HOMEWORK' ? -1 : 1).map(assignment => {
+          return <div key={assignment.id}>
+            {(assignment.type === 'HOMEWORK' ? 'Homework' : assignment.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus')} [{assignment.user.name}] {assignment.movie?.title} ({assignment.movie?.year})
+          </div>
         })} <br />
       </pre>
     </section>

@@ -20,9 +20,9 @@ export const guessRouter = router({
 			// Check if user is an admin
 			const userRoles = await ctx.prisma.userRole.findMany({
 				where: { userId: ctx.session.user.id },
-				include: { Role: true },
+				include: { role: true },
 			});
-			const isAdmin = userRoles.some(userRole => userRole.Role.admin);
+			const isAdmin = userRoles.some(userRole => userRole.role.admin);
 			if (!isAdmin) {
 				throw new TRPCError({ code: 'UNAUTHORIZED' });
 			}
@@ -63,7 +63,7 @@ export const guessRouter = router({
 					const assignmentReview = await prisma.assignmentReview.findFirst({
 						where: {
 							assignmentId: assignmentId,
-							Review: {
+							review: {
 								userId: adminId,
 								movieId: movieId,
 							},
@@ -180,13 +180,13 @@ export const guessRouter = router({
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany({
 				include: {
-					User: true,
-					Rating: true
+					user: true,
+					rating: true
 				},
 				where: {
-					AssignmentReview: {
+					assignmentReview: {
 						is: {
-							Assignment: {
+							assignment: {
 								is: {
 									id: req.input.assignmentId
 								}
@@ -201,11 +201,11 @@ export const guessRouter = router({
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany({
 				where: {
-					AssignmentReview: {
+					assignmentReview: {
 						is: {
-							Assignment: {
+							assignment: {
 								is: {
-									Episode: {
+									episode: {
 										is: {
 											id: req.input.episodeId
 										}
@@ -234,19 +234,19 @@ export const guessRouter = router({
 					seasonId: seasonId
 				},
 				include: {
-					AssignmentReview: {
+					assignmentReview: {
 						include: {
-							Assignment: {
+							assignment: {
 								include: {
-									Episode: true,
-									Movie: true
+									episode: true,
+									movie: true
 								}
 							}
 						}
 					},
-					Point: {
+					point: {
 						include: {
-							GamePointType: true
+							gamePointType: true
 						}
 					}
 				}
@@ -271,7 +271,7 @@ export const guessRouter = router({
 					endedOn: null,
 				},
 				include: {
-					GameType: true
+					gameType: true
 				}
 			})
 		}),
@@ -330,7 +330,7 @@ export const guessRouter = router({
 					reason: req.input.reason,
 					gamePointTypeId: req.input.gamePointId,
 					earnedOn: new Date(),
-					Guess: {
+					guesses: {
 						connect: {
 							id: req.input.id
 						}

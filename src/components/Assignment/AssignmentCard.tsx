@@ -5,18 +5,18 @@ import MovieCard from "../MovieCard"
 
 interface AssignmentCardProps {
 	assignment: Assignment & {
-		Movie: Movie
-		User: User
+		movie: Movie
+		user: User
 	}
 }
 
 const AssignmentCard: FC<AssignmentCardProps> = ({ assignment }) => {
 	return (
 		<div className="flex flex-col gap-2 items-center">
-			<MovieCard movie={assignment.Movie} showTitle={false} />
+			<MovieCard movie={assignment.movie} showTitle={false} />
 			<div className="flex gap-2 justify-center items-center">
 				<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
-				{assignment.User && <span className="text-sm">{assignment.User.name}</span>}
+				{assignment.user && <span className="text-sm">{assignment.user.name}</span>}
 			</div>
 		</div>
 	)

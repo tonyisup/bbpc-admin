@@ -112,9 +112,9 @@ export const gameRouter = router({
 		.query(async (req) => {
 			const points = await req.ctx.prisma.assignmentPoints.findMany({
 				include: {
-					Point: {
+					point: {
 						include: {
-							GamePointType: true
+							gamePointType: true
 						}
 					}
 				},
@@ -126,6 +126,6 @@ export const gameRouter = router({
 			if (!points) {
 				return 0;
 			}
-			return points.reduce((acc, point) => acc + (point.Point?.GamePointType?.points ?? 0) + (point.Point?.adjustment ?? 0), 0);
+			return points.reduce((acc, point) => acc + (point.point?.gamePointType?.points ?? 0) + (point.point?.adjustment ?? 0), 0);
 		})
 })

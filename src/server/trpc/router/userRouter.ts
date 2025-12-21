@@ -77,9 +77,9 @@ export const userRouter = router({
           id: req.input.id
         },
         include: {
-          UserRoles: {
+          roles: {
             include: {
-              Role: true
+              role: true
             }
           }
         }
@@ -93,7 +93,7 @@ export const userRouter = router({
           userId: req.input.id
         },
         include: {
-          Role: true
+          role: true
         }
       })
     }),
@@ -130,38 +130,38 @@ export const userRouter = router({
           userId: req.input.id,
         },
         include: {
-          Season: true,
-          GamePointType: true,
-          Guess: {
+          season: true,
+          gamePointType: true,
+          guesses: {
             include: {
-              AssignmentReview: {
+              assignmentReview: {
                 include: {
-                  Assignment: {
+                  assignment: {
                     include: {
-                      Episode: true,
-                      Movie: true,
+                      episode: true,
+                      movie: true,
                     }
                   }
                 }
               }
             }
           },
-          GamblingPoints: {
+          gamblingPoints: {
             include: {
-              Assignment: {
+              assignment: {
                 include: {
-                  Episode: true,
-                  Movie: true,
+                  episode: true,
+                  movie: true,
                 }
               }
             }
           },
           assignmentPoints: {
             include: {
-              Assignment: {
+              assignment: {
                 include: {
-                  Episode: true,
-                  Movie: true,
+                  episode: true,
+                  movie: true,
                 }
               }
             }
@@ -248,10 +248,10 @@ export const userRouter = router({
           userId: req.input.id
         },
         include: {
-          Movie: true,
-          Assignment: {
+          movie: true,
+          assignment: {
             include: {
-              Episode: true
+              episode: true
             }
           }
         },
@@ -279,9 +279,9 @@ export const userRouter = router({
     .query(async ({ ctx }) => {
       return await ctx.prisma.user.findMany({
         where: {
-          UserRoles: {
+          roles: {
             some: {
-              Role: {
+              role: {
                 admin: true
               }
             }

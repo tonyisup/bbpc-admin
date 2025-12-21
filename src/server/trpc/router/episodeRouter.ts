@@ -12,7 +12,7 @@ export const episodeRouter = router({
           id: req.input.id
         },
         select: {
-          Links: true
+          links: true
         }
       })
     }),
@@ -21,7 +21,7 @@ export const episodeRouter = router({
     .mutation(async (req) => {
       return await req.ctx.prisma.link.create({
         data: {
-          Episode: {
+          episode: {
             connect: {
               id: req.input.episodeId
             }
@@ -102,18 +102,18 @@ export const episodeRouter = router({
           id: req.input.id
         },
         include: {
-          Assignments: {
+          assignments: {
             include: {
-              User: true,
-              Movie: true
+              user: true,
+              movie: true
             }
           },
-          Extras: {
+          extras: {
             include: {
-              Review: {
+              review: {
                 include: {
-                  User: true,
-                  Movie: true
+                  user: true,
+                  movie: true
                 }
               }
             }
@@ -129,18 +129,18 @@ export const episodeRouter = router({
           number: req.input.number
         },
         include: {
-          Assignments: {
+          assignments: {
             include: {
-              User: true,
-              Movie: true
+              user: true,
+              movie: true
             }
           },
-          Extras: {
+          extras: {
             include: {
-              Review: {
+              review: {
                 include: {
-                  User: true,
-                  Movie: true
+                  user: true,
+                  movie: true
                 }
               }
             }
@@ -166,7 +166,7 @@ export const episodeRouter = router({
       return await req.ctx.prisma.audioEpisodeMessage.findMany({
         where: { episodeId: req.input.episodeId },
         include: {
-          User: true
+          user: true
         }
       })
     }),
@@ -237,50 +237,50 @@ export const episodeRouter = router({
       const episode = await req.ctx.prisma.episode.findUnique({
         where: { id: req.input.episodeId },
         include: {
-          Extras: {
+          extras: {
             include: {
-              Review: {
+              review: {
                 include: {
-                  User: true,
-                  Movie: true,
-                  Rating: true,
-                  Show: true
+                  user: true,
+                  movie: true,
+                  rating: true,
+                  show: true
                 }
               }
             }
           },
-          Assignments: {
+          assignments: {
             include: {
-              User: true,
-              Movie: true,
-              AssignmentReviews: {
+              user: true,
+              movie: true,
+              assignmentReviews: {
                 include: {
-                  Review: {
+                  review: {
                     include: {
-                      User: true,
-                      Movie: true,
-                      Rating: true
+                      user: true,
+                      movie: true,
+                      rating: true
                     }
                   },
-                  Guesses: {
+                  guesses: {
                     include: {
-                      User: true,
-                      Rating: true,
-                      Point: true
+                      user: true,
+                      rating: true,
+                      point: true
                     }
                   }
                 }
               },
-              AudioMessage: {
+              audioMessages: {
                 include: {
-                  User: true
+                  user: true
                 }
               }
             }
           },
-          AudioEpisodeMessage: {
+          audioEpisodeMessages: {
             include: {
-              User: true
+              user: true
             }
           }
         }
