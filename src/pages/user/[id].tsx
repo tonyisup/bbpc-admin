@@ -319,7 +319,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 const renderPoint = (point: any) => (
                   <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md mb-2">
                     <div className="flex flex-col">
-                      <span className="font-semibold">{point.isGuess ? 'Pending' : `${(point.gamePointType?.points ?? 0) + point.adjustment} points`}</span>
+                      <span className="font-semibold">{point.isGuess ? 'Pending' : `${(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)} points`}</span>
                       <span className="text-sm text-gray-400">{point.reason}</span>
                       <span className="text-xs text-gray-400">{point.gamePointType?.title}</span>
                       <span className="text-xs text-gray-500">{point.season?.title} {point.earnedOn ? `- ${point.earnedOn.toLocaleDateString()}` : ''}</span>

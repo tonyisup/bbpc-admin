@@ -36,7 +36,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         userPointsMap.set(point.user.id, { user: point.user, total: 0 });
       }
       const gamePointPoints = point.gamePointType?.points ?? 0;
-      userPointsMap.get(point.user.id)!.total += point.adjustment + gamePointPoints;
+      userPointsMap.get(point.user.id)!.total += (point.adjustment ?? 0) + gamePointPoints;
       let episode = null;
       let assignment = null;
 
@@ -102,7 +102,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
 
     pointsByDate.forEach((point) => {
       const dateKey = format(new Date(point.earnedOn), "yyyy-MM-dd");
-      const points = point.adjustment + (point.gamePointType?.points ?? 0);
+      const points = (point.adjustment ?? 0) + (point.gamePointType?.points ?? 0);
 
       runningTotals[point.user.id] = (runningTotals[point.user.id] || 0) + points;
 
@@ -250,13 +250,15 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                                 {point.user.name}
                               </span>
                               <span
-                                className={`font-bold ${point.adjustment > 0
+                                className={`font-bold ${(point.adjustment ?? 0) > 0
                                   ? "text-green-500"
-                                  : "text-red-500"
+                                  : (point.adjustment ?? 0) < 0
+                                    ? "text-red-500"
+                                    : "text-gray-500"
                                   }`}
                               >
-                                {point.adjustment > 0 ? "+" : ""}
-                                {point.adjustment}
+                                {(point.adjustment ?? 0) > 0 ? "+" : ""}
+                                {point.adjustment ?? 0}
                               </span>
                             </div>
                             <div className="mt-1 text-sm text-gray-400">
@@ -284,13 +286,15 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                             {point.user.name}
                           </span>
                           <span
-                            className={`font-bold ${point.adjustment > 0
+                            className={`font-bold ${(point.adjustment ?? 0) > 0
                               ? "text-green-500"
-                              : "text-red-500"
+                              : (point.adjustment ?? 0) < 0
+                                ? "text-red-500"
+                                : "text-gray-500"
                               }`}
                           >
-                            {point.adjustment > 0 ? "+" : ""}
-                            {point.adjustment}
+                            {(point.adjustment ?? 0) > 0 ? "+" : ""}
+                            {point.adjustment ?? 0}
                           </span>
                         </div>
                         <div className="mt-1 text-sm text-gray-400">
