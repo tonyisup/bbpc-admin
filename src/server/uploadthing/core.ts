@@ -24,6 +24,19 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
+      // Trigger n8n webhook
+      await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileUrl: file.url }),
+      })
+        .then((res) => {
+          if (!res.ok) console.error("Failed to trigger webhook:", res.statusText);
+          else console.log("Webhook triggered successfully");
+        })
+        .catch((err) => console.error("Error triggering webhook:", err));
 
       // Trigger n8n webhook
       await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
