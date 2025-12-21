@@ -11,10 +11,10 @@ export const reviewRouter = router({
 					id: req.input.id
 				},
 				include: {
-					Movie: true,
-					Show: true,
-					User: true,
-					Rating: true,
+					movie: true,
+					show: true,
+					user: true,
+					rating: true,
 				}
 			})
 		}),
@@ -33,7 +33,7 @@ export const reviewRouter = router({
 					movieId: req.input.movieId,
 					showId: req.input.showId,
 					ratingId: req.input.ratingId,
-					ExtraReviews: {
+					extraReviews: {
 						create: {
 							episodeId: req.input.episodeId
 						}
@@ -51,13 +51,13 @@ export const reviewRouter = router({
 		.mutation(async (req) => {
 			return await req.ctx.prisma.review.create({
 				include: {
-					AssignmentReviews: true
+					assignmentReviews: true
 				},
 				data: {
 					userId: req.input.userId,
 					movieId: req.input.movieId,
 					ratingId: req.input.ratingId,
-					AssignmentReviews: {
+					assignmentReviews: {
 						create: {
 							assignmentId: req.input.assignmentId
 						}
@@ -83,8 +83,8 @@ export const reviewRouter = router({
 					id: req.input.id
 				},
 				include: {
-					Review: true,
-					Guesses: true
+					review: true,
+					guesses: true
 				}
 			})
 		}),
@@ -93,16 +93,16 @@ export const reviewRouter = router({
 		.query(async (req) => {
 			return await req.ctx.prisma.review.findMany({
 				where: {
-					ExtraReviews: {
+					extraReviews: {
 						some: {
 							episodeId: req.input.episodeId
 						}
 					}
 				},
 				include: {
-					Movie: true,
-					Show: true,
-					User: true,
+					movie: true,
+					show: true,
+					user: true,
 				}
 			})
 		}),
@@ -114,17 +114,17 @@ export const reviewRouter = router({
 					assignmentId: req.input.assignmentId
 				},
 				include: {
-					Review: {
+					review: {
 						include: {
-							Movie: true,
-							User: true,
-							Rating: true,
+							movie: true,
+							user: true,
+							rating: true,
 						}
 					},
-					Guesses: {
+					guesses: {
 						include: {
-							User: true,
-							Rating: true,
+							user: true,
+							rating: true,
 						}
 					}
 				}

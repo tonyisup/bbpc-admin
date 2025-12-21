@@ -32,6 +32,7 @@ export const serverSchema = z.object({
   PUSHER_APP_ID: z.string(),
   PUSHER_SECRET: z.string(),
   AZURE_STORAGE_ACCOUNT_CONNECTION_STRING: z.string(),
+  AUDIO_UPOLOADER_URL: z.string(),
 });
 
 /**

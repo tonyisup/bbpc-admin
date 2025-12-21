@@ -54,6 +54,12 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/test",
       active: pathname === "/test",
     },
+    {
+      label: "Test Audio",
+      icon: Beaker,
+      href: "/test-audio",
+      active: pathname === "/test-audio",
+    },
   ]
 
   useEffect(() => {

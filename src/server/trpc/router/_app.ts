@@ -13,6 +13,7 @@ import { userRouter } from "./userRouter";
 import { seasonRouter } from "./seasonRouter";
 
 import { dashboardRouter } from "./dashboardRouter";
+import { testRouter } from "./testRouter";
 import { gameRouter } from "./gameRouter";
 import { azureRouter } from "./azureRouter";
 
@@ -29,6 +30,7 @@ export const appRouter = router({
   gambling: gamblingRouter,
   syllabus: syllabusRouter,
   dashboard: dashboardRouter,
+  test: testRouter,
   season: seasonRouter,
   game: gameRouter,
   azure: azureRouter,

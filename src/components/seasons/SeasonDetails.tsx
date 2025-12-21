@@ -31,28 +31,28 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
     const others: any[] = [];
     const userPointsMap = new Map<string, { user: any; total: number }>();
 
-    season.Point.forEach((point) => {
-      if (!userPointsMap.has(point.User.id)) {
-        userPointsMap.set(point.User.id, { user: point.User, total: 0 });
+    season.points.forEach((point) => {
+      if (!userPointsMap.has(point.user.id)) {
+        userPointsMap.set(point.user.id, { user: point.user, total: 0 });
       }
-      const gamePointPoints = point.GamePointType?.points ?? 0;
-      userPointsMap.get(point.User.id)!.total += point.adjustment + gamePointPoints;
+      const gamePointPoints = point.gamePointType?.points ?? 0;
+      userPointsMap.get(point.user.id)!.total += (point.adjustment ?? 0) + gamePointPoints;
       let episode = null;
       let assignment = null;
 
-      const guess = point.Guess?.[0];
+      const guess = point.guesses?.[0];
       const assignmentPoint = point.assignmentPoints?.[0];
-      const gamblingPoint = point.GamblingPoints?.[0];
+      const gamblingPoint = point.gamblingPoints?.[0];
 
       if (guess) {
-        assignment = guess.AssignmentReview?.Assignment;
-        episode = assignment?.Episode;
+        assignment = guess.assignmentReview?.assignment;
+        episode = assignment?.episode;
       } else if (assignmentPoint) {
-        assignment = assignmentPoint.Assignment;
-        episode = assignment?.Episode;
+        assignment = assignmentPoint.assignment;
+        episode = assignment?.episode;
       } else if (gamblingPoint) {
-        assignment = gamblingPoint.Assignment;
-        episode = assignment?.Episode;
+        assignment = gamblingPoint.assignment;
+        episode = assignment?.episode;
       }
 
       if (episode && assignment) {
@@ -88,7 +88,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
     );
 
     // Chart Data Calculation
-    const pointsByDate = [...season.Point].sort(
+    const pointsByDate = [...season.points].sort(
       (a, b) => new Date(a.earnedOn).getTime() - new Date(b.earnedOn).getTime()
     );
 
@@ -102,9 +102,9 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
 
     pointsByDate.forEach((point) => {
       const dateKey = format(new Date(point.earnedOn), "yyyy-MM-dd");
-      const points = point.adjustment + (point.GamePointType?.points ?? 0);
+      const points = (point.adjustment ?? 0) + (point.gamePointType?.points ?? 0);
 
-      runningTotals[point.User.id] = (runningTotals[point.User.id] || 0) + points;
+      runningTotals[point.user.id] = (runningTotals[point.user.id] || 0) + points;
 
       // We overwrite/update the entry for this date with new current totals
       // This ensures if multiple points happen on same day, we take the EOD state
@@ -192,30 +192,30 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Guesses</h2>
           <div className="grid gap-4">
-            {season.Guesses.map((guess) => (
+            {season.guesses.map((guess) => (
               <div
                 key={guess.id}
                 className="rounded-lg border border-gray-700 bg-gray-800 p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{guess.User.name}</span>
+                  <span className="font-semibold">{guess.user.name}</span>
                   <span className="text-sm text-gray-400">
                     {new Date(guess.created).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="mt-2">
                   <span className="text-lg font-bold text-yellow-500">
-                    {guess.Rating.name}
+                    {guess.rating.name}
                   </span>
                   <span className="ml-2 text-gray-400">
                     on{" "}
-                    {guess.AssignmentReview.Assignment.Movie?.title ||
-                      guess.AssignmentReview.Assignment.Episode?.title}
+                    {guess.assignmentReview.assignment.movie?.title ||
+                      guess.assignmentReview.assignment.episode?.title}
                   </span>
                 </div>
               </div>
             ))}
-            {season.Guesses.length === 0 && (
+            {season.guesses.length === 0 && (
               <p className="text-gray-500">No guesses yet.</p>
             )}
           </div>
@@ -236,8 +236,8 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       className="ml-4 space-y-2"
                     >
                       <h4 className="text-lg font-medium text-gray-400">
-                        {assignGroup.assignment.Movie?.title ||
-                          assignGroup.assignment.Episode?.title}
+                        {assignGroup.assignment.movie?.title ||
+                          assignGroup.assignment.episode?.title}
                       </h4>
                       <div className="grid gap-2">
                         {assignGroup.points.map((point) => (
@@ -247,20 +247,22 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-semibold">
-                                {point.User.name}
+                                {point.user.name}
                               </span>
                               <span
-                                className={`font-bold ${point.adjustment > 0
+                                className={`font-bold ${(point.adjustment ?? 0) > 0
                                   ? "text-green-500"
-                                  : "text-red-500"
+                                  : (point.adjustment ?? 0) < 0
+                                    ? "text-red-500"
+                                    : "text-gray-500"
                                   }`}
                               >
-                                {point.adjustment > 0 ? "+" : ""}
-                                {point.adjustment}
+                                {(point.adjustment ?? 0) > 0 ? "+" : ""}
+                                {point.adjustment ?? 0}
                               </span>
                             </div>
                             <div className="mt-1 text-sm text-gray-400">
-                              {point.GamePointType?.title || point.reason}
+                              {point.gamePointType?.title || point.reason}
                             </div>
                           </div>
                         ))}
@@ -281,20 +283,22 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-semibold">
-                            {point.User.name}
+                            {point.user.name}
                           </span>
                           <span
-                            className={`font-bold ${point.adjustment > 0
+                            className={`font-bold ${(point.adjustment ?? 0) > 0
                               ? "text-green-500"
-                              : "text-red-500"
+                              : (point.adjustment ?? 0) < 0
+                                ? "text-red-500"
+                                : "text-gray-500"
                               }`}
                           >
-                            {point.adjustment > 0 ? "+" : ""}
-                            {point.adjustment}
+                            {(point.adjustment ?? 0) > 0 ? "+" : ""}
+                            {point.adjustment ?? 0}
                           </span>
                         </div>
                         <div className="mt-1 text-sm text-gray-400">
-                          {point.GamePointType?.title || point.reason}
+                          {point.gamePointType?.title || point.reason}
                         </div>
                       </div>
                     ))}
@@ -302,7 +306,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                 </div>
               )}
 
-              {season.Point.length === 0 && (
+              {season.points.length === 0 && (
                 <p className="text-gray-500">No points yet.</p>
               )}
             </div>
@@ -311,13 +315,13 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Gambling</h2>
             <div className="grid gap-4">
-              {season.GamblingPoints.map((gamble) => (
+              {season.gamblingPoints.map((gamble) => (
                 <div
                   key={gamble.id}
                   className="rounded-lg border border-gray-700 bg-gray-800 p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{gamble.User.name}</span>
+                    <span className="font-semibold">{gamble.user.name}</span>
                     <span
                       className={`font-bold ${gamble.successful ? "text-green-500" : "text-gray-500"
                         }`}
@@ -327,12 +331,12 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                   </div>
                   <div className="mt-1 text-sm text-gray-400">
                     on{" "}
-                    {gamble.Assignment?.Movie?.title ||
-                      gamble.Assignment?.Episode?.title}
+                    {gamble.assignment?.movie?.title ||
+                      gamble.assignment?.episode?.title}
                   </div>
                 </div>
               ))}
-              {season.GamblingPoints.length === 0 && (
+              {season.gamblingPoints.length === 0 && (
                 <p className="text-gray-500">No gambling yet.</p>
               )}
             </div>

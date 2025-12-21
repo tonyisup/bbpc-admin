@@ -61,9 +61,9 @@ export const assignmentRouter = router({
           episodeId: req.input.episodeId
         },
         include: {
-          AssignmentReviews: true,
-          Movie: true,
-          User: true
+          assignmentReviews: true,
+          movie: true,
+          user: true
         }
       })
     }),
@@ -77,7 +77,7 @@ export const assignmentRouter = router({
       return await req.ctx.prisma.audioMessage.findMany({
         where: { assignmentId: req.input.assignmentId },
         include: {
-          User: true
+          user: true
         }
       })
     }),

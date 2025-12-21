@@ -36,7 +36,7 @@ import AudioStream from "../../components/AudioStream";
 
 // --- Types ---
 type Admin = User;
-type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['Assignments'][number];
+type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number];
 
 interface ConnectedUser {
 	id: string;
@@ -67,9 +67,9 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 	const handleEdit = () => {
 		const initialRatings: Record<string, string> = {};
 		admins.forEach(admin => {
-			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			if (review?.Review?.ratingId) {
-				initialRatings[admin.id] = review.Review.ratingId;
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
+			if (review?.review?.ratingId) {
+				initialRatings[admin.id] = review.review.ratingId;
 			}
 		});
 		setEditedRatings(initialRatings);
@@ -78,12 +78,12 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 
 	const handleSave = () => {
 		admins.forEach(admin => {
-			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
 			const newRatingId = editedRatings[admin.id];
 
 			// Only save if changed or new
-			if (newRatingId !== review?.Review?.ratingId && newRatingId) {
-				onRatingChange(review?.Review?.id || null, assignment.id, admin.id, newRatingId);
+			if (newRatingId !== review?.review?.ratingId && newRatingId) {
+				onRatingChange(review?.review?.id || null, assignment.id, admin.id, newRatingId);
 			}
 		});
 		setIsEditing(false);
@@ -98,8 +98,8 @@ const HostRatingRow: React.FC<HostRatingRowProps> = ({
 		<tr className="border-b border-gray-700 bg-gray-800/50">
 			<td className="p-2 font-semibold">Host Ratings</td>
 			{admins.map(admin => {
-				const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-				const currentRatingId = isEditing ? editedRatings[admin.id] : review?.Review?.ratingId;
+				const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
+				const currentRatingId = isEditing ? editedRatings[admin.id] : review?.review?.ratingId;
 				const currentRating = ratings.find(r => r.id === currentRatingId);
 
 				return (
@@ -183,10 +183,10 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	const handleEdit = () => {
 		const initialRatings: Record<string, string> = {};
 		admins.forEach(admin => {
-			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
-			if (guess?.Rating.id) {
-				initialRatings[admin.id] = guess.Rating.id;
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
+			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+			if (guess?.rating.id) {
+				initialRatings[admin.id] = guess.rating.id;
 			}
 		});
 		setEditedRatings(initialRatings);
@@ -194,12 +194,12 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	};
 	const handleSave = () => {
 		admins.forEach(admin => {
-			const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-			const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
+			const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
+			const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
 			const newRatingId = editedRatings[admin.id];
 
 			// Only save if changed or new
-			if (newRatingId !== guess?.Rating.id && newRatingId) {
+			if (newRatingId !== guess?.rating.id && newRatingId) {
 				onRatingChange(assignment.id, guesser.id, admin.id, newRatingId);
 			}
 		});
@@ -211,10 +211,10 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				<Link href={`/user/${guesser.id}`}>{guesser.name}</Link>
 			</td>
 			{admins.map(admin => {
-				const review = assignment.AssignmentReviews?.find((ar: any) => ar.Review.userId === admin.id);
-				const guess = review?.Guesses?.find((g: any) => g.userId === guesser.id);
-				const isBlurred = !review?.Review?.ratingId;
-				const currentRatingId = isEditing ? editedRatings[admin.id] : guess?.Rating.id;
+				const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
+				const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
+				const isBlurred = !review?.review?.ratingId;
+				const currentRatingId = isEditing ? editedRatings[admin.id] : guess?.rating.id;
 				const currentRating = ratings.find(r => r.id === currentRatingId);
 
 				return (
@@ -241,11 +241,11 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 								<div className="flex items-center gap-1">
 									<span><RatingIcon value={currentRating?.value || 0} /></span>
 									<span className="text-xs text-gray-400">{(
-										review?.Review?.ratingId == guess.Rating.id
+										review?.review?.ratingId == guess.rating.id
 											? 1 : 0)
 									} pts</span>
 
-									{!guess.pointsId && (review?.Review?.ratingId == guess.Rating.id) && <PointEventButton
+									{!guess.pointsId && (review?.review?.ratingId == guess.rating.id) && <PointEventButton
 										userId={guesser.id}
 										event={{
 											gamePointLookupId: 'guess',
@@ -411,14 +411,14 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 }) => {
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
-	assignment.AssignmentReviews?.forEach((ar: any) => {
-		ar.Guesses?.forEach((g: any) => guesserIds.add(g.userId));
+	assignment.assignmentReviews?.forEach((ar: any) => {
+		ar.guesses?.forEach((g: any) => guesserIds.add(g.userId));
 	});
 	const guessers = Array.from(guesserIds).map(id => {
 		// Find user object from one of the guesses
-		for (const ar of assignment.AssignmentReviews || []) {
-			const guess = ar.Guesses?.find((g: any) => g.userId === id);
-			if (guess) return guess.User;
+		for (const ar of assignment.assignmentReviews || []) {
+			const guess = ar.guesses?.find((g: any) => g.userId === id);
+			if (guess) return guess.user;
 		}
 		return { id, name: "Unknown" };
 	});
@@ -427,10 +427,10 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 		<div className="border border-gray-700 rounded p-4">
 			<div className="flex justify-around items-center gap-4 mb-4">
 				<div className="flex flex-col items-center gap-2">
-					<MovieCard movie={assignment.Movie} width={150} height={225} />
+					<MovieCard movie={assignment.movie} width={150} height={225} />
 				</div>
 				<div className="flex flex-col items-center gap-2">
-					<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />&nbsp;{assignment.User.name}
+					<HomeworkFlag type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />&nbsp;{assignment.user.name}
 				</div>
 			</div>
 
@@ -482,12 +482,12 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 
 			{/* Audio Messages */}
 			{
-				assignment.AudioMessage && assignment.AudioMessage.length > 0 && (
+				assignment.audioMessages && assignment.audioMessages.length > 0 && (
 					<div className="mt-4">
 						<h5 className="font-medium mb-2">Audio Messages</h5>
-						{assignment.AudioMessage.map((audio: any) => (
+						{assignment.audioMessages.map((audio: any) => (
 							<div key={audio.id} className="mb-2">
-								<p className="text-xs text-gray-400 mb-1">{audio.User.name}</p>
+								<p className="text-xs text-gray-400 mb-1">{audio.user.name}</p>
 								<audio controls className="w-full max-w-md h-8">
 									<source src={audio.url} type="audio/mpeg" />
 								</audio>
@@ -673,7 +673,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		} else {
 			// Create new review for this assignment
 			// We need the movie ID from the assignment
-			const assignment = recordingData?.Assignments?.find(a => a.id === assignmentId);
+			const assignment = recordingData?.assignments?.find(a => a.id === assignmentId);
 			if (assignment) {
 				addToAssignment({
 					assignmentId,
@@ -836,23 +836,23 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						<Item variant="outline">
-							<ItemHeader>Season {seasonData?.title} - {seasonData?.GameType?.title}</ItemHeader>
+							<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
 							<ItemContent>
 								<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
 								<ItemDescription>
-									{seasonData?.description} - {seasonData?.GameType?.description}
+									{seasonData?.description} - {seasonData?.gameType?.description}
 								</ItemDescription>
 							</ItemContent>
 						</Item>
 
 						{/* Extras */}
-						{recordingData.Extras && recordingData.Extras.length > 0 && (
+						{recordingData.extras && recordingData.extras.length > 0 && (
 							<Card className="w-full max-w-6xl p-6">
-								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.Extras.length})</h3>
+								<h3 className="text-xl font-semibold mb-4">Extras ({recordingData.extras.length})</h3>
 								<div className="space-y-4">
-									{recordingData.Extras.map((extra) => {
-										if (extra.Review.Movie) return <div key={extra.id} className="flex flex-col items-center gap-2"><MovieCard movie={extra.Review.Movie} />{extra.Review.User?.name}</div>
-										if (extra.Review.Show) return <div key={extra.id} className="flex flex-col items-center gap-2"><ShowCard show={extra.Review.Show} />{extra.Review.User?.name}</div>
+									{recordingData.extras.map((extra) => {
+										if (extra.review.movie) return <div key={extra.id} className="flex flex-col items-center gap-2"><MovieCard movie={extra.review.movie} />{extra.review.user?.name}</div>
+										if (extra.review.show) return <div key={extra.id} className="flex flex-col items-center gap-2"><ShowCard show={extra.review.show} />{extra.review.user?.name}</div>
 										return null;
 									})}
 								</div>
@@ -860,13 +860,13 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						{/* Assignments Grid */}
-						{recordingData.Assignments && recordingData.Assignments.length > 0 && isAdmin && (
+						{recordingData.assignments && recordingData.assignments.length > 0 && isAdmin && (
 							<Card className="w-full max-w-[95vw] p-6">
 								<h3 className="text-xl font-semibold mb-4">
-									Assignments ({recordingData.Assignments.length})
+									Assignments ({recordingData.assignments.length})
 								</h3>
 								<div className="space-y-8">
-									{recordingData.Assignments?.map((assignment) => (
+									{recordingData.assignments?.map((assignment) => (
 										<AssignmentGrid
 											key={assignment.id}
 											assignment={assignment}
@@ -885,15 +885,15 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						)}
 
 						{/* General Audio */}
-						{recordingData.AudioEpisodeMessage && recordingData.AudioEpisodeMessage.length > 0 && (
+						{recordingData.audioEpisodeMessages && recordingData.audioEpisodeMessages.length > 0 && (
 							<Card className="w-full max-w-6xl p-6">
 								<h3 className="text-xl font-semibold mb-4">
-									General Episode Audio Messages ({recordingData.AudioEpisodeMessage.length})
+									General Episode Audio Messages ({recordingData.audioEpisodeMessages.length})
 								</h3>
 								<div className="space-y-4">
-									{recordingData.AudioEpisodeMessage.map((audio) => (
+									{recordingData.audioEpisodeMessages.map((audio) => (
 										<div key={audio.id} className="border border-gray-700 rounded p-4">
-											<p className="text-sm text-gray-400 mb-2">{audio.User.name}</p>
+											<p className="text-sm text-gray-400 mb-2">{audio.user.name}</p>
 											<audio controls className="w-full">
 												<source src={audio.url} type="audio/mpeg" />
 											</audio>

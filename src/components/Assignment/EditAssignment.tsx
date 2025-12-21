@@ -54,7 +54,7 @@ const AudioMessages: FC<AudioMessagesProps> = ({ assignment }) => {
 }
 interface AudioProps {
 	audioMessage: AudioMessage & {
-		User: User | null
+		user: User | null
 	},
 	refreshAudioMessages: Dispatch<void>
 }
@@ -65,8 +65,8 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()}
 		</a>
 		<span>
-			<Link href={"/user/" + audioMessage.User?.id}>
-				{audioMessage.User?.name ?? audioMessage.User?.email}
+			<Link href={"/user/" + audioMessage.user?.id}>
+				{audioMessage.user?.name ?? audioMessage.user?.email}
 			</Link>
 		</span>
 		<button
@@ -117,10 +117,10 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 	const guessesByUser = new Map<string, { user: User, guesses: Array<{ guess: any, assignmentReview: any }> }>();
 
 	assignmentReviews?.forEach(assignmentReview => {
-		assignmentReview.Guesses?.forEach(guess => {
-			const userId = guess.User.id;
+		assignmentReview.guesses?.forEach(guess => {
+			const userId = guess.user.id;
 			if (!guessesByUser.has(userId)) {
-				guessesByUser.set(userId, { user: guess.User, guesses: [] });
+				guessesByUser.set(userId, { user: guess.user, guesses: [] });
 			}
 			const userData = guessesByUser.get(userId);
 			if (userData) {
@@ -184,13 +184,13 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 											className="text-red-500 cursor-pointer m-2"
 											onClick={() => deleteGuess(guess.id)}
 										/>
-										<Link href={"/user/" + assignmentReview.Review?.User?.id}>
-											{assignmentReview.Review?.User?.name ?? assignmentReview.Review?.User?.email}
+										<Link href={"/user/" + assignmentReview.review?.user?.id}>
+											{assignmentReview.review?.user?.name ?? assignmentReview.review?.user?.email}
 										</Link>
 									</div>
 									<div className="flex items-center gap-2">
-										<span className="color-yellow-200" title={guess.Rating?.name}>
-											<RatingIcon value={guess.Rating?.value} />
+										<span className="color-yellow-200" title={guess.rating?.name}>
+											<RatingIcon value={guess.rating?.value} />
 										</span>
 									</div>
 								</li>
@@ -204,7 +204,7 @@ const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
 }
 interface ReviewRatingProps {
 	review: null | (Review & {
-		Rating: Rating | null
+		rating: Rating | null
 	}),
 	refetch: Dispatch<void>
 }
@@ -220,9 +220,9 @@ const ReviewRating: FC<ReviewRatingProps> = ({ review, refetch }) => {
 		setReviewRating({ reviewId: review.id, ratingId: null }, { onSuccess: () => { refetch() } })
 	}
 	if (!review) return null
-	if (!review.Rating) return <RatingIconSelect selectRating={handleRatingSelect}></RatingIconSelect>
+	if (!review.rating) return <RatingIconSelect selectRating={handleRatingSelect}></RatingIconSelect>
 	return <div className="cursor-pointer" onClick={handleResetRating}>
-		<RatingIcon value={review.Rating.value} />
+		<RatingIcon value={review.rating.value} />
 	</div>
 }
 

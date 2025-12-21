@@ -26,7 +26,7 @@ export const syllabusRouter = router({
           id: req.input.syllabusId
         },
         include: {
-          Movie: true
+          movie: true
         }
       });
 
@@ -39,7 +39,7 @@ export const syllabusRouter = router({
         where: {
           userId: syllabus.userId,
           movieId: syllabus.movieId,
-          episodeId: episode.id 
+          episodeId: episode.id
         }
       });
 
@@ -73,9 +73,9 @@ export const syllabusRouter = router({
           assignmentId: assignment.id
         },
         include: {
-          Assignment: {
+          assignment: {
             include: {
-              Episode: true
+              episode: true
             }
           }
         }
@@ -86,7 +86,7 @@ export const syllabusRouter = router({
       syllabusId: z.string()
     }))
     .mutation(async (req) => {
-      await req.ctx.prisma.syllabus.update({  
+      await req.ctx.prisma.syllabus.update({
         where: {
           id: req.input.syllabusId
         },

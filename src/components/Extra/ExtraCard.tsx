@@ -5,24 +5,24 @@ import type { ExtraReview, Movie, Review, Show, User } from "@prisma/client";
 
 interface ExtraCardProps {
 	extra: ExtraReview & {
-		Review: Review & {
-			User: User | null
-			Movie: Movie | null
-			Show: Show | null
+		review: Review & {
+			user: User | null
+			movie: Movie | null
+			show: Show | null
 		}
 	}
 }
 
 const ExtraCard: FC<ExtraCardProps> = ({ extra }) => {
-	const title = extra.Review.Movie?.title ?? extra.Review.Show?.title ?? "Unknown";
-	const item = extra.Review.Movie ? extra.Review.Movie : extra.Review.Show;
-	const type = extra.Review.Movie ? "movie" : "show";
+	const title = extra.review.movie?.title ?? extra.review.show?.title ?? "Unknown";
+	const item = extra.review.movie ? extra.review.movie : extra.review.show;
+	const type = extra.review.movie ? "movie" : "show";
 	return (
 		<div className="flex flex-col gap-2 items-center">
-			{type === "movie" && extra.Review.Movie && <MovieCard movie={extra.Review.Movie} showTitle={false} />}
-			{type === "show" && extra.Review.Show && <ShowCard show={extra.Review.Show as any} />}
+			{type === "movie" && extra.review.movie && <MovieCard movie={extra.review.movie} showTitle={false} />}
+			{type === "show" && extra.review.show && <ShowCard show={extra.review.show as any} />}
 			<span className="text-sm">
-				{extra.Review.User?.name ?? 'Unknown'}
+				{extra.review.user?.name ?? 'Unknown'}
 			</span>
 		</div>
 	)

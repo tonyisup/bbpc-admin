@@ -209,7 +209,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
         <ul className="flex flex-col space-y-2">
           {userRoles?.map((userRole) => (
             <li key={userRole.id}>
-              <span>{userRole.Role?.name}</span>
+              <span>{userRole.role?.name}</span>
               <div className="flex justify-center">
                 <HiX className="text-red-500 cursor-pointer" onClick={() => removeRole({ id: userRole.id })} />
               </div>
@@ -237,13 +237,13 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
             <ItemContent>
               {(() => {
                 const groupedPoints = points?.reduce((acc: any, point) => {
-                  const episode = point.Guess?.[0]?.AssignmentReview?.Assignment?.Episode
-                    || point.GamblingPoints?.[0]?.Assignment?.Episode
-                    || point.assignmentPoints?.[0]?.Assignment?.Episode;
+                  const episode = point.guesses?.[0]?.assignmentReview?.assignment?.episode
+                    || point.gamblingPoints?.[0]?.assignment?.episode
+                    || point.assignmentPoints?.[0]?.assignment?.episode;
 
-                  const assignment = point.Guess?.[0]?.AssignmentReview?.Assignment
-                    || point.GamblingPoints?.[0]?.Assignment
-                    || point.assignmentPoints?.[0]?.Assignment;
+                  const assignment = point.guesses?.[0]?.assignmentReview?.assignment
+                    || point.gamblingPoints?.[0]?.assignment
+                    || point.assignmentPoints?.[0]?.assignment;
 
                   if (episode) {
                     if (!acc[episode.id]) {
@@ -277,9 +277,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 }, { general: { otherPoints: [] } });
 
                 // Add un-pointed guesses
-                guesses?.filter(g => !g.Point).forEach(guess => {
-                  const episode = guess.AssignmentReview.Assignment.Episode;
-                  const assignment = guess.AssignmentReview.Assignment;
+                guesses?.filter(g => !g.point).forEach(guess => {
+                  const episode = guess.assignmentReview.assignment.episode;
+                  const assignment = guess.assignmentReview.assignment;
 
                   if (episode) {
                     if (!groupedPoints[episode.id]) {
@@ -303,7 +303,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                         guess: guess,
                         earnedOn: guess.created,
                         reason: 'Pending Guess',
-                        GamePointType: { points: 0, title: 'Guess' },
+                        gamePointType: { points: 0, title: 'Guess' },
                         adjustment: 0
                       });
                     }
@@ -319,10 +319,10 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 const renderPoint = (point: any) => (
                   <div key={point.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-md mb-2">
                     <div className="flex flex-col">
-                      <span className="font-semibold">{point.isGuess ? 'Pending' : `${(point.GamePointType?.points ?? 0) + point.adjustment} points`}</span>
+                      <span className="font-semibold">{point.isGuess ? 'Pending' : `${(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)} points`}</span>
                       <span className="text-sm text-gray-400">{point.reason}</span>
-                      <span className="text-xs text-gray-400">{point.GamePointType?.title}</span>
-                      <span className="text-xs text-gray-500">{point.Season?.title} {point.earnedOn ? `- ${point.earnedOn.toLocaleDateString()}` : ''}</span>
+                      <span className="text-xs text-gray-400">{point.gamePointType?.title}</span>
+                      <span className="text-xs text-gray-500">{point.season?.title} {point.earnedOn ? `- ${point.earnedOn.toLocaleDateString()}` : ''}</span>
                     </div>
                     {!point.isGuess && <HiTrash className="text-red-500 cursor-pointer text-xl" onClick={() => removePoint({ id: point.id })} />}
                   </div>
@@ -340,7 +340,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                             <div key={assignmentGroup.assignment.id} className="ml-2 mb-4">
                               <h4 className="text-md font-semibold mb-2 text-gray-300 flex items-center gap-2">
                                 <span className="px-2 py-0.5 rounded bg-gray-700 text-xs">{assignmentGroup.assignment.type}</span>
-                                {assignmentGroup.assignment.Movie?.title}
+                                {assignmentGroup.assignment.movie?.title}
                               </h4>
                               <div className="pl-2">
                                 {assignmentGroup.points.map(renderPoint)}
@@ -388,8 +388,8 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 <TableBody>
                   {gamblingPoints?.map((gamblingPoint) => (
                     <TableRow key={gamblingPoint.id}>
-                      <TableCell>{gamblingPoint.Assignment?.Movie?.title ?? 'Unknown'}</TableCell>
-                      <TableCell>{gamblingPoint.Assignment?.Episode?.number} - {gamblingPoint.Assignment?.Episode?.title ?? 'Unknown'}</TableCell>
+                      <TableCell>{gamblingPoint.assignment?.movie?.title ?? 'Unknown'}</TableCell>
+                      <TableCell>{gamblingPoint.assignment?.episode?.number} - {gamblingPoint.assignment?.episode?.title ?? 'Unknown'}</TableCell>
                       <TableCell>{gamblingPoint.successful ? 'Won' : 'Lost'} {gamblingPoint.points} points</TableCell>
                       <TableCell>
                       </TableCell>
@@ -414,9 +414,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 <TableBody>
                   {guesses?.map((guess) => (
                     <TableRow key={guess.id}>
-                      <TableCell>{guess.AssignmentReview.Assignment.Movie.title}</TableCell>
-                      <TableCell>{guess.AssignmentReview.Assignment.Episode?.number} - {guess.AssignmentReview.Assignment.Episode?.title}</TableCell>
-                      <TableCell>{guess.Point?.GamePointType?.points}</TableCell>
+                      <TableCell>{guess.assignmentReview.assignment.movie.title}</TableCell>
+                      <TableCell>{guess.assignmentReview.assignment.episode?.number} - {guess.assignmentReview.assignment.episode?.title}</TableCell>
+                      <TableCell>{guess.point?.gamePointType?.points}</TableCell>
                       <TableCell>
                       </TableCell>
                     </TableRow>
@@ -453,15 +453,15 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 </div>
                 <span className="text-gray-400">#{item.order}</span>
                 <div>
-                  <h3 className="font-medium">{item.Movie.title} ({item.Movie.year})</h3>
+                  <h3 className="font-medium">{item.movie.title} ({item.movie.year})</h3>
                   <p className="text-sm text-gray-400">{item.notes}</p>
-                  {item.Assignment && (
+                  {item.assignment && (
                     <p className="text-sm text-gray-400">
-                      Assigned in Episode {item.Assignment.Episode?.number}
+                      Assigned in Episode {item.assignment.episode?.number}
                       <HiX className="text-red-500 cursor-pointer" onClick={() => handleRemoveAssignment(item.id)} />
                     </p>
                   )}
-                  {!item.Assignment && (
+                  {!item.assignment && (
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"

@@ -20,13 +20,13 @@ const EpisodeLinks: FC<EpisodeLinksProps> = ({ episode }) => {
 	return (
 		<section className="flex flex-col w-full px-6">
 			<div className="flex justify-between w-full">
-				<h2 className="text-xl font-semibold">Links ({ep?.Links.length ?? 0})</h2>
+				<h2 className="text-xl font-semibold">Links ({ep?.links.length ?? 0})</h2>
 				{isLinksVisible && <HiChevronUp className="cursor-pointer" onClick={hideLinks} />}
 				{!isLinksVisible && <HiChevronDown className="cursor-pointer" onClick={showLinks} />}
 				{episode && <AddEpisodeLinkModal episode={episode} refreshItems={refreshLinks} />}
 			</div>
 			{isLinksVisible && <div className="grid grid-cols-3 w-full">
-				{ep?.Links?.map((link) => (
+				{ep?.links?.map((link) => (
 					link && <div key={link.id} className="flex">
 						<a href={link.url}>{link.text}</a>
 					</div>

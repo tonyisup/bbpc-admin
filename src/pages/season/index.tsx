@@ -17,7 +17,7 @@ const SeasonPage: NextPage = () => {
       </Head>
       <main className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">Seasons</h1>
-        {user?.UserRoles.some((role) => role.Role.admin) && <NewSeasonForm />}
+        {user?.roles.some((role) => role.role.admin) && <NewSeasonForm />}
         {isLoading ? (
           <p>Loading...</p>
         ) : (
