@@ -277,9 +277,9 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                 }, { general: { otherPoints: [] } });
 
                 // Add un-pointed guesses
-                guesses?.filter(g => !g.Point).forEach(guess => {
-                  const episode = guess.AssignmentReview.Assignment.Episode;
-                  const assignment = guess.AssignmentReview.Assignment;
+                guesses?.filter(g => !g.point).forEach(guess => {
+                  const episode = guess.assignmentReview.assignment.episode;
+                  const assignment = guess.assignmentReview.assignment;
 
                   if (episode) {
                     if (!groupedPoints[episode.id]) {
@@ -461,7 +461,7 @@ const User: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = (
                       <HiX className="text-red-500 cursor-pointer" onClick={() => handleRemoveAssignment(item.id)} />
                     </p>
                   )}
-                  {!item.Assignment && (
+                  {!item.assignment && (
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"
