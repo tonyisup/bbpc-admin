@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import Image from "next/image";
+import Link from "next/link";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -93,25 +94,31 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
           {loadingSearch && <p className="text-sm text-muted-foreground">Searching...</p>}
 
-          {searchResults && searchResults.length > 0 && (
+          {searchResults && searchResults.results && searchResults.results.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-              {searchResults.map((result: any) => (
-                <div key={result.url} className="flex flex-col gap-2 p-2 border rounded-md hover:bg-muted transition group relative">
-                  <div className="aspect-[2/3] relative overflow-hidden rounded-md">
-                    {result.poster ? (
-                      <Image
-                        unoptimized
-                        src={result.poster}
-                        alt={result.title}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-secondary flex items-center justify-center">
-                        <Film className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
+              {searchResults.results.map((result: any) => (
+                <div key={result.id} className="flex flex-col gap-2 p-2 border rounded-md hover:bg-muted transition group relative">
+                  <a
+                    href={`https://www.themoviedb.org/tv/${result.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <div className="aspect-[2/3] relative overflow-hidden rounded-md">
+                      {result.poster_path ? (
+                        <Image
+                          unoptimized
+                          src={`https://image.tmdb.org/t/p/w500${result.poster_path}`}
+                          alt={result.title}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-secondary flex items-center justify-center">
+                          <Film className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  </a>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold line-clamp-1">{result.title}</span>
                     <span className="text-xs text-muted-foreground">{result.year}</span>
@@ -164,18 +171,29 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   <TableRow key={show.id} className="group">
                     <TableCell>
                       {show.poster && (
-                        <div className="w-12 h-18 relative aspect-[2/3] rounded overflow-hidden shadow-sm">
-                          <Image
-                            unoptimized
-                            src={show.poster}
-                            alt={show.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                        <a
+                          href={show.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:opacity-80 transition-opacity block"
+                        >
+                          <div className="w-12 h-18 relative aspect-[2/3] rounded overflow-hidden shadow-sm">
+                            <Image
+                              unoptimized
+                              src={show.poster}
+                              alt={show.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </a>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{show.title}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/show/${show.id}`} className="hover:underline">
+                        {show.title}
+                      </Link>
+                    </TableCell>
                     <TableCell>{show.year}</TableCell>
                     <TableCell className="text-right">
                       <Button

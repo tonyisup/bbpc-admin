@@ -71,6 +71,28 @@ export const showRouter = router({
     .query(({ ctx, input }) => {
       return ctx.prisma.show.findUnique({
         where: { id: input.id },
+        include: {
+          reviews: {
+            include: {
+              user: true,
+              rating: true,
+              extraReviews: {
+                include: {
+                  episode: true,
+                }
+              },
+              assignmentReviews: {
+                include: {
+                  assignment: {
+                    include: {
+                      episode: true,
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       });
     }),
   getAll: publicProcedure
