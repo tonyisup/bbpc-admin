@@ -311,7 +311,7 @@ export const userRouter = router({
           }
         },
         orderBy: {
-          order: 'asc'
+          order: 'desc'
         }
       });
     }),
