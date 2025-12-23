@@ -18,17 +18,19 @@ export const calculateUserPoints = async (
       },
       where: { endedOn: null }
     });
-    seasonIdToUse = season?.id ?? '';
+    seasonIdToUse = season?.id;
+  }
+
+  const where: any = { userId };
+  if (seasonIdToUse) {
+    where.seasonId = seasonIdToUse;
   }
 
   const adjustmentResult = await prisma.point.aggregate({
     _sum: {
       adjustment: true,
     },
-    where: {
-      userId,
-      seasonId: seasonIdToUse,
-    },
+    where,
   });
 
   /* points to sum are in the linked gamepoint.points table */
@@ -39,7 +41,7 @@ from [dbo].[point] [a]
 join [dbo].[gamepointtype] [b]
 	on [a].[gamepointtypeid] = [b].[id]
 where [a].[userid] = ${userId}
-and [a].[seasonid] = ${seasonIdToUse}
+${seasonIdToUse ? prisma.$queryRaw`and [a].[seasonid] = ${seasonIdToUse}` : prisma.$queryRaw``}
 `;
 
   return (pointsResult[0]?.sum ?? 0)
@@ -53,5 +55,5 @@ export const getCurrentSeasonID = async (prisma: PrismaTransactionClient) => {
     },
     where: { endedOn: null }
   });
-  return season?.id ?? '';
+  return season?.id ?? null;
 };

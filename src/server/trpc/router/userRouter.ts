@@ -115,7 +115,7 @@ export const userRouter = router({
             endedOn: null,
           },
         });
-        seasonId = season?.id ?? '';
+        seasonId = season?.id ?? undefined;
       }
       if (!seasonId) {
         return 0;

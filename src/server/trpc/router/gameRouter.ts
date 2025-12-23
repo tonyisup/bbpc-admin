@@ -42,7 +42,11 @@ export const gameRouter = router({
 				}
 			});
 			if (!req.input.seasonId) {
-				req.input.seasonId = await getCurrentSeasonID(req.ctx.prisma);
+				const currentSeasonId = await getCurrentSeasonID(req.ctx.prisma);
+				if (!currentSeasonId) {
+					throw new Error("No active season found to add points");
+				}
+				req.input.seasonId = currentSeasonId;
 			}
 			const point = await req.ctx.prisma.point.create({
 				data: {
@@ -77,7 +81,11 @@ export const gameRouter = router({
 				}
 			});
 			if (!req.input.seasonId) {
-				req.input.seasonId = await getCurrentSeasonID(req.ctx.prisma);
+				const currentSeasonId = await getCurrentSeasonID(req.ctx.prisma);
+				if (!currentSeasonId) {
+					throw new Error("No active season found to add assignment points");
+				}
+				req.input.seasonId = currentSeasonId;
 			}
 			const point = await req.ctx.prisma.point.create({
 				data: {
