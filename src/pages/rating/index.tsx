@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Button } from "../../components/ui/button";
 import RatingModal from "../../components/Rating/RatingModal";
 import { Rating } from "@prisma/client";
+import RatingIcon from "@/components/Review/RatingIcon";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -112,10 +113,7 @@ const RatingsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
               {ratings?.map((rating) => (
                 <TableRow key={rating.id} className="group">
                   <TableCell className="font-bold text-lg">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      {rating.value}
-                    </div>
+                    <RatingIcon value={rating.value} />
                   </TableCell>
                   <TableCell className="font-medium">{rating.name}</TableCell>
                   <TableCell>{rating.category || "-"}</TableCell>
