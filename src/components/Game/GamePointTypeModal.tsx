@@ -88,7 +88,7 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="gameType">Game Type</Label>
-            <Select value={gameTypeId.toString()} onValueChange={(val) => setGameTypeId(parseInt(val))}>
+            <Select value={gameTypeId.toString()} onValueChange={(val) => setGameTypeId(parseInt(val || 0))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a game type" />
               </SelectTrigger>
@@ -109,7 +109,7 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
           </div>
           <div className="grid gap-2">
             <Label htmlFor="points">Points Value</Label>
-            <Input id="points" type="number" value={points} onChange={(e) => setPoints(parseInt(e.target.value))} />
+            <Input id="points" type="number" value={points} onChange={(e) => setPoints(parseInt(e.target.value) || 0)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="description">Description</Label>

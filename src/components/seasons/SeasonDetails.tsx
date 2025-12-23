@@ -169,7 +169,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
 
   const getInitials = (name: string | null) => {
     if (!name) return "U";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+    return name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
   }
 
   if (!season) return null;

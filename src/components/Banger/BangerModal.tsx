@@ -61,6 +61,7 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
   };
 
   const handleSave = () => {
+    if (!title || !artist || !url) return;
     const data = {
       title,
       artist,

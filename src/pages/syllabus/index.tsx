@@ -31,6 +31,8 @@ export async function getServerSideProps(context: any) {
 }
 
 const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
+  const removeMutation = trpc.syllabus.remove.useMutation();
+
   const {
     data,
     isLoading,
@@ -43,6 +45,10 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
   );
 
   const syllabusItems = data?.pages.flatMap((page) => page.items) ?? [];
+
+  const handleRemove = (id: string) => {
+    removeMutation.mutate({ id });
+  };
 
   return (
     <>
@@ -123,7 +129,10 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                     {new Date(item.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost" size="icon" className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleRemove(item.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>

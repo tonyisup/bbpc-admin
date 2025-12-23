@@ -42,13 +42,13 @@ export async function getServerSideProps(context: any) {
   }
 }
 
-const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
+const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session }) => {
   const { query } = useRouter();
-  const id = query.id as string;
+  const id = typeof query.id === 'string' ? query.id : undefined;
   const [activeTab, setActiveTab] = useState("general");
 
   const { data: episode, refetch, isFetching } = trpc.episode.get.useQuery({
-    id
+    id: id!
   }, {
     enabled: !!id
   });
@@ -76,9 +76,8 @@ const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
   return (
     <>
       <Head>
-        <title>{`Episode ${episode?.number} - ${episode?.title} | Admin`}</title>
+        <title>{episode ? `Episode ${episode.number} - ${episode.title} | Admin` : 'Loading Episode... | Admin'}</title>
       </Head>
-
       <div className="flex flex-col gap-8 max-w-6xl mx-auto w-full py-8 px-4">
         {/* Navigation & Actions */}
         <div className="flex justify-between items-center">
@@ -187,7 +186,7 @@ const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                     <UploadDropzone
                       endpoint="audioUploader"
                       onClientUploadComplete={(res) => {
-                        if (res?.[0]) {
+                        if (res?.[0] && id) {
                           addAudioMessage.mutate({
                             episodeId: id,
                             url: res[0].url,

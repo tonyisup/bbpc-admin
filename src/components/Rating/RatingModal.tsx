@@ -87,7 +87,7 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
           </div>
           <div className="grid gap-2">
             <Label htmlFor="value">Value (1-5 or similar)</Label>
-            <Input id="value" type="number" value={value} onChange={(e) => setValue(parseInt(e.target.value))} />
+            <Input id="value" type="number" value={value} onChange={(e) => setValue(parseInt(e.target.value) || 0)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="category">Category</Label>

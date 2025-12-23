@@ -2,6 +2,17 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 export const syllabusRouter = router({
+  remove: protectedProcedure
+    .input(z.object({
+      id: z.string()
+    }))
+    .mutation(async (req) => {
+      await req.ctx.prisma.syllabus.delete({
+        where: {
+          id: req.input.id
+        }
+      });
+    }),
   assignEpisode: protectedProcedure
     .input(z.object({
       syllabusId: z.string(),

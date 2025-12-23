@@ -438,11 +438,10 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                           <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
                             <span className="text-[10px] font-black text-primary uppercase">Ep {item.assignment.episode?.number}</span>
                             <Separator orientation="vertical" className="h-3 bg-primary/20" />
-                            <button className="text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleRemoveAssignment(item.id)}>
+                            <button type="button" className="text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleRemoveAssignment(item.id)}>
                               <X className="h-3 w-3" />
                             </button>
-                          </div>
-                        ) : (
+                          </div>                        ) : (
                           <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Input
                               type="number"
@@ -519,7 +518,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                         <Shield className="h-3.5 w-3.5" />
                         <span className="text-xs font-bold uppercase tracking-tight">{userRole.role?.name}</span>
                         <Separator orientation="vertical" className="h-3 bg-primary/30 mx-1" />
-                        <button onClick={() => removeRole({ id: userRole.id })} className="text-primary/50 hover:text-destructive transition-colors">
+                        <button  type="button" onClick={() => removeRole({ id: userRole.id })} className="text-primary/50 hover:text-destructive transition-colors">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>

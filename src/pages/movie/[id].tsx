@@ -131,7 +131,7 @@ const MovieDetailPage: NextPage<InferGetServerSidePropsType<typeof getServerSide
 
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter">{movie.title}</h1>
 
-              <div className="flex items-center gap-6">
+              {movie.url && <div className="flex items-center gap-6">
                 <a
                   href={movie.url}
                   target="_blank"
@@ -141,7 +141,7 @@ const MovieDetailPage: NextPage<InferGetServerSidePropsType<typeof getServerSide
                   <ExternalLink className="h-4 w-4" />
                   View Details
                 </a>
-              </div>
+              </div>}
             </div>
           </div>
         </div>

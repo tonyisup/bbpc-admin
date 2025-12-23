@@ -53,9 +53,10 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
   });
 
   const handleAdd = (result: any) => {
+    const releaseYear = result.release_date ? new Date(result.release_date).getFullYear() : 0;
     addMutation.mutate({
       title: result.title,
-      year: result.release_date ? new Date(result.release_date).getFullYear() : 0,
+      year: Number.isNaN(releaseYear) ? 0 : releaseYear,
       poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : "",
       url: `https://www.themoviedb.org/tv/${result.id}`,
     });

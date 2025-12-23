@@ -149,7 +149,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                 {filteredItems.length}
               </span>
               {activeRoleName}
-              <button onClick={() => setSelectedRoleId("all")} className="hover:text-foreground transition-colors">
+              <button type="button" onClick={() => setSelectedRoleId("all")} className="hover:text-foreground transition-colors">
                 <X className="h-3 w-3" />
               </button>
             </Badge>
@@ -214,6 +214,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                         {item.roles && item.roles.length > 0 ? (
                           item.roles.map((ur) => (
                             <button
++                             type="button"
                               key={ur.role.id}
                               onClick={(e) => {
                                 e.preventDefault();
