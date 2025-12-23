@@ -1,8 +1,8 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
-import { useState } from "react";
-import { Trash2, Search, Plus, Film } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Trash2, Search, Plus, Film, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -34,11 +34,60 @@ export async function getServerSideProps(context: any) {
 
 const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [existingFilter, setExistingFilter] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({
+    key: 'title',
+    direction: 'asc'
+  });
+
   const { data: existingMovies, isLoading: loadingExisting, refetch } = trpc.movie.getAll.useQuery();
   const { data: searchResults, isLoading: loadingSearch } = trpc.movie.search.useQuery(
     { searchTerm },
     { enabled: searchTerm.length > 2 }
   );
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = null;
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedMovies = useMemo(() => {
+    if (!existingMovies) return [];
+
+    let items = existingMovies.filter(movie =>
+      movie.title.toLowerCase().includes(existingFilter.toLowerCase())
+    );
+
+    if (sortConfig.key && sortConfig.direction) {
+      items.sort((a: any, b: any) => {
+        let aValue: any;
+        let bValue: any;
+
+        if (sortConfig.key === 'reviews') {
+          aValue = a._count?.reviews || 0;
+          bValue = b._count?.reviews || 0;
+        } else {
+          aValue = a[sortConfig.key];
+          bValue = b[sortConfig.key];
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return items;
+  }, [existingMovies, existingFilter, sortConfig]);
 
   const addMutation = trpc.movie.add.useMutation({
     onSuccess: () => {
@@ -146,35 +195,83 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
 
         {/* Existing Movies */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xl font-bold">Existing Movies</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold">Existing Movies</h3>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filter by title..."
+                value={existingFilter}
+                onChange={(e) => setExistingFilter(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
           <div className="rounded-md border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[80px]">Poster</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Year</TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleSort('title')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Title
+                      {sortConfig.key === 'title' ? (
+                        sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleSort('year')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Year
+                      {sortConfig.key === 'year' ? (
+                        sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleSort('reviews')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Reviews
+                      {sortConfig.key === 'reviews' ? (
+                        sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpDown className="h-4 w-4 opacity-30" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loadingExisting && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
+                    <TableCell colSpan={5} className="text-center h-24">
                       Loading...
                     </TableCell>
                   </TableRow>
                 )}
 
-                {!loadingExisting && existingMovies?.length === 0 && (
+                {!loadingExisting && (sortedMovies.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
-                      No movies found in database.
+                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                      {existingFilter ? `No movies matching "${existingFilter}"` : "No movies found in database."}
                     </TableCell>
                   </TableRow>
                 )}
 
-                {existingMovies?.map((movie) => (
+                {sortedMovies.map((movie) => (
                   <TableRow key={movie.id} className="group">
                     <TableCell>
                       {movie.poster && (
@@ -202,6 +299,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
                       </Link>
                     </TableCell>
                     <TableCell>{movie.year}</TableCell>
+                    <TableCell>{movie._count?.reviews || 0}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

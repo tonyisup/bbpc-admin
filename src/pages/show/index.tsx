@@ -34,6 +34,7 @@ export async function getServerSideProps(context: any) {
 
 const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [existingFilter, setExistingFilter] = useState("");
   const { data: existingShows, isLoading: loadingExisting, refetch } = trpc.show.getAll.useQuery();
   const { data: searchResults, isLoading: loadingSearch } = trpc.show.search.useQuery(
     { searchTerm },
@@ -141,7 +142,18 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
         {/* Existing Shows */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xl font-bold">Existing Shows</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold">Existing Shows</h3>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filter by title..."
+                value={existingFilter}
+                onChange={(e) => setExistingFilter(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
           <div className="rounded-md border bg-card">
             <Table>
               <TableHeader>
@@ -161,54 +173,56 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   </TableRow>
                 )}
 
-                {!loadingExisting && existingShows?.length === 0 && (
+                {!loadingExisting && (existingShows?.filter(s => s.title.toLowerCase().includes(existingFilter.toLowerCase())).length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
-                      No shows found in database.
+                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                      {existingFilter ? `No shows matching "${existingFilter}"` : "No shows found in database."}
                     </TableCell>
                   </TableRow>
                 )}
 
-                {existingShows?.map((show) => (
-                  <TableRow key={show.id} className="group">
-                    <TableCell>
-                      {show.poster && (
-                        <a
-                          href={show.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:opacity-80 transition-opacity block"
+                {existingShows
+                  ?.filter(show => show.title.toLowerCase().includes(existingFilter.toLowerCase()))
+                  .map((show) => (
+                    <TableRow key={show.id} className="group">
+                      <TableCell>
+                        {show.poster && (
+                          <a
+                            href={show.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:opacity-80 transition-opacity block"
+                          >
+                            <div className="w-12 h-18 relative aspect-[2/3] rounded overflow-hidden shadow-sm">
+                              <Image
+                                unoptimized
+                                src={show.poster}
+                                alt={show.title}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          </a>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/show/${show.id}`} className="hover:underline">
+                          {show.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{show.year}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemove(show.id)}
                         >
-                          <div className="w-12 h-18 relative aspect-[2/3] rounded overflow-hidden shadow-sm">
-                            <Image
-                              unoptimized
-                              src={show.poster}
-                              alt={show.title}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        </a>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Link href={`/show/${show.id}`} className="hover:underline">
-                        {show.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{show.year}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemove(show.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </div>

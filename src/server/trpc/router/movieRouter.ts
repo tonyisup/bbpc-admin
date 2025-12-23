@@ -97,10 +97,26 @@ export const movieRouter = router({
     }),
   getAll: publicProcedure
     .query(({ ctx }) => {
-      return ctx.prisma.movie.findMany();
+      return ctx.prisma.movie.findMany({
+        include: {
+          _count: {
+            select: { reviews: true }
+          }
+        },
+        orderBy: {
+          title: 'asc'
+        }
+      });
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {
       return ctx.prisma.movie.count();
+    }),
+  remove: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.movie.delete({
+        where: { id: input.id },
+      });
     }),
 });
