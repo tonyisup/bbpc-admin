@@ -157,6 +157,8 @@ interface GuesserRowProps {
 	assignment: AssignmentWithRelations;
 	admins: Admin[];
 	ratings: Rating[];
+	bonusPoints: number;
+	seasonId: string | null;
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
@@ -166,16 +168,15 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	assignment,
 	admins,
 	ratings,
+	bonusPoints,
+	seasonId,
 	onRatingChange,
+	onAddPointForGuess
 }) => {
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
 	const { mutateAsync: setPointForGuess } = trpc.guess.setPointForGuess.useMutation();
-	const { data: bonusPoints, refetch: refetchBonusPoints } = trpc.game.getUserPointTotalForAssignment.useQuery({
-		userId: guesser.id,
-		assignmentId: assignment.id
-	});
 	const handleCancel = () => {
 		setIsEditing(false);
 		setEditedRatings({});
@@ -278,7 +279,14 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 						adjustment: 0,
 					}}
 					onSaved={(pointEvent) => {
-						refetchBonusPoints();
+						// Points are refetched in the parent AssignmentGrid
+						onAddPointForGuess({
+							userId: guesser.id,
+							seasonId: seasonId || "",
+							id: pointEvent.id,
+							adjustment: 0,
+							reason: "bonus"
+						});
 					}}
 				/>
 			</td>
@@ -396,6 +404,7 @@ interface AssignmentGridProps {
 	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
+	bonusPointsData?: Record<string, number>;
 }
 
 const AssignmentGrid: React.FC<AssignmentGridProps> = ({
@@ -407,7 +416,8 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	onGuessRatingChange,
 	onAdminRatingChange,
 	onAddOrUpdateGuess,
-	onAddPointForGuess
+	onAddPointForGuess,
+	bonusPointsData
 }) => {
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
@@ -457,17 +467,23 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 					/>
 
 					{/* Guesser Rows */}
-					{guessers.map(guesser => guesser.name && (
-						<GuesserRow
-							key={guesser.id}
-							guesser={guesser}
-							assignment={assignment}
-							admins={admins}
-							ratings={ratings}
-							onRatingChange={onGuessRatingChange}
-							onAddPointForGuess={onAddPointForGuess}
-						/>
-					))}
+					{guessers.map(guesser => {
+						if (!guesser.name) return null;
+						const bonusPoints = bonusPointsData?.[`${guesser.id}-${assignment.id}`] || 0;
+						return (
+							<GuesserRow
+								key={guesser.id}
+								guesser={guesser}
+								assignment={assignment}
+								admins={admins}
+								ratings={ratings}
+								bonusPoints={bonusPoints}
+								seasonId={seasonId}
+								onRatingChange={onGuessRatingChange}
+								onAddPointForGuess={onAddPointForGuess}
+							/>
+						);
+					})}
 
 					{/* Quick Add Guess Row */}
 					<QuickAddGuessRow
@@ -623,6 +639,15 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 	const { data: seasonData } = trpc.guess.currentSeason.useQuery();
 
+	// Computed user and assignment list for batch fetching
+	const allUserIds = users?.map(u => u.id) || [];
+	const allAssignmentIds = recordingData?.assignments?.map(a => a.id) || [];
+
+	const { data: bonusPointsData, refetch: refetchBonusPoints } = trpc.game.getUsersPointTotalsForAssignments.useQuery(
+		{ userIds: allUserIds, assignmentIds: allAssignmentIds },
+		{ enabled: !!(users && recordingData?.assignments) }
+	);
+
 	// Mutations
 	const { mutate: updateStatus } = trpc.episode.updateStatus.useMutation({
 		onSuccess: () => {
@@ -638,19 +663,31 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	});
 
 	const { mutate: setReviewRating } = trpc.review.setReviewRating.useMutation({
-		onSuccess: () => refetchRecordingData()
+		onSuccess: () => {
+			refetchRecordingData();
+			refetchBonusPoints();
+		}
 	});
 
 	const { mutate: addToAssignment } = trpc.review.addToAssignment.useMutation({
-		onSuccess: () => refetchRecordingData()
+		onSuccess: () => {
+			refetchRecordingData();
+			refetchBonusPoints();
+		}
 	});
 
 	const { mutate: addOrUpdateGuessesForUser } = trpc.guess.addOrUpdateGuessesForUser.useMutation({
-		onSuccess: () => refetchRecordingData()
+		onSuccess: () => {
+			refetchRecordingData();
+			refetchBonusPoints();
+		}
 	});
 
 	const { mutate: addPointForGuess } = trpc.guess.addPointForGuess.useMutation({
-		onSuccess: () => refetchRecordingData()
+		onSuccess: () => {
+			refetchRecordingData();
+			refetchBonusPoints();
+		}
 	});
 
 	const handleAddOrUpdateGuess = (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => {
@@ -877,7 +914,11 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											onGuessRatingChange={handleGuessRatingChange}
 											onAdminRatingChange={handleAdminRatingChange}
 											onAddOrUpdateGuess={handleAddOrUpdateGuess}
-											onAddPointForGuess={addPointForGuess}
+											onAddPointForGuess={(data) => {
+												addPointForGuess(data);
+												refetchBonusPoints();
+											}}
+											bonusPointsData={bonusPointsData}
 										/>
 									))}
 								</div>
