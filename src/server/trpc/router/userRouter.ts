@@ -138,8 +138,19 @@ export const userRouter = router({
                 include: {
                   assignment: {
                     include: {
-                      episode: true,
-                      movie: true,
+                      episode: {
+                        select: {
+                          id: true,
+                          number: true,
+                          title: true,
+                        },
+                      },
+                      movie: {
+                        select: {
+                          id: true,
+                          title: true,
+                        },
+                      },
                     }
                   }
                 }
@@ -150,8 +161,19 @@ export const userRouter = router({
             include: {
               assignment: {
                 include: {
-                  episode: true,
-                  movie: true,
+                  episode: {
+                    select: {
+                      id: true,
+                      number: true,
+                      title: true,
+                    },
+                  },
+                  movie: {
+                    select: {
+                      id: true,
+                      title: true,
+                    },
+                  },
                 }
               }
             }
@@ -160,8 +182,19 @@ export const userRouter = router({
             include: {
               assignment: {
                 include: {
-                  episode: true,
-                  movie: true,
+                  episode: {
+                    select: {
+                      id: true,
+                      number: true,
+                      title: true,
+                    },
+                  },
+                  movie: {
+                    select: {
+                      id: true,
+                      title: true,
+                    },
+                  },
                 }
               }
             }

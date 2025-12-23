@@ -236,6 +236,11 @@ export const guessRouter = router({
 				include: {
 					assignmentReview: {
 						include: {
+							review: {
+								include: {
+									rating: true
+								}
+							},
 							assignment: {
 								include: {
 									episode: true,

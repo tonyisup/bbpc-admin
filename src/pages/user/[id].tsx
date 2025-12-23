@@ -59,29 +59,38 @@ interface Point {
   assignmentPoints?: AssignmentPoint[];
   isGuess?: boolean;
   guess?: Guess;
+  season?: {
+    id: string;
+    title: string;
+  };
 }
 
 interface Episode {
   id: string;
   number: number;
   title: string;
+  recording?: string | null;
+  date?: Date | null;
+  description?: string | null;
+  status?: string | null;
 }
 
 interface Assignment {
   id: string;
-  title: string;
+  title?: string;
   type: string;
   movie?: {
     id: string;
     title: string;
-    year: number;
+    year?: number;
   };
+  episode?: Episode;
 }
 
 interface Guess {
   id: string;
   created: Date;
-  point: Point | null;
+  point?: Point | null;
   assignmentReview: {
     assignment: {
       id: string;
@@ -264,7 +273,7 @@ const UserPage: NextPage<{ session: any }> = () => {
   const groupedPoints = useMemo(() => {
     const acc: GroupedPoints = { general: { assignments: {}, otherPoints: [] } };
 
-    points?.forEach((point: Point) => {
+    points?.forEach((point) => {
       const episode = point.guesses?.[0]?.assignmentReview?.assignment?.episode
         || point.gamblingPoints?.[0]?.assignment?.episode
         || point.assignmentPoints?.[0]?.assignment?.episode;
@@ -274,40 +283,51 @@ const UserPage: NextPage<{ session: any }> = () => {
         || point.assignmentPoints?.[0]?.assignment;
 
       if (episode) {
-        if (!acc[episode.id]) {
-          acc[episode.id] = { episode, assignments: {}, otherPoints: [] };
+        let group = acc[episode.id];
+        if (!group) {
+          group = { episode, assignments: {}, otherPoints: [] };
+          acc[episode.id] = group;
         }
 
         if (assignment) {
-          if (!acc[episode.id].assignments[assignment.id]) {
-            acc[episode.id].assignments[assignment.id] = { assignment, points: [] };
+          let assignmentGroup = group.assignments[assignment.id];
+          if (!assignmentGroup) {
+            assignmentGroup = { assignment, points: [] };
+            group.assignments[assignment.id] = assignmentGroup;
           }
-          acc[episode.id].assignments[assignment.id].points.push(point);
+          assignmentGroup.points.push(point as Point);
         } else {
-          acc[episode.id].otherPoints.push(point);
+          group.otherPoints.push(point as Point);
         }
       } else {
-        acc['general'].otherPoints.push(point);
+        const generalGroup = acc['general'];
+        if (generalGroup) {
+          generalGroup.otherPoints.push(point as Point);
+        }
       }
     });
 
     // Add un-pointed guesses
-    guesses?.filter((g: Guess) => !g.point).forEach((guess: Guess) => {
+    guesses?.filter((g) => !g.point).forEach((guess) => {
       const episode = guess.assignmentReview.assignment.episode;
       const assignment = guess.assignmentReview.assignment;
 
       if (episode) {
-        if (!acc[episode.id]) {
-          acc[episode.id] = { episode, assignments: {}, otherPoints: [] };
+        let group = acc[episode.id];
+        if (!group) {
+          group = { episode, assignments: {}, otherPoints: [] };
+          acc[episode.id] = group;
         }
         if (assignment) {
-          if (!acc[episode.id].assignments[assignment.id]) {
-            acc[episode.id].assignments[assignment.id] = { assignment, points: [] };
+          let assignmentGroup = group.assignments[assignment.id];
+          if (!assignmentGroup) {
+            assignmentGroup = { assignment, points: [] };
+            group.assignments[assignment.id] = assignmentGroup;
           }
-          acc[episode.id].assignments[assignment.id].points.push({
+          assignmentGroup.points.push({
             id: `guess-${guess.id}`,
             isGuess: true,
-            guess: guess,
+            guess: guess as Guess,
             earnedOn: guess.created,
             reason: 'Pending Guess',
             gamePointType: { points: 0, title: 'Guess' },
@@ -381,7 +401,7 @@ const UserPage: NextPage<{ session: any }> = () => {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-6 mt-4">
-                  {sortedEpisodeKeys.length === 0 && !groupedPoints['general'].otherPoints.length && (
+                  {sortedEpisodeKeys.length === 0 && !groupedPoints['general']?.otherPoints.length && (
                     <div className="text-center py-12 text-muted-foreground italic">No point events recorded yet.</div>
                   )}
 
@@ -391,12 +411,12 @@ const UserPage: NextPage<{ session: any }> = () => {
                       <div key={episodeId} className="relative pl-6 pb-6 border-l-2 border-primary/20 last:border-0 last:pb-0">
                         <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-background" />
                         <div className="mb-4">
-                          <h3 className="text-sm font-bold text-primary uppercase tracking-tight">Episode {group.episode.number}</h3>
-                          <p className="text-lg font-bold">{group.episode.title}</p>
+                          <h3 className="text-sm font-bold text-primary uppercase tracking-tight">Episode {group?.episode?.number}</h3>
+                          <p className="text-lg font-bold">{group?.episode?.title}</p>
                         </div>
 
                         <div className="space-y-3">
-                          {Object.values(group.assignments).map((assignmentGroup) => (
+                          {Object.values(group?.assignments || {}).map((assignmentGroup) => (
                             <div key={assignmentGroup.assignment.id} className="bg-muted/30 p-4 rounded-lg border border-muted-foreground/10">
                               <div className="flex items-center gap-2 mb-3">
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
@@ -431,12 +451,12 @@ const UserPage: NextPage<{ session: any }> = () => {
                     )
                   })}
 
-                  {groupedPoints['general'].otherPoints.length > 0 && (
+                  {(groupedPoints?.['general']?.otherPoints?.length ?? 0) > 0 && (
                     <div className="relative pl-6 border-l-2 border-muted/50">
                       <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-muted-foreground border-4 border-background" />
                       <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-tight mb-4">Other Points</h3>
                       <div className="space-y-2">
-                        {groupedPoints['general'].otherPoints.map((point) => (
+                        {groupedPoints?.['general']?.otherPoints?.map((point) => (
                           <div key={point.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg border border-transparent hover:border-muted-foreground/10">
                             <div className="flex flex-col">
                               <span className="text-sm font-semibold">{point.reason}</span>
@@ -509,7 +529,7 @@ const UserPage: NextPage<{ session: any }> = () => {
                           <TableRow key={g.id} className="text-xs">
                             <TableCell className="py-2 px-4">
                               <div className="font-medium truncate max-w-[120px]">{g.assignmentReview.assignment.movie.title}</div>
-                              <div className="text-[9px] text-muted-foreground">Rating: {g.rating?.value}</div>
+                              <div className="text-[9px] text-muted-foreground">Rating: {g.assignmentReview?.review?.rating?.value}</div>
                             </TableCell>
                             <TableCell className="py-2 px-4 text-right font-bold">
                               {g.point?.gamePointType?.points ?? 0}
