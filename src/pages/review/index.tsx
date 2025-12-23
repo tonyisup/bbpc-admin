@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
 import { Fragment } from "react";
+import RatingIcon from "../../components/Review/RatingIcon";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -131,8 +132,7 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                   <TableCell>
                     {review.rating ? (
                       <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm font-bold">{review.rating.value}</span>
+                        <RatingIcon value={review.rating.value} />
                         <span className="text-xs text-muted-foreground">({review.rating.name})</span>
                       </div>
                     ) : (
