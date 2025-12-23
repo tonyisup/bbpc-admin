@@ -50,6 +50,9 @@ export const assignmentRouter = router({
       return await req.ctx.prisma.assignment.findUnique({
         where: {
           id: req.input.id
+        },
+        include: {
+          episode: true
         }
       })
     }),

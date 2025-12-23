@@ -61,14 +61,19 @@ interface AudioProps {
 const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 	const { mutate: removeAudioMessage } = trpc.assignment.removeAudioMessage.useMutation()
 	return <div className="flex gap-4 w-full px-6 items-center justify-between">
-		<a className="text-blue-500 underline" href={audioMessage.url} target="_blank" rel="noreferrer">
-			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()}
-		</a>
-		<span>
-			<Link href={"/user/" + audioMessage.user?.id}>
-				{audioMessage.user?.name ?? audioMessage.user?.email}
-			</Link>
-		</span>
+		<div className="flex flex-col gap-1 flex-1">
+			<div className="flex justify-between items-center">
+				<Link href={"/user/" + audioMessage.user?.id}>
+					{audioMessage.user?.name ?? audioMessage.user?.email}
+				</Link>
+				<span className="text-xs text-gray-400">
+					{audioMessage.createdAt.toLocaleString()}
+				</span>
+			</div>
+			<audio controls className="w-full max-w-md h-8">
+				<source src={audioMessage.url} type="audio/mpeg" />
+			</audio>
+		</div>
 		<button
 			type="button"
 			title="Remove Audio Message"
