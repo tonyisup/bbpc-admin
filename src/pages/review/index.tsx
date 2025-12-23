@@ -1,15 +1,16 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
-import { Trash2, Star, User, Film, Tv, Loader2 } from "lucide-react";
+import { Trash2, Star, User, Film, Tv, Loader2, Filter } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import RatingIcon from "../../components/Review/RatingIcon";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -32,6 +33,8 @@ export async function getServerSideProps(context: any) {
 }
 
 const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
+
   const {
     data,
     isLoading,
@@ -40,9 +43,18 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
     hasNextPage,
     refetch
   } = trpc.review.getAll.useInfiniteQuery(
-    { limit: 50 },
+    {
+      limit: 50,
+      ratingId: ratingFilter === "all" ? undefined : (ratingFilter === "none" ? null : ratingFilter)
+    },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
+
+  const { data: ratings } = trpc.review.getRatings.useQuery();
+
+  const setRatingMutation = trpc.review.setReviewRating.useMutation({
+    onSuccess: () => refetch(),
+  });
 
   const removeMutation = trpc.review.remove.useMutation({
     onSuccess: () => refetch(),
@@ -63,9 +75,29 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
       </Head>
 
       <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">All Reviews</h2>
-          <p className="text-muted-foreground">Manage and audit all submitted reviews. ({reviews.length} shown)</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">All Reviews</h2>
+            <p className="text-muted-foreground">Manage and audit all submitted reviews. ({reviews.length} shown)</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={ratingFilter} onValueChange={setRatingFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by rating" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Ratings</SelectItem>
+                <SelectItem value="none">No Rating</SelectItem>
+                {ratings?.map((rating) => (
+                  <SelectItem key={rating.id} value={rating.id}>
+                    {rating.name} ({rating.value})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="rounded-md border bg-card shadow-sm">
@@ -130,14 +162,34 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                     </div>
                   </TableCell>
                   <TableCell>
-                    {review.rating ? (
-                      <div className="flex items-center gap-1">
-                        <RatingIcon value={review.rating.value} />
-                        <span className="text-xs text-muted-foreground">({review.rating.name})</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">No Rating</span>
-                    )}
+                    <Select
+                      value={review.ratingId || "none"}
+                      onValueChange={(value) => setRatingMutation.mutate({ reviewId: review.id, ratingId: value === "none" ? null : value })}
+                    >
+                      <SelectTrigger className="h-8 border-none bg-transparent hover:bg-muted/50 transition-colors px-2 w-[140px] focus:ring-0">
+                        <SelectValue>
+                          {review.rating ? (
+                            <div className="flex items-center gap-1">
+                              <RatingIcon value={review.rating.value} />
+                              <span className="text-xs font-semibold">{review.rating.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">No Rating</span>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Rating</SelectItem>
+                        {ratings?.map((rating) => (
+                          <SelectItem key={rating.id} value={rating.id}>
+                            <div className="flex items-center gap-2">
+                              <RatingIcon value={rating.value} />
+                              <span>{rating.name} ({rating.value})</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
