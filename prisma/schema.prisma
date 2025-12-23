@@ -116,6 +116,7 @@ model Assignment {
   episodeId         String             @db.UniqueIdentifier
   movieId           String             @db.UniqueIdentifier
   type              String             @default("HOMEWORK")
+  playable          Boolean            @default(true)
   episode           Episode            @relation(fields: [episodeId], references: [id])
   movie             Movie              @relation(fields: [movieId], references: [id])
   user              User               @relation(fields: [userId], references: [id], onUpdate: NoAction)

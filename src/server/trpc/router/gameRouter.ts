@@ -157,5 +157,79 @@ export const gameRouter = router({
 			});
 
 			return totals;
-		})
+		}),
+
+	addGameType: publicProcedure
+		.input(z.object({
+			title: z.string(),
+			description: z.string().optional(),
+			lookupID: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.prisma.gameType.create({
+				data: input,
+			});
+		}),
+
+	updateGameType: publicProcedure
+		.input(z.object({
+			id: z.number(),
+			title: z.string(),
+			description: z.string().optional(),
+			lookupID: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			const { id, ...data } = input;
+			return await ctx.prisma.gameType.update({
+				where: { id },
+				data,
+			});
+		}),
+
+	removeGameType: publicProcedure
+		.input(z.object({ id: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.prisma.gameType.delete({
+				where: { id: input.id },
+			});
+		}),
+
+	addGamePointType: publicProcedure
+		.input(z.object({
+			lookupID: z.string(),
+			title: z.string(),
+			description: z.string().optional(),
+			points: z.number(),
+			gameTypeId: z.number(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.prisma.gamePointType.create({
+				data: input,
+			});
+		}),
+
+	updateGamePointType: publicProcedure
+		.input(z.object({
+			id: z.number(),
+			lookupID: z.string(),
+			title: z.string(),
+			description: z.string().optional(),
+			points: z.number(),
+			gameTypeId: z.number(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			const { id, ...data } = input;
+			return await ctx.prisma.gamePointType.update({
+				where: { id },
+				data,
+			});
+		}),
+
+	removeGamePointType: publicProcedure
+		.input(z.object({ id: z.number() }))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.prisma.gamePointType.delete({
+				where: { id: input.id },
+			});
+		}),
 })

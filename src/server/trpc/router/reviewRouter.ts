@@ -146,4 +146,31 @@ export const reviewRouter = router({
 				}
 			})
 		}),
+	getAll: publicProcedure.query(async ({ ctx }) => {
+		return await ctx.prisma.review.findMany({
+			include: {
+				movie: true,
+				show: true,
+				user: true,
+				rating: true,
+				assignmentReviews: {
+					include: {
+						assignment: {
+							include: {
+								episode: true,
+							},
+						},
+					},
+				},
+				extraReviews: {
+					include: {
+						episode: true,
+					},
+				},
+			},
+			orderBy: {
+				ReviewdOn: "desc",
+			},
+		});
+	}),
 });

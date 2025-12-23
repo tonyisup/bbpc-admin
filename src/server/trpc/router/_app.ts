@@ -16,6 +16,9 @@ import { dashboardRouter } from "./dashboardRouter";
 import { testRouter } from "./testRouter";
 import { gameRouter } from "./gameRouter";
 import { azureRouter } from "./azureRouter";
+import { ratingRouter } from "./ratingRouter";
+import { bangerRouter } from "./bangerRouter";
+import { tagRouter } from "./tagRouter";
 
 export const appRouter = router({
   review: reviewRouter,
@@ -34,6 +37,9 @@ export const appRouter = router({
   season: seasonRouter,
   game: gameRouter,
   azure: azureRouter,
+  rating: ratingRouter,
+  banger: bangerRouter,
+  tag: tagRouter,
 });
 
 // export type definition of API

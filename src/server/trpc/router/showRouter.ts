@@ -81,4 +81,26 @@ export const showRouter = router({
     .query(({ ctx }) => {
       return ctx.prisma.show.count();
     }),
+  update: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string(),
+      year: z.number(),
+      poster: z.string().optional(),
+      url: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return await ctx.prisma.show.update({
+        where: { id },
+        data,
+      });
+    }),
+  remove: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.show.delete({
+        where: { id: input.id },
+      });
+    }),
 });

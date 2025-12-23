@@ -95,4 +95,20 @@ export const syllabusRouter = router({
         }
       });
     }),
-}); 
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    return await ctx.prisma.syllabus.findMany({
+      include: {
+        movie: true,
+        user: true,
+        assignment: {
+          include: {
+            episode: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }),
+});
