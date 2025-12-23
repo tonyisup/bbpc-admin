@@ -1,4 +1,5 @@
 import { Dispatch, DispatchWithoutAction, FC, SetStateAction, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "../utils/trpc";
 import {
   Dialog,
@@ -38,9 +39,10 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
     onSuccess: () => {
       refresh();
       setModalOpen(false);
+      toast.success("Role assigned successfully");
     },
     onError: (err) => {
-      alert("Failed to assign role: " + err.message);
+      toast.error("Failed to assign role: " + err.message);
     }
   });
 
@@ -50,7 +52,7 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
     if (selectedRoleId) {
       const roleId = parseInt(selectedRoleId, 10);
       if (Number.isNaN(roleId)) {
-        alert("Invalid role selected");
+        toast.error("Invalid role selected");
         return;
       }
       addUserRole({

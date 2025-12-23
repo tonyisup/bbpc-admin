@@ -2,6 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage }
 import Head from "next/head";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
@@ -242,25 +243,65 @@ const UserPage: NextPage<{ session: any }> = () => {
   }
 
   const { mutate: updateUser } = trpc.user.update.useMutation({
-    onSuccess: () => refetchUser(),
+    onSuccess: () => {
+      refetchUser();
+      toast.success("User updated successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to update user: " + err.message);
+    }
   });
 
   const { mutate: removeRole } = trpc.user.removeRole.useMutation({
-    onSuccess: () => refetchRoles(),
+    onSuccess: () => {
+      refetchRoles();
+      toast.success("Role removed successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove role: " + err.message);
+    }
   });
 
   const { mutate: assignEpisode } = trpc.syllabus.assignEpisode.useMutation({
-    onSuccess: () => refetchSyllabus(),
+    onSuccess: () => {
+      refetchSyllabus();
+      toast.success("Episode assigned successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to assign episode: " + err.message);
+    }
   });
 
   const { mutate: removePoint } = trpc.user.removePoint.useMutation({
-    onSuccess: () => refreshAllPoints(),
+    onSuccess: () => {
+      refreshAllPoints();
+      toast.success("Point removed successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove point: " + err.message);
+    }
+  });
+
+  const { mutate: removeSyllabusItem } = trpc.syllabus.remove.useMutation({
+    onSuccess: () => {
+      refetchSyllabus();
+      toast.success("Syllabus item removed");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove syllabus item: " + err.message);
+    }
   });
 
   const [modalOpen, setModalOpen] = useState<boolean>(false)
 
   const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
-    onSuccess: () => refetchSyllabus(),
+    onSuccess: () => {
+      refetchSyllabus();
+      toast.success("Assignment removed from syllabus");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove assignment: " + err.message);
+    }
   });
 
   const handleRemoveAssignment = (syllabusId: string) => {
@@ -656,12 +697,27 @@ const UserPage: NextPage<{ session: any }> = () => {
                               <X className="h-3 w-3" />
                             </button>
                           </div>) : (
-                          <SyllabusAssignmentForm
-                            itemId={item.id}
-                            onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
-                          />
+                          <div className="flex items-center gap-2">
+                            <SyllabusAssignmentForm
+                              itemId={item.id}
+                              onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to remove this from the syllabus?")) {
+                                  removeSyllabusItem({ id: item.id });
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
+
                     </div>
                   ))}
                 </div>

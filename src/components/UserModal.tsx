@@ -1,4 +1,5 @@
 import { DispatchWithoutAction, FC, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "../utils/trpc";
 import {
   Dialog,
@@ -26,6 +27,10 @@ const UserModal: FC<UserModalProps> = ({ open, setOpen, refreshItems }) => {
       setOpen(false)
       setUserName("")
       setUserEmail("")
+      toast.success("User created successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to create user: " + err.message);
     }
   });
   const [userName, setUserName] = useState<string>("");

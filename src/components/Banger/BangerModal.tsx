@@ -1,4 +1,5 @@
 import { DispatchWithoutAction, FC, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "../../utils/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -33,9 +34,10 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
       refreshItems();
       setOpen(false);
       resetForm();
+      toast.success("Banger added successfully!");
     },
     onError: (err) => {
-      alert("Failed to add banger: " + err.message);
+      toast.error("Failed to add banger: " + err.message);
     },
   });
 
@@ -44,9 +46,10 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
       refreshItems();
       setOpen(false);
       resetForm();
+      toast.success("Banger updated successfully!");
     },
     onError: (err) => {
-      alert("Failed to update banger: " + err.message);
+      toast.error("Failed to update banger: " + err.message);
     },
   });
 

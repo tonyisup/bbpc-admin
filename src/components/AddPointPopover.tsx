@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -27,7 +28,11 @@ export function AddPointPopover({ userId, seasonId, onSuccess }: AddPointPopover
 			setPoints("0");
 			setReason("");
 			setGamePointTypeId("custom");
+			toast.success("Points added successfully");
 			onSuccess?.();
+		},
+		onError: (err) => {
+			toast.error("Failed to add points: " + err.message);
 		},
 	});
 

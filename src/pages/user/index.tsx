@@ -2,6 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage }
 import Link from "next/link";
 import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Trash2, Plus, Search, UserCheck, ShieldAlert, Filter, X } from "lucide-react";
 import UserModal from "../../components/UserModal";
 import { getServerSession } from "next-auth";
@@ -53,7 +54,11 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
   const { mutate: removeItem } = trpc.user.remove.useMutation({
     onSuccess: () => {
-      refresh()
+      refresh();
+      toast.success("User removed successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove user: " + err.message);
     }
   })
   const [modalOpen, setModalOpen] = useState<boolean>(false)

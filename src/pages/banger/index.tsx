@@ -2,6 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Trash2, Plus, Edit2, Music } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -34,7 +35,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const BangersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const { data: bangers, isLoading, refetch } = trpc.banger.getAll.useQuery();
   const removeMutation = trpc.banger.remove.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      refetch();
+      toast.success("Banger deleted successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to delete banger: " + err.message);
+    }
   });
 
   const [modalOpen, setModalOpen] = useState(false);

@@ -1,4 +1,5 @@
 import { DispatchWithoutAction, FC, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "../../utils/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -24,9 +25,10 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
       refreshItems();
       setOpen(false);
       resetForm();
+      toast.success("Tag added successfully");
     },
     onError: (err) => {
-      alert("Failed to add tag: " + err.message);
+      toast.error("Failed to add tag: " + err.message);
     }
   });
 
@@ -35,9 +37,10 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
       refreshItems();
       setOpen(false);
       resetForm();
+      toast.success("Tag updated successfully");
     },
     onError: (err) => {
-      alert("Failed to update tag: " + err.message);
+      toast.error("Failed to update tag: " + err.message);
     }
   });
 
