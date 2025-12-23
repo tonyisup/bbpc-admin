@@ -23,7 +23,9 @@ export const gamblingRouter = router({
     }))
     .query(async (req) => {
       let seasonId = req.input.seasonId;
-      if (!seasonId) {
+      const isAll = seasonId === "all";
+
+      if (!seasonId && !isAll) {
         const season = await req.ctx.prisma.season.findFirst({
           orderBy: {
             startedOn: 'desc',
@@ -33,12 +35,14 @@ export const gamblingRouter = router({
         seasonId = season?.id;
       }
 
+      const filterBySeasonId = isAll ? undefined : seasonId;
+
       const where: any = {
         userId: req.input.userId,
       };
 
-      if (seasonId) {
-        where.seasonId = seasonId;
+      if (filterBySeasonId) {
+        where.seasonId = filterBySeasonId;
       }
 
       return await req.ctx.prisma.gamblingPoints.findMany({

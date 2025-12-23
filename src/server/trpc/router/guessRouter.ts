@@ -225,17 +225,21 @@ export const guessRouter = router({
 		}))
 		.query(async (req) => {
 			let seasonId = req.input.seasonId;
-			if (!seasonId) {
+			const isAll = seasonId === "all";
+
+			if (!seasonId && !isAll) {
 				const currentSeasonId = await getCurrentSeasonID(req.ctx.prisma);
 				seasonId = currentSeasonId ?? undefined;
 			}
+
+			const filterBySeasonId = isAll ? undefined : seasonId;
 
 			const where: any = {
 				userId: req.input.userId,
 			};
 
-			if (seasonId) {
-				where.seasonId = seasonId;
+			if (filterBySeasonId) {
+				where.seasonId = filterBySeasonId;
 			}
 
 			return await req.ctx.prisma.guess.findMany({

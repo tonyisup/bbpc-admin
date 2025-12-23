@@ -103,11 +103,23 @@ export const userRouter = router({
       seasonId: z.string().optional()
     }))
     .query(async ({ ctx, input }) => {
-      const { userId } = input;
-      let seasonId = input.seasonId ?? '';
+      const { userId, seasonId } = input;
+      // We pass seasonId as is: 
+      // undefined -> calculateUserPoints uses current
+      // "all" -> we should map this to null in the frontend or here
+      return await calculateUserPoints(ctx.prisma, userId, seasonId === "all" ? null : seasonId);
+    }),
+  getPoints: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      seasonId: z.string().optional()
+    }))
+    .query(async (req) => {
+      let seasonId = req.input.seasonId;
+      const isAll = seasonId === "all";
 
-      if (!seasonId) {
-        const season = await ctx.prisma.season.findFirst({
+      if (!seasonId && !isAll) {
+        const season = await req.ctx.prisma.season.findFirst({
           orderBy: {
             startedOn: 'desc',
           },
@@ -115,20 +127,19 @@ export const userRouter = router({
             endedOn: null,
           },
         });
-        seasonId = season?.id ?? undefined;
+        seasonId = season?.id;
       }
-      if (!seasonId) {
-        return 0;
+
+      const where: any = {
+        userId: req.input.id,
+      };
+
+      if (seasonId && !isAll) {
+        where.seasonId = seasonId;
       }
-      return await calculateUserPoints(ctx.prisma, userId, seasonId);
-    }),
-  getPoints: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async (req) => {
+
       return await req.ctx.prisma.point.findMany({
-        where: {
-          userId: req.input.id,
-        },
+        where,
         include: {
           season: true,
           gamePointType: true,

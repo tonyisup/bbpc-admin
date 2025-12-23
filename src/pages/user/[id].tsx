@@ -2,7 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage }
 import Head from "next/head";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
-import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus } from "lucide-react";
+import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -188,11 +189,42 @@ const UserPage: NextPage<{ session: any }> = () => {
   const { data: userRoles, refetch: refetchRoles } = trpc.user.getRoles.useQuery({ id });
   const { data: syllabus, refetch: refetchSyllabus } = trpc.user.getSyllabus.useQuery({ id });
   const { data: currentSeason } = trpc.guess.currentSeason.useQuery();
+  const { data: allSeasons } = trpc.guess.seasons.useQuery();
 
-  const { data: totalPoints, refetch: refetchTotalPoints } = trpc.user.getTotalPointsForSeason.useQuery({ userId: id });
-  const { data: guesses, refetch: refetchGuesses } = trpc.guess.getForUser.useQuery({ userId: id });
-  const { data: gamblingPoints, refetch: refetchGamblingPoints } = trpc.gambling.getForUser.useQuery({ userId: id });
-  const { data: points, refetch: refetchPoints } = trpc.user.getPoints.useQuery({ id });
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>("current");
+  const [expandedEpisodes, setExpandedEpisodes] = useState<Record<string, boolean>>({});
+
+  const toggleEpisode = (episodeId: string) => {
+    setExpandedEpisodes(prev => ({
+      ...prev,
+      [episodeId]: !prev[episodeId]
+    }));
+  };
+
+  const querySeasonId = useMemo(() => {
+    if (selectedSeasonId === "current") return undefined; // Let backend handle current
+    return selectedSeasonId; // "all" or specific UUID
+  }, [selectedSeasonId]);
+
+  const { data: totalPoints, refetch: refetchTotalPoints } = trpc.user.getTotalPointsForSeason.useQuery({
+    userId: id,
+    seasonId: querySeasonId
+  }, { enabled: !!id });
+
+  const { data: guesses, refetch: refetchGuesses } = trpc.guess.getForUser.useQuery({
+    userId: id,
+    seasonId: querySeasonId
+  }, { enabled: !!id });
+
+  const { data: gamblingPoints, refetch: refetchGamblingPoints } = trpc.gambling.getForUser.useQuery({
+    userId: id,
+    seasonId: querySeasonId
+  }, { enabled: !!id });
+
+  const { data: points, refetch: refetchPoints } = trpc.user.getPoints.useQuery({
+    id,
+    seasonId: querySeasonId
+  }, { enabled: !!id });
 
   const form = useForm<z.infer<typeof formSchema>>({
     values: {
@@ -371,12 +403,31 @@ const UserPage: NextPage<{ session: any }> = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-lg border border-primary/10">
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-primary/70">Total Points</span>
-              <span className="text-2xl font-black text-primary">{totalPoints ?? 0}</span>
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end gap-1.5 min-w-[140px]">
+              <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/70">Filter Season</span>
+              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+                <SelectTrigger className="h-8 text-xs font-bold bg-background/50 border-primary/10">
+                  <SelectValue placeholder="Select Season" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current" className="text-xs font-bold">Current Season</SelectItem>
+                  <SelectItem value="all" className="text-xs font-bold">All Time</SelectItem>
+                  {allSeasons?.filter(s => s.id !== currentSeason?.id).map(season => (
+                    <SelectItem key={season.id} value={season.id} className="text-xs">
+                      {season.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Trophy className="h-8 w-8 text-primary/40" />
+            <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-lg border border-primary/10">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-primary/70">Total Points</span>
+                <span className="text-2xl font-black text-primary">{totalPoints ?? 0}</span>
+              </div>
+              <Trophy className="h-8 w-8 text-primary/40" />
+            </div>
           </div>
         </div>
 
@@ -405,48 +456,64 @@ const UserPage: NextPage<{ session: any }> = () => {
                     <div className="text-center py-12 text-muted-foreground italic">No point events recorded yet.</div>
                   )}
 
-                  {sortedEpisodeKeys.map(episodeId => {
+                  {sortedEpisodeKeys.map((episodeId, idx) => {
                     const group = groupedPoints[episodeId];
+                    const isExpanded = expandedEpisodes[episodeId] ?? (idx === 0);
+
                     return (
                       <div key={episodeId} className="relative pl-6 pb-6 border-l-2 border-primary/20 last:border-0 last:pb-0">
                         <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-background" />
-                        <div className="mb-4">
-                          <h3 className="text-sm font-bold text-primary uppercase tracking-tight">Episode {group?.episode?.number}</h3>
-                          <p className="text-lg font-bold">{group?.episode?.title}</p>
-                        </div>
 
-                        <div className="space-y-3">
-                          {Object.values(group?.assignments || {}).map((assignmentGroup) => (
-                            <div key={assignmentGroup.assignment.id} className="bg-muted/30 p-4 rounded-lg border border-muted-foreground/10">
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
-                                  {assignmentGroup.assignment.type}
-                                </span>
-                                <span className="text-sm font-semibold text-muted-foreground">{assignmentGroup.assignment.movie?.title}</span>
-                              </div>
-                              <div className="space-y-2">
-                                {assignmentGroup.points.map((point) => (
-                                  <div key={point.id} className="flex items-center justify-between bg-background/50 p-2.5 rounded border border-muted-foreground/5 transition-colors hover:border-muted-foreground/20">
-                                    <div className="flex items-center gap-3">
-                                      <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${point.isGuess ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
-                                        {point.isGuess ? '?' : `+${(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)}`}
+                        <button
+                          onClick={() => toggleEpisode(episodeId)}
+                          className="flex items-center justify-between w-full text-left mb-4 group/header"
+                        >
+                          <div>
+                            <h3 className="text-sm font-bold text-primary uppercase tracking-tight flex items-center gap-2">
+                              Episode {group?.episode?.number}
+                              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </h3>
+                            <p className="text-lg font-bold group-hover/header:text-primary transition-colors">{group?.episode?.title}</p>
+                          </div>
+                          <div className="text-[10px] font-black uppercase text-muted-foreground/40 bg-muted/50 px-2 py-0.5 rounded">
+                            {Object.values(group?.assignments || {}).length} Assignments
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                            {Object.values(group?.assignments || {}).map((assignmentGroup) => (
+                              <div key={assignmentGroup.assignment.id} className="bg-muted/30 p-4 rounded-lg border border-muted-foreground/10">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
+                                    {assignmentGroup.assignment.type}
+                                  </span>
+                                  <span className="text-sm font-semibold text-muted-foreground">{assignmentGroup.assignment.movie?.title}</span>
+                                </div>
+                                <div className="space-y-2">
+                                  {assignmentGroup.points.map((point) => (
+                                    <div key={point.id} className="flex items-center justify-between bg-background/50 p-2.5 rounded border border-muted-foreground/5 transition-colors hover:border-muted-foreground/20">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${point.isGuess ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                                          {point.isGuess ? '?' : `+${(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)}`}
+                                        </div>
+                                        <div className="flex flex-col">
+                                          <span className="text-sm font-medium">{point.reason}</span>
+                                          <span className="text-[10px] text-muted-foreground/70">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
+                                        </div>
                                       </div>
-                                      <div className="flex flex-col">
-                                        <span className="text-sm font-medium">{point.reason}</span>
-                                        <span className="text-[10px] text-muted-foreground/70">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
-                                      </div>
+                                      {!point.isGuess && (
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removePoint({ id: point.id })}>
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      )}
                                     </div>
-                                    {!point.isGuess && (
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removePoint({ id: point.id })}>
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
