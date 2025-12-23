@@ -17,7 +17,8 @@ import {
   Tag as TagIcon,
   BookOpen,
   ShieldAlert,
-  Search
+  Search,
+  Film
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -72,6 +73,12 @@ export function Sidebar({ className }: SidebarProps) {
           icon: Tv,
           href: "/show",
           active: pathname.startsWith("/show"),
+        },
+        {
+          label: "Movies",
+          icon: Film,
+          href: "/movie",
+          active: pathname.startsWith("/movie"),
         },
         {
           label: "Bangers",

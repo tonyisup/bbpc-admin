@@ -32,23 +32,28 @@ export async function getServerSideProps(context: any) {
   };
 }
 
-const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
+const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data: existingShows, isLoading: loadingExisting, refetch } = trpc.show.getAll.useQuery();
-  const { data: searchResults, isLoading: loadingSearch } = trpc.show.search.useQuery(
+  const { data: existingMovies, isLoading: loadingExisting, refetch } = trpc.movie.getAll.useQuery();
+  const { data: searchResults, isLoading: loadingSearch } = trpc.movie.search.useQuery(
     { searchTerm },
     { enabled: searchTerm.length > 2 }
   );
 
-  const addMutation = trpc.show.add.useMutation({
+  const addMutation = trpc.movie.add.useMutation({
     onSuccess: () => {
       refetch();
       setSearchTerm("");
     },
   });
 
-  const removeMutation = trpc.show.remove.useMutation({
-    onSuccess: () => refetch(),
+  const removeMutation = trpc.movie.remove.useMutation({
+    // onSuccess: () => refetch(),
+    // Error handling since movies might be linked to assignments/reviews
+    onError: (err) => {
+      alert("Failed to delete movie: " + err.message);
+    },
+    onSettled: () => refetch(),
   });
 
   const handleAdd = (result: any) => {
@@ -56,12 +61,12 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
       title: result.title,
       year: result.release_date ? new Date(result.release_date).getFullYear() : 0,
       poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : "",
-      url: `https://www.themoviedb.org/tv/${result.id}`,
+      url: `https://www.themoviedb.org/movie/${result.id}`,
     });
   };
 
   const handleRemove = (id: string) => {
-    if (confirm("Are you sure you want to delete this show?")) {
+    if (confirm("Are you sure you want to delete this movie? This might fail if it's linked to episodes or reviews.")) {
       removeMutation.mutate({ id });
     }
   };
@@ -69,13 +74,13 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
   return (
     <>
       <Head>
-        <title>Shows - BBPC Admin</title>
+        <title>Movies - BBPC Admin</title>
       </Head>
 
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold tracking-tight">Shows</h2>
-          <p className="text-muted-foreground">Manage TV shows and series in the database.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Movies</h2>
+          <p className="text-muted-foreground">Manage movies in the database.</p>
         </div>
 
         {/* Search and Add */}
@@ -85,7 +90,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
           </h3>
           <div className="flex gap-2">
             <Input
-              placeholder="Search for a show..."
+              placeholder="Search for a movie..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-md"
@@ -99,7 +104,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
               {searchResults.results.map((result: any) => (
                 <div key={result.id} className="flex flex-col gap-2 p-2 border rounded-md hover:bg-muted transition group relative">
                   <a
-                    href={`https://www.themoviedb.org/tv/${result.id}`}
+                    href={`https://www.themoviedb.org/movie/${result.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -139,9 +144,9 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
           )}
         </div>
 
-        {/* Existing Shows */}
+        {/* Existing Movies */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xl font-bold">Existing Shows</h3>
+          <h3 className="text-xl font-bold">Existing Movies</h3>
           <div className="rounded-md border bg-card">
             <Table>
               <TableHeader>
@@ -161,20 +166,20 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   </TableRow>
                 )}
 
-                {!loadingExisting && existingShows?.length === 0 && (
+                {!loadingExisting && existingMovies?.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center h-24">
-                      No shows found in database.
+                      No movies found in database.
                     </TableCell>
                   </TableRow>
                 )}
 
-                {existingShows?.map((show) => (
-                  <TableRow key={show.id} className="group">
+                {existingMovies?.map((movie) => (
+                  <TableRow key={movie.id} className="group">
                     <TableCell>
-                      {show.poster && (
+                      {movie.poster && (
                         <a
-                          href={show.url}
+                          href={movie.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:opacity-80 transition-opacity block"
@@ -182,8 +187,8 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                           <div className="w-12 h-18 relative aspect-[2/3] rounded overflow-hidden shadow-sm">
                             <Image
                               unoptimized
-                              src={show.poster}
-                              alt={show.title}
+                              src={movie.poster}
+                              alt={movie.title}
                               fill
                               className="object-cover"
                             />
@@ -192,17 +197,17 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <Link href={`/show/${show.id}`} className="hover:underline">
-                        {show.title}
+                      <Link href={`/movie/${movie.id}`} className="hover:underline">
+                        {movie.title}
                       </Link>
                     </TableCell>
-                    <TableCell>{show.year}</TableCell>
+                    <TableCell>{movie.year}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemove(show.id)}
+                        onClick={() => handleRemove(movie.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -218,4 +223,4 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
   );
 };
 
-export default ShowsPage;
+export default MoviesPage;

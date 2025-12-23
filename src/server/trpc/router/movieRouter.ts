@@ -11,13 +11,13 @@ export const movieRouter = router({
       return await ctx.prisma.movie.findMany({
         where: {
           title: {
-            contains: input.searchTerm,            
+            contains: input.searchTerm,
           }
         }
       })
     }),
   search: publicProcedure
-    .input(z.object({ 
+    .input(z.object({
       searchTerm: z.string(),
       page: z.number().optional().default(1),
     }))
@@ -58,7 +58,7 @@ export const movieRouter = router({
         })
       }
       return await req.ctx.prisma.movie.create({
-        data: {          
+        data: {
           title: req.input.title,
           year: req.input.year,
           poster: req.input.poster,
@@ -71,6 +71,28 @@ export const movieRouter = router({
     .query(({ ctx, input }) => {
       return ctx.prisma.movie.findUnique({
         where: { id: input.id },
+        include: {
+          reviews: {
+            include: {
+              user: true,
+              rating: true,
+              extraReviews: {
+                include: {
+                  episode: true,
+                }
+              },
+              assignmentReviews: {
+                include: {
+                  assignment: {
+                    include: {
+                      episode: true,
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       });
     }),
   getAll: publicProcedure
