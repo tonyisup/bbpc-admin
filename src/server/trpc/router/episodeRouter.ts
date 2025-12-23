@@ -31,6 +31,13 @@ export const episodeRouter = router({
         }
       })
     }),
+  removeLink: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.link.delete({
+        where: { id: input.id }
+      })
+    }),
   getAssigments: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {

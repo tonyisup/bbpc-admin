@@ -1,76 +1,104 @@
-import type { Episode } from "@prisma/client";
 import { type DispatchWithoutAction, type FC, useState } from "react";
 import { trpc } from "../../utils/trpc";
-import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Link2, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface AddEpisodeLinkModalProps {
 	refreshItems: DispatchWithoutAction,
-	episode: Episode
+	episode: {
+		id: string;
+	},
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }
 
-const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({refreshItems, episode}) => {
-	const [modalOpen, setModalOpen] = useState(false)
+const AddEpisodeLinkModal: FC<AddEpisodeLinkModalProps> = ({ refreshItems, episode, open, onOpenChange }) => {
 	const [url, setUrl] = useState("")
 	const [text, setText] = useState("")
-	const {mutate: addLink} = trpc.episode.addLink.useMutation({
+
+	const { mutate: addLink, isLoading } = trpc.episode.addLink.useMutation({
 		onSuccess: () => {
-			refreshItems()
-			closeModal()
+			toast.success("Link added successfully");
+			refreshItems();
+			setUrl("");
+			setText("");
+			onOpenChange(false);
+		},
+		onError: (err) => {
+			toast.error(`Failed to add link: ${err.message}`);
 		}
 	})
-	const closeModal = function() {
-		setModalOpen(false)
+
+	const handleAddLink = () => {
+		if (!url || !text) return;
+		addLink({
+			episodeId: episode.id,
+			url: url,
+			text: text
+		})
 	}
-	const handleAddExtra = function() {
-			addLink({
-				episodeId: episode.id,
-				url: url,
-				text: text
-			})
-	}
-	return <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Link</DialogTitle>
-        </DialogHeader>
-		<div className="p-3 space-y-4 bg-gray-800">
-			<div className="grid grid-cols-2 gap-2">
-				<div className="flex flex-col gap-2">
-					<label htmlFor="url">Url</label>
-					<input
-						id="url"
-						type="text"
-						value={url}
-						onChange={(e) => setUrl(e.target.value)}
-						className="bg-gray-600 text-gray-300"
-					/>
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						<Link2 className="h-5 w-5 text-primary" />
+						Add Episode Link
+					</DialogTitle>
+					<DialogDescription>
+						Add a reference link or resource for this episode.
+					</DialogDescription>
+				</DialogHeader>
+
+				<div className="grid gap-4 py-4">
+					<div className="grid gap-2">
+						<Label htmlFor="text">Display Text</Label>
+						<Input
+							id="text"
+							placeholder="e.g. Movie Trailer"
+							value={text}
+							onChange={(e) => setText(e.target.value)}
+							onKeyDown={(e) => e.key === 'Enter' && handleAddLink()}
+						/>
+					</div>
+					<div className="grid gap-2">
+						<Label htmlFor="url">URL</Label>
+						<Input
+							id="url"
+							placeholder="https://example.com"
+							type="url"
+							value={url}
+							onChange={(e) => setUrl(e.target.value)}
+							onKeyDown={(e) => e.key === 'Enter' && handleAddLink()}
+						/>
+					</div>
 				</div>
-				<div className="flex flex-col gap-2">
-					<label htmlFor="text">Text</label>
-					<input
-						id="text"
-						type="text"
-						value={text}
-						onChange={(e) => setText(e.target.value)}
-						className="bg-gray-600 text-gray-300"
-					/>
-				</div>
-				<button
-					onClick={closeModal}
-					className="rounded-md bg-gray-500 p-1 text-xs transition hover:bg-gray-600"
-				>
-					Cancel
-				</button>
-				<button
-					onClick={handleAddExtra}
-					disabled={!url || !text}
-					className="rounded-md bg-violet-500 p-1 text-xs transition hover:bg-violet-600 disabled:bg-gray-600 disabled:text-gray-400"
-				>
-					Add Link
-				</button>
-			</div>
-		</div>
-	</DialogContent>
-	</Dialog>
+
+				<DialogFooter>
+					<Button variant="outline" onClick={() => onOpenChange(false)}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleAddLink}
+						disabled={!url || !text || isLoading}
+						className="gap-2"
+					>
+						{isLoading ? "Adding..." : (
+							<>
+								<Save className="h-4 w-4" />
+								Add Link
+							</>
+						)}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	)
 }
+
 export default AddEpisodeLinkModal
