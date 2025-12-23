@@ -95,6 +95,11 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
     onSuccess: () => refetchSyllabus(),
   });
 
+  const handleRemoveAssignment = (syllabusId: string) => {
+    removeAssignment({ syllabusId });
+  };
+
+
   const { mutate: reorderSyllabus } = trpc.user.reorderSyllabus.useMutation({
     onSuccess: () => refetchSyllabus(),
   });

@@ -1,7 +1,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { trpc } from "@/utils/trpc";
+import { trpc, type RouterOutputs } from "@/utils/trpc";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -13,46 +13,62 @@ import {
   SelectTrigger,
   SelectValue
 } from "../ui/select";
-import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
+import { CalendarIcon, Loader2, Sparkles, Save } from "lucide-react";
+import { toast } from "sonner";
 
-const NewSeasonFormSchema = z.object({
+const EditSeasonFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   gameTypeId: z.string().min(1, "Please select a game type"),
   startedOn: z.string().min(1, "Start date is required"),
-  endedOn: z.string().optional(),
+  endedOn: z.string().optional().nullable(),
 });
 
-type NewSeasonFormInputs = z.infer<typeof NewSeasonFormSchema>;
+type EditSeasonFormInputs = z.infer<typeof EditSeasonFormSchema>;
 
-type NewSeasonFormProps = {
+type EditSeasonFormProps = {
+  season: RouterOutputs["season"]["getById"];
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-export const NewSeasonForm = ({ onSuccess, onCancel }: NewSeasonFormProps) => {
+export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormProps) => {
+  if (!season) return null;
+
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm<NewSeasonFormInputs>({
-    resolver: zodResolver(NewSeasonFormSchema),
+  } = useForm<EditSeasonFormInputs>({
+    resolver: zodResolver(EditSeasonFormSchema),
     defaultValues: {
-      startedOn: new Date().toISOString().split('T')[0],
+      title: season.title,
+      description: season.description || "",
+      gameTypeId: season.gameTypeId.toString(),
+      startedOn: season.startedOn ? new Date(season.startedOn).toISOString().split('T')[0] : "",
+      endedOn: season.endedOn ? new Date(season.endedOn).toISOString().split('T')[0] : null,
     }
   });
 
+  const utils = trpc.useContext();
   const { data: gameTypes, isLoading: isLoadingGameTypes } = trpc.game.getGameTypes.useQuery();
-  const createSeason = trpc.season.create.useMutation({
+  const updateSeason = trpc.season.update.useMutation({
     onSuccess: () => {
+      toast.success("Season updated successfully");
+      utils.season.getById.invalidate({ id: season.id });
       onSuccess?.();
+    },
+    onError: (error) => {
+      toast.error(`Error updating season: ${error.message}`);
     }
   });
 
-  const onSubmit = (data: NewSeasonFormInputs) => {
-    createSeason.mutate({
-      ...data,
+  const onSubmit = (data: EditSeasonFormInputs) => {
+    updateSeason.mutate({
+      id: season.id,
+      title: data.title,
+      description: data.description,
       gameTypeId: parseInt(data.gameTypeId),
       startedOn: new Date(data.startedOn),
       endedOn: data.endedOn ? new Date(data.endedOn) : null,
@@ -60,7 +76,7 @@ export const NewSeasonForm = ({ onSuccess, onCancel }: NewSeasonFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
       <div className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="title" className="text-sm font-bold flex items-center gap-2">
@@ -147,13 +163,18 @@ export const NewSeasonForm = ({ onSuccess, onCancel }: NewSeasonFormProps) => {
             Cancel
           </Button>
         )}
-        <Button size="lg" type="submit" disabled={createSeason.isLoading} className="px-8 shadow-lg">
-          {createSeason.isLoading ? (
+        <Button size="lg" type="submit" disabled={updateSeason.isLoading} className="px-8 shadow-lg gap-2">
+          {updateSeason.isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Updating...
             </>
-          ) : "Initialize Season"}
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Changes
+            </>
+          )}
         </Button>
       </div>
     </form>

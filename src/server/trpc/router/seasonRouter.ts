@@ -4,7 +4,20 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 
 export const seasonRouter = router({
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.season.findMany();
+    return ctx.prisma.season.findMany({
+      include: {
+        gameType: true,
+        _count: {
+          select: {
+            guesses: true,
+            points: true,
+          }
+        }
+      },
+      orderBy: {
+        startedOn: 'desc',
+      },
+    });
   }),
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
@@ -89,7 +102,7 @@ export const seasonRouter = router({
         description: z.string(),
         gameTypeId: z.number(),
         startedOn: z.date(),
-        endedOn: z.date(),
+        endedOn: z.date().nullable().optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -111,7 +124,7 @@ export const seasonRouter = router({
         description: z.string(),
         gameTypeId: z.number(),
         startedOn: z.date(),
-        endedOn: z.date(),
+        endedOn: z.date().nullable(),
       })
     )
     .mutation(({ ctx, input }) => {
