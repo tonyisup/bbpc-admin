@@ -1,13 +1,14 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
-import { Trash2, Star, User, Film, Tv } from "lucide-react";
+import { Trash2, Star, User, Film, Tv, Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
+import { Fragment } from "react";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -30,7 +31,18 @@ export async function getServerSideProps(context: any) {
 }
 
 const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const { data: reviews, isLoading, refetch } = trpc.review.getAll.useQuery();
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch
+  } = trpc.review.getAll.useInfiniteQuery(
+    { limit: 50 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
+
   const removeMutation = trpc.review.remove.useMutation({
     onSuccess: () => refetch(),
   });
@@ -41,6 +53,8 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
     }
   };
 
+  const reviews = data?.pages.flatMap((page) => page.items) ?? [];
+
   return (
     <>
       <Head>
@@ -50,7 +64,7 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">All Reviews</h2>
-          <p className="text-muted-foreground">Manage and audit all submitted reviews.</p>
+          <p className="text-muted-foreground">Manage and audit all submitted reviews. ({reviews.length} shown)</p>
         </div>
 
         <div className="rounded-md border bg-card shadow-sm">
@@ -69,11 +83,11 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                 <TableRow><TableCell colSpan={5} className="text-center h-24">Loading...</TableCell></TableRow>
               )}
 
-              {!isLoading && reviews?.length === 0 && (
+              {!isLoading && reviews.length === 0 && (
                 <TableRow><TableCell colSpan={5} className="text-center h-24">No reviews found.</TableCell></TableRow>
               )}
 
-              {reviews?.map((review: any) => (
+              {reviews.map((review: any) => (
                 <TableRow key={review.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -154,6 +168,26 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
             </TableBody>
           </Table>
         </div>
+
+        {hasNextPage && (
+          <div className="flex justify-center py-4">
+            <Button
+              variant="outline"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="w-full max-w-xs"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                "Load More"
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

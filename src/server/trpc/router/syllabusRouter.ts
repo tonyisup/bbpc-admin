@@ -95,20 +95,42 @@ export const syllabusRouter = router({
         }
       });
     }),
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.syllabus.findMany({
-      include: {
-        movie: true,
-        user: true,
-        assignment: {
-          include: {
-            episode: true,
+
+  getAll: publicProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).nullish(),
+      cursor: z.string().nullish(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const limit = input.limit ?? 50;
+      const { cursor } = input;
+
+      const items = await ctx.prisma.syllabus.findMany({
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        include: {
+          movie: true,
+          user: true,
+          assignment: {
+            include: {
+              episode: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-  }),
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
 });

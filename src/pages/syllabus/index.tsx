@@ -1,13 +1,14 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
-import { Trash2, BookOpen, User, Film } from "lucide-react";
+import { Trash2, BookOpen, User, Film, Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
+import { Fragment } from "react";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -30,7 +31,18 @@ export async function getServerSideProps(context: any) {
 }
 
 const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const { data: syllabusItems, isLoading } = trpc.syllabus.getAll.useQuery();
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage
+  } = trpc.syllabus.getAll.useInfiniteQuery(
+    { limit: 50 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
+
+  const syllabusItems = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <>
@@ -41,7 +53,7 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Global Syllabus</h2>
-          <p className="text-muted-foreground">Manage all user movie syllabuses.</p>
+          <p className="text-muted-foreground">Manage all user movie syllabuses. ({syllabusItems.length} shown)</p>
         </div>
 
         <div className="rounded-md border bg-card shadow-sm">
@@ -60,11 +72,11 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                 <TableRow><TableCell colSpan={5} className="text-center h-24">Loading...</TableCell></TableRow>
               )}
 
-              {!isLoading && syllabusItems?.length === 0 && (
+              {!isLoading && syllabusItems.length === 0 && (
                 <TableRow><TableCell colSpan={5} className="text-center h-24">No syllabus items found.</TableCell></TableRow>
               )}
 
-              {syllabusItems?.map((item: any) => (
+              {syllabusItems.map((item: any) => (
                 <TableRow key={item.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -120,6 +132,26 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
             </TableBody>
           </Table>
         </div>
+
+        {hasNextPage && (
+          <div className="flex justify-center py-4">
+            <Button
+              variant="outline"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="w-full max-w-xs"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                "Load More"
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
