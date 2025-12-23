@@ -159,7 +159,13 @@ export function Sidebar({ className }: SidebarProps) {
           label: "Test Lab",
           icon: Beaker,
           href: "/test",
-          active: pathname === "/test" || pathname === "/test-audio",
+          active: pathname === "/test"
+        },
+        {
+          label: "Test Audio",
+          icon: Beaker,
+          href: "/test-audio",
+          active: pathname === "/test-audio"
         }
       ]
     }

@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";

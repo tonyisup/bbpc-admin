@@ -32,8 +32,8 @@ export const bangerRouter = router({
         title: z.string(),
         artist: z.string(),
         url: z.string().url(),
-        episodeId: z.string().optional(),
-        userId: z.string().optional(),
+        episodeId: z.string().nullish(),
+        userId: z.string().nullish(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -49,8 +49,8 @@ export const bangerRouter = router({
         title: z.string(),
         artist: z.string(),
         url: z.string().url(),
-        episodeId: z.string().optional(),
-        userId: z.string().optional(),
+        episodeId: z.string().nullish(),
+        userId: z.string().nullish(),
       })
     )
     .mutation(async ({ ctx, input }) => {
