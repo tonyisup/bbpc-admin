@@ -88,13 +88,14 @@ const RolesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead className="text-center">Users</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     Loading...
                   </TableCell>
                 </TableRow>
@@ -102,7 +103,7 @@ const RolesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
               {!isLoading && roles?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     No roles found.
                   </TableCell>
                 </TableRow>
@@ -123,14 +124,19 @@ const RolesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   <TableCell>{role.description}</TableCell>
                   <TableCell>
                     {role.admin ? (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-semibold uppercase tracking-wider">
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-semibold uppercase tracking-wider border border-primary/20">
                         Admin
                       </span>
                     ) : (
-                      <span className="text-xs bg-muted px-2 py-1 rounded font-semibold uppercase tracking-wider">
+                      <span className="text-xs bg-muted px-2 py-1 rounded font-semibold uppercase tracking-wider border">
                         Member
                       </span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center bg-muted h-6 min-w-[24px] px-1.5 rounded-full text-xs font-bold font-mono">
+                      {role._count?.users ?? 0}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

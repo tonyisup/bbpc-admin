@@ -11,7 +11,16 @@ export const roleRouter = router({
     }),
 
   getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.role.findMany();
+    return ctx.prisma.role.findMany({
+      include: {
+        _count: {
+          select: { users: true }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
   }),
 
   getSummary: publicProcedure.query(({ ctx }) => {

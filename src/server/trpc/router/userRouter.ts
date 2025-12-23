@@ -234,7 +234,18 @@ export const userRouter = router({
     }),
   getAll: publicProcedure
     .query(({ ctx }) => {
-      return ctx.prisma.user.findMany();
+      return ctx.prisma.user.findMany({
+        include: {
+          roles: {
+            include: {
+              role: true
+            }
+          }
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      });
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {
