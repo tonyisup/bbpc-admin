@@ -15,7 +15,7 @@ export async function getServerSideProps(context: any) {
 	if (!session || !isAdmin) {
 		return {
 			redirect: {
-				destionation: '/',
+				destination: '/',
 				permanent: false,
 			}
 		}

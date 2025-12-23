@@ -1,285 +1,325 @@
-import type { Assignment, Episode, Movie, Rating, Review, User } from "@prisma/client";
-import { useState, type Dispatch, type FC } from "react";
+import type { Assignment, AudioMessage, Rating, User } from "@prisma/client";
+import { useState, useMemo, type FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
-import { HiMinusCircle, HiPlusCircle, HiX } from "react-icons/hi";
+import { Trash2, Plus, MessageSquare, Mic, Coins, User as UserIcon, X, PlusCircle, MinusCircle } from "lucide-react";
 import Link from "next/link";
 import RatingIcon from "../Review/RatingIcon";
-import { type AudioMessage } from "@prisma/client";
 import HomeworkFlag from "./HomeworkFlag";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Separator } from "../ui/separator";
+import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
+import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
+
 interface EditAssignmentProps {
-	assignment: Assignment
+	assignment: Assignment;
 }
 
 const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
-	const { refetch: refreshAssignment } = trpc.assignment.get.useQuery({ id: assignment.id })
-	const { data: movie } = trpc.movie.get.useQuery({ id: assignment.movieId })
-	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId })
-	const { data: episode } = trpc.episode.get.useQuery({ id: assignment.episodeId })
+	const { refetch: refreshAssignment } = trpc.assignment.get.useQuery({ id: assignment.id });
+	const { data: movie } = trpc.movie.get.useQuery({ id: assignment.movieId });
+	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId });
+	const { data: episode } = trpc.episode.get.useQuery({ id: assignment.episodeId });
 
-	const handleRefreshAssignment = function () {
-		refreshAssignment();
-	}
+	const [addReviewOpen, setAddReviewOpen] = useState(false);
+
 	return (
-		<section>
-			<div className="flex flex-col w-full px-6 items-center">
-				<span>{episode && episode.number + ' - ' + episode.title}</span>
-				<span>{user && user.name}</span>
-				<HomeworkFlag showText={true} type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
-				{movie && <MovieCard movie={movie} />}
+		<div className="flex flex-col gap-8 max-w-4xl mx-auto w-full py-8 px-4">
+			{/* Header Info */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+				<div className="flex flex-col gap-6">
+					<div className="space-y-4">
+						<div className="flex items-center gap-3">
+							<Badge variant="outline" className="px-2 py-0 h-6 font-black text-[10px] uppercase tracking-wider bg-primary/5 text-primary border-primary/20">
+								Ep. {episode?.number}
+							</Badge>
+							<HomeworkFlag showText={true} type={assignment.type as "HOMEWORK" | "EXTRA_CREDIT" | "BONUS"} />
+						</div>
+						<h1 className="text-3xl font-black tracking-tight flex items-center gap-2 text-left">
+							<UserIcon className="h-7 w-7 text-primary/60" />
+							{user?.name || "Loading..."}
+						</h1>
+						<p className="text-muted-foreground font-medium text-left">
+							Assigned to watch <span className="text-foreground font-bold">{movie?.title}</span> for this episode.
+						</p>
+					</div>
+
+					{movie && episode && (
+						<div className="flex justify-start">
+							<Button onClick={() => setAddReviewOpen(true)} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+								<Plus className="h-4 w-4" /> Add Review
+							</Button>
+						</div>
+					)}
+				</div>
+
+				<div className="flex justify-center md:justify-end">
+					{movie && <MovieCard movie={movie} />}
+				</div>
 			</div>
 
-			{movie && episode &&
+			<Separator />
+
+			{movie && episode && (
 				<>
-					<Reviews assignment={assignment} refreshAssignment={handleRefreshAssignment} />
+					<Reviews assignment={assignment} onUpdate={refreshAssignment} />
+					{addReviewOpen && (
+						<AddAssignmentReviewModal
+							open={addReviewOpen}
+							setOpen={setAddReviewOpen}
+							assignment={assignment}
+							movie={movie}
+							episode={episode}
+							refreshItems={refreshAssignment}
+						/>
+					)}
 				</>
-			}
+			)}
+
+			<Separator />
+
 			<AudioMessages assignment={assignment} />
-		</section>
-	)
-}
+		</div>
+	);
+};
 
 interface AudioMessagesProps {
-	assignment: Assignment
+	assignment: Assignment;
 }
 const AudioMessages: FC<AudioMessagesProps> = ({ assignment }) => {
-	const { refetch: refreshAudioMessages } = trpc.assignment.getAudioMessages.useQuery({ assignmentId: assignment.id })
-	const handleRefreshAudioMessages = function () {
-		refreshAudioMessages();
-	}
-	const { data: audioMessages } = trpc.assignment.getAudioMessages.useQuery({ assignmentId: assignment.id })
-	return <div className="flex flex-col w-full px-6 items-center">
-		{audioMessages?.map((audioMessage) => <Audio key={audioMessage.id} audioMessage={audioMessage} refreshAudioMessages={handleRefreshAudioMessages} />)}
-	</div>
-}
+	const { data: audioMessages, refetch } = trpc.assignment.getAudioMessages.useQuery({ assignmentId: assignment.id });
+
+	return (
+		<Card className="shadow-none border bg-card">
+			<CardHeader className="flex flex-row items-center justify-between">
+				<div className="flex items-center gap-2">
+					<Mic className="h-5 w-5 text-primary" />
+					<CardTitle className="text-xl">Audio Messages</CardTitle>
+				</div>
+				<Badge variant="secondary" className="font-bold">{audioMessages?.length || 0}</Badge>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{audioMessages?.length === 0 ? (
+					<p className="text-center py-6 text-sm text-muted-foreground italic">No audio messages for this assignment.</p>
+				) : (
+					audioMessages?.map((audioMessage) => (
+						<Audio key={audioMessage.id} audioMessage={audioMessage} refresh={refetch} />
+					))
+				)}
+			</CardContent>
+		</Card>
+	);
+};
+
 interface AudioProps {
-	audioMessage: AudioMessage & {
-		user: User | null
-	},
-	refreshAudioMessages: Dispatch<void>
+	audioMessage: AudioMessage & { user: User | null };
+	refresh: () => void;
 }
-const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
-	const { mutate: removeAudioMessage } = trpc.assignment.removeAudioMessage.useMutation()
-	return <div className="flex gap-4 w-full px-6 items-center justify-between">
-		<div className="flex flex-col gap-1 flex-1">
-			<div className="flex justify-between items-center">
-				<Link href={"/user/" + audioMessage.user?.id}>
-					{audioMessage.user?.name ?? audioMessage.user?.email}
-				</Link>
-				<span className="text-xs text-gray-400">
-					{audioMessage.createdAt.toLocaleString()}
-				</span>
-			</div>
-			<audio controls className="w-full max-w-md h-8">
-				<source src={audioMessage.url} type="audio/mpeg" />
-			</audio>
-		</div>
-		<button
-			type="button"
-			title="Remove Audio Message"
-			className="ml-2 text-red-500 hover:text-red-700"
-			onClick={() => {
-				removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
-			}}
-		>
-			<HiX />
-		</button>
-	</div>
-}
-
-interface ReviewsProps {
-	assignment: Assignment,
-	refreshAssignment: Dispatch<void>
-}
-const Reviews: FC<ReviewsProps> = ({ assignment, refreshAssignment }) => {
-	const { data: assignmentReviews, refetch: refreshAssignmentReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id }, { onSuccess: () => refreshAssignment() })
-	const { data: gamblingPoints, refetch: refreshGamblingPoints } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id }, { onSuccess: () => refreshAssignment() })
-
-	const { mutate: removeAssignmentReview } = trpc.review.removeAssignment.useMutation({
-		onSuccess: () => refreshAssignmentReviews()
-	})
-	const { mutate: removeGuess } = trpc.guess.remove.useMutation({
-		onSuccess: () => refreshAssignmentReviews()
-	})
-	const { mutate: addGamblingPoints } = trpc.gambling.add.useMutation({
-		onSuccess: () => refreshGamblingPoints()
-	})
-	const { mutate: updateGamblingPoints } = trpc.gambling.update.useMutation({
-		onSuccess: () => refreshGamblingPoints()
-	})
-	const { mutate: removeGamblingPoints } = trpc.gambling.remove.useMutation({
-		onSuccess: () => refreshGamblingPoints()
-	})
-
-	const deleteReview = function (id: string) {
-		removeAssignmentReview({ id })
-	}
-	const deleteGuess = function (id: string) {
-		removeGuess({ id })
-	}
-
-	// Group guesses by user
-	const guessesByUser = new Map<string, { user: User, guesses: Array<{ guess: any, assignmentReview: any }> }>();
-
-	assignmentReviews?.forEach(assignmentReview => {
-		assignmentReview.guesses?.forEach(guess => {
-			const userId = guess.user.id;
-			if (!guessesByUser.has(userId)) {
-				guessesByUser.set(userId, { user: guess.user, guesses: [] });
-			}
-			const userData = guessesByUser.get(userId);
-			if (userData) {
-				userData.guesses.push({ guess, assignmentReview });
-			}
-		});
+const Audio: FC<AudioProps> = ({ audioMessage, refresh }) => {
+	const { mutate: removeAudioMessage } = trpc.assignment.removeAudioMessage.useMutation({
+		onSuccess: () => {
+			refresh();
+		}
 	});
 
-	return <div className="flex flex-col w-full px-6 items-center">
-		<h2>Reviews</h2>
+	const handleRemove = () => {
+		if (confirm("Are you sure you want to remove this audio message?")) {
+			removeAudioMessage({ id: audioMessage.id });
+		}
+	}
 
-		<div className="flex flex-col w-full px-6 items-center">
-			{Array.from(guessesByUser.values()).map((userData) => {
-				// Find gambling points for this user
-				const userGamblingPoints = gamblingPoints?.find(gp => gp.userId === userData.user.id);
+	return (
+		<div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border group">
+			<div className="flex flex-col gap-2 flex-1">
+				<div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+					<Link href={"/user/" + audioMessage.user?.id} className="hover:text-primary transition-colors">
+						{audioMessage.user?.name ?? audioMessage.user?.email}
+					</Link>
+					<span>{new Date(audioMessage.createdAt).toLocaleString()}</span>
+				</div>
+				<audio controls className="w-full h-8">
+					<source src={audioMessage.url} type="audio/mpeg" />
+				</audio>
+			</div>
+			<Button
+				variant="ghost"
+				size="icon"
+				className="text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+				onClick={handleRemove}
+			>
+				<Trash2 className="h-4 w-4" />
+			</Button>
+		</div>
+	);
+};
 
-				return (
-					<div className="flex items-center w-full" key={userData.user.id}>
-						<div className="flex justify-between items-center gap-2 w-full bg-gray-700 p-2">
-							<Link href={"/user/" + userData.user.id}>
-								{userData.user.name ?? userData.user.email}
-							</Link>
-							<div className="flex items-center gap-2">
-								{userGamblingPoints ? (
-									<>
-										<span>{userGamblingPoints.points}</span>
-										<button
-											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points + 1 })}
-											className="text-green-500"
+interface ReviewsProps {
+	assignment: Assignment;
+	onUpdate: () => void;
+}
+const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
+	const { data: assignmentReviews, refetch: refreshReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id });
+	const { data: gamblingPoints, refetch: refreshGambling } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id });
+
+	const [addGuessOpen, setAddGuessOpen] = useState<{ open: boolean; ar: any }>({ open: false, ar: null });
+
+	const { mutate: removeReview } = trpc.review.removeAssignment.useMutation({ onSuccess: () => refreshReviews() });
+	const { mutate: removeGuess } = trpc.guess.remove.useMutation({ onSuccess: () => refreshReviews() });
+	const { mutate: addGambling } = trpc.gambling.add.useMutation({ onSuccess: () => refreshGambling() });
+	const { mutate: updateGambling } = trpc.gambling.update.useMutation({ onSuccess: () => refreshGambling() });
+	const { mutate: removeGambling } = trpc.gambling.remove.useMutation({ onSuccess: () => refreshGambling() });
+
+	const guessesByUser = useMemo(() => {
+		const map = new Map<string, { user: User; items: Array<{ guess: any; ar: any }> }>();
+		assignmentReviews?.forEach(ar => {
+			ar.guesses?.forEach(guess => {
+				const userId = guess.user.id;
+				if (!map.has(userId)) map.set(userId, { user: guess.user, items: [] });
+				map.get(userId)?.items.push({ guess, ar });
+			});
+		});
+		return Array.from(map.values());
+	}, [assignmentReviews]);
+
+	return (
+		<Card className="shadow-none border bg-card">
+			<CardHeader className="flex flex-row items-center justify-between">
+				<div className="flex items-center gap-2">
+					<MessageSquare className="h-5 w-5 text-primary" />
+					<CardTitle className="text-xl">Reviews & Guesses</CardTitle>
+				</div>
+			</CardHeader>
+			<CardContent className="space-y-8">
+				{/* Admin Reviews */}
+				<div className="space-y-4">
+					<h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2 text-left">
+						<UserIcon className="h-3 w-3" /> Admin Reviews
+					</h4>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						{assignmentReviews?.map((ar) => (
+							<div key={ar.id} className="bg-muted/30 p-4 rounded-xl border group">
+								<div className="flex justify-between items-center mb-4">
+									<div className="flex items-center gap-2">
+										<RatingIcon value={ar.review.rating?.value} />
+										<span className="text-sm font-bold">{ar.review.user?.name}</span>
+									</div>
+									<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+										<Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setAddGuessOpen({ open: true, ar })}>
+											<Plus className="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-8 w-8 text-destructive"
+											onClick={() => confirm("Delete this review?") && removeReview({ id: ar.id })}
 										>
-											<HiPlusCircle />
-										</button>
-										<button
-											onClick={() => updateGamblingPoints({ id: userGamblingPoints.id, points: userGamblingPoints.points - 1 })}
-											className="text-red-500"
-										>
-											<HiMinusCircle />
-										</button>
-										<button
-											onClick={() => removeGamblingPoints({ id: userGamblingPoints.id })}
-											className="text-red-500"
-										>
-											<HiX />
-										</button>
-									</>
-								) : (
-									<button
-										onClick={() => addGamblingPoints({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}
-										className="text-blue-500"
-									>
-										Add Points
-									</button>
+											<Trash2 className="h-4 w-4" />
+										</Button>
+									</div>
+								</div>
+								{ar.guesses && ar.guesses.length > 0 && (
+									<div className="space-y-2 mt-4 pt-4 border-t border-muted-foreground/10">
+										<span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 text-left block">Guesses</span>
+										{ar.guesses.map((g: any) => (
+											<div key={g.id} className="flex items-center justify-between bg-background/50 p-2 rounded border text-xs">
+												<span className="font-medium text-muted-foreground italic">{g.user.name}</span>
+												<div className="flex items-center gap-2">
+													<RatingIcon value={g.rating?.value} />
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-5 w-5 text-destructive"
+														onClick={() => confirm("Delete this guess?") && removeGuess({ id: g.id })}
+													>
+														<Trash2 className="h-3 w-3" />
+													</Button>
+												</div>
+											</div>
+										))}
+									</div>
 								)}
 							</div>
-						</div>
-						<ul className="p-2 flex">
-							{userData.guesses.map(({ guess, assignmentReview }) => (
-								<li key={guess.id} className="flex gap-2 bg-gray-800 p-2 items-center justify-between">
-									<div className="flex items-center gap-2">
-										<HiX
-											className="text-red-500 cursor-pointer m-2"
-											onClick={() => deleteGuess(guess.id)}
-										/>
-										<Link href={"/user/" + assignmentReview.review?.user?.id}>
-											{assignmentReview.review?.user?.name ?? assignmentReview.review?.user?.email}
-										</Link>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="color-yellow-200" title={guess.rating?.name}>
-											<RatingIcon value={guess.rating?.value} />
-										</span>
-									</div>
-								</li>
-							))}
-						</ul>
+						))}
+						{assignmentReviews?.length === 0 && (
+							<p className="col-span-full text-center py-6 text-sm text-muted-foreground italic border-2 border-dashed rounded-xl">No reviews yet.</p>
+						)}
 					</div>
-				);
-			})}
-		</div>
-	</div>
-}
-interface ReviewRatingProps {
-	review: null | (Review & {
-		rating: Rating | null
-	}),
-	refetch: Dispatch<void>
-}
-const ReviewRating: FC<ReviewRatingProps> = ({ review, refetch }) => {
-	const { mutate: setReviewRating } = trpc.review.setReviewRating.useMutation()
-	const handleRatingSelect: Dispatch<Rating> = function (rating) {
-		if (!review) return
-		if (!rating) return
-		setReviewRating({ reviewId: review.id, ratingId: rating.id }, { onSuccess: () => { refetch() } })
-	}
-	const handleResetRating = function () {
-		if (!review) return
-		setReviewRating({ reviewId: review.id, ratingId: null }, { onSuccess: () => { refetch() } })
-	}
-	if (!review) return null
-	if (!review.rating) return <RatingIconSelect selectRating={handleRatingSelect}></RatingIconSelect>
-	return <div className="cursor-pointer" onClick={handleResetRating}>
-		<RatingIcon value={review.rating.value} />
-	</div>
-}
+				</div>
 
-interface RatingIconSelectProps {
-	selectRating: Dispatch<Rating>
-}
-const RatingIconSelect: FC<RatingIconSelectProps> = ({ selectRating }) => {
-	const { data: ratings } = trpc.review.getRatings.useQuery();
-
-	const [ratingValue, setRatingValue] = useState<number>(0);
-
-	const isSelectedByValue = function (value: number) {
-		return ratingValue == value;
-	}
-	const handleRatingSelection: Dispatch<number> = function (value: number) {
-		setRatingValue(value);
-		if (!ratings) return;
-		const selectedRating = ratings.find(rating => rating.value == value);
-		if (!selectedRating) return;
-		selectRating(selectedRating);
-	}
-
-	if (!ratings) return null;
-	return (
-		<div className="ml-2 flex gap-2">
-			{ratings.sort((a, b) => a.value - b.value).map((rating) => {
-				return <RatingButton
-					key={rating.id}
-					value={rating.value}
-					selected={isSelectedByValue(rating.value)}
-					click={handleRatingSelection}
+				{/* Gambling Tracker */}
+				<div className="space-y-4">
+					<h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2 text-left">
+						<Coins className="h-3 w-3" /> User Gambling
+					</h4>
+					<div className="rounded-xl border overflow-hidden">
+						<Table>
+							<TableHeader className="bg-muted/50">
+								<TableRow>
+									<TableHead className="w-1/2">User</TableHead>
+									<TableHead className="text-right">Points</TableHead>
+									<TableHead className="text-right w-[120px]">Actions</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{guessesByUser.map((userData) => {
+									const gp = gamblingPoints?.find(p => p.userId === userData.user.id);
+									return (
+										<TableRow key={userData.user.id}>
+											<TableCell className="font-medium text-left">
+												<Link href={"/user/" + userData.user.id} className="hover:underline">{userData.user.name}</Link>
+											</TableCell>
+											<TableCell className="text-right">
+												<span className={`text-lg font-black ${gp ? (gp.points > 0 ? "text-green-500" : "text-muted-foreground") : "text-muted-foreground/30"}`}>
+													{gp?.points ?? 0}
+												</span>
+											</TableCell>
+											<TableCell className="text-right">
+												<div className="flex justify-end items-center gap-1">
+													{gp ? (
+														<>
+															<Button size="icon" variant="ghost" className="h-8 w-8 text-green-500" onClick={() => updateGambling({ id: gp.id, points: gp.points + 1 })}>
+																<PlusCircle className="h-4 w-4" />
+															</Button>
+															<Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => updateGambling({ id: gp.id, points: gp.points - 1 })}>
+																<MinusCircle className="h-4 w-4" />
+															</Button>
+															<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeGambling({ id: gp.id })}>
+																<X className="h-4 w-4" />
+															</Button>
+														</>
+													) : (
+														<Button size="sm" variant="outline" className="h-8 text-[10px] font-bold uppercase" onClick={() => addGambling({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}>
+															Add Points
+														</Button>
+													)}
+												</div>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+								{guessesByUser.length === 0 && (
+									<TableRow>
+										<TableCell colSpan={3} className="text-center py-6 text-sm text-muted-foreground italic">No guesses recorded.</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					</div>
+				</div>
+			</CardContent>
+			{addGuessOpen.open && addGuessOpen.ar && (
+				<AddAssignmentReviewGuessModal
+					open={addGuessOpen.open}
+					setOpen={(open) => setAddGuessOpen(prev => ({ ...prev, open }))}
+					assignmentReview={addGuessOpen.ar}
+					refreshItems={refreshReviews}
 				/>
-			})}
-		</div>
-	)
-}
-interface RatingButtonProps {
-	value: number,
-	selected?: boolean,
-	click: Dispatch<number>
-}
-const RatingButton: FC<RatingButtonProps> = ({ value, selected, click }) => {
-	if (selected) {
-		return <div className="p-4 rounded-sm ring-red-900 ring-2 hover:ring-2">
-			<RatingIcon value={value} />
-		</div>
-	}
-	const handleClick = function () {
-		click(value);
-	}
-	return <div className="p-4 cursor-pointer rounded-sm ring-red-900 hover:ring-2" onClick={handleClick}>
-		<RatingIcon value={value} />
-	</div>
-}
-export default EditAssignment
+			)}
+		</Card>
+	);
+};
+
+export default EditAssignment;

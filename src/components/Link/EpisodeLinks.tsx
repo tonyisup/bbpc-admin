@@ -17,7 +17,10 @@ const EpisodeLinks: FC<EpisodeLinksProps> = ({ episode }) => {
 	const { data: ep, refetch: refreshLinks } = trpc.episode.getLinks.useQuery({ id: episode.id })
 
 	const { mutate: removeLink } = trpc.episode.removeLink.useMutation({
-		onSuccess: () => refreshLinks()
+		onSuccess: () => refreshLinks(),
+		onError: (err) => {
+			toast.error(`Failed to remove link: ${err.message}`);
+		}
 	})
 
 	return (

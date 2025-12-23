@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { Trash2, Star, User, Film, Tv, Loader2, Filter } from "lucide-react";
@@ -8,11 +8,11 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import RatingIcon from "../../components/Review/RatingIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -30,6 +30,57 @@ export async function getServerSideProps(context: any) {
       session,
     },
   };
+}
+
+interface Movie {
+  id: string;
+  title: string;
+  poster: string | null;
+  year: number;
+}
+
+interface Show {
+  id: string;
+  title: string;
+  poster: string | null;
+  year: number;
+}
+
+interface Episode {
+  id: string;
+  number: number;
+  title: string;
+}
+
+interface Assignment {
+  id: string;
+  type: string;
+  episode: Episode;
+}
+
+interface Review {
+  id: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
+  movie: Movie | null;
+  show: Show | null;
+  ratingId: string | null;
+  rating: {
+    id: string;
+    name: string;
+    value: number;
+  } | null;
+  assignmentReviews: {
+    id: string;
+    assignment: Assignment;
+  }[];
+  extraReviews: {
+    id: string;
+    episode: Episode;
+  }[];
 }
 
 const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
@@ -120,7 +171,7 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                 <TableRow><TableCell colSpan={5} className="text-center h-24">No reviews found.</TableCell></TableRow>
               )}
 
-              {reviews.map((review: any) => (
+              {reviews.map((review: Review) => (
                 <TableRow key={review.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -193,12 +244,12 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      {review.assignmentReviews?.map((ar: any) => (
+                      {review.assignmentReviews?.map((ar) => (
                         <span key={ar.id} className="text-[10px] bg-sky-50 text-sky-700 px-1.5 py-0.5 rounded border border-sky-100 w-fit">
-                          Ep {ar.assignment.episode.number} Assignment
+                          Ep {ar.assignment.episode.number} {ar.assignment.type}
                         </span>
                       ))}
-                      {review.extraReviews?.map((er: any) => (
+                      {review.extraReviews?.map((er) => (
                         <span key={er.id} className="text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100 w-fit">
                           Ep {er.episode.number} Extra
                         </span>

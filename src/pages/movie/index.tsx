@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState, useMemo } from "react";
@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -97,7 +97,6 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
   });
 
   const removeMutation = trpc.movie.remove.useMutation({
-    // onSuccess: () => refetch(),
     // Error handling since movies might be linked to assignments/reviews
     onError: (err) => {
       alert("Failed to delete movie: " + err.message);

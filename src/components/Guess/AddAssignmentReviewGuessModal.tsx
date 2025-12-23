@@ -4,87 +4,98 @@ import { trpc } from "../../utils/trpc";
 import RatingSelect from "../Review/RatingSelect";
 import UserSelect from "../UserSelect";
 import SeasonSelect from "./SeasonSelect";
-import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 
 interface AddAssignmentReviewGuessModalProps {
 	refreshItems: DispatchWithoutAction;
 	assignmentReview: AssignmentReview;
+	open: boolean;
+	setOpen: (open: boolean) => void;
 }
 
-const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({ refreshItems, assignmentReview }) => {
-
-	const [modalOpen, setModalOpen] = useState(false);
-	const [points, setPoints] = useState<number>(0);
+const AddAssignmentReviewGuessModal: FC<AddAssignmentReviewGuessModalProps> = ({ refreshItems, assignmentReview, open, setOpen }) => {
 	const [ratingId, setRatingId] = useState<string | null>(null);
 	const [guesser, setGuesser] = useState<User | null>(null);
 	const [seasonId, setSeasonId] = useState<string | null>(null);
 
 	const { data: review } = trpc.review.get.useQuery({ id: assignmentReview.reviewId });
 
-	const { mutate: AddGuess } = trpc.guess.add.useMutation({
-		onSuccess: (m) => {
-			console.log(m);
+	const { mutate: addGuess, isLoading } = trpc.guess.add.useMutation({
+		onSuccess: () => {
+			refreshItems();
+			setOpen(false);
+			setRatingId(null);
+			setGuesser(null);
+			setSeasonId(null);
+		},
+		onError: (err) => {
+			alert("Failed to add guess: " + err.message);
 		}
-	})
-	const closeModal = function () {
-		setRatingId(null)
-		setModalOpen(false)
-	}
-	const handleSubmit = (e: React.FormEvent) => {
-		if (!seasonId) return;
-		if (!ratingId) return;
-		if (!guesser) return;
-		if (!assignmentReview) return;
+	});
 
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		AddGuess({
+		if (!seasonId) {
+			alert("Please select a season");
+			return;
+		}
+		if (!guesser) {
+			alert("Please select a guesser");
+			return;
+		}
+		if (!ratingId) {
+			alert("Please select a rating guess");
+			return;
+		}
+
+		addGuess({
 			assignmentReviewId: assignmentReview.id,
 			userId: guesser.id,
 			ratingId: ratingId,
 			seasonId: seasonId
-		}, {
-			onSuccess: () => {
-				refreshItems();
-				closeModal();
-			}
 		});
 	};
 
-	const handlePointsChange = function (e: React.ChangeEvent<HTMLInputElement>) {
-		setPoints(e.target.valueAsNumber)
-	}
-
 	return (
-		<Dialog open={modalOpen} onOpenChange={setModalOpen}>
-			<DialogContent>
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>Add Guess</DialogTitle>
+					<DialogTitle>Add Review Guess</DialogTitle>
 				</DialogHeader>
-				<div className="p-3 space-y-4 bg-gray-800">
-					<div className="grid grid-cols-2 gap-2">
-						<form onSubmit={handleSubmit}>
-							{review && <h2>Add Guess for Review of {review.movie?.title ?? review.show?.title} by {review.user?.name}</h2>}
-							<label htmlFor="user">Season</label>
+				<div className="py-4 space-y-4">
+					{review && (
+						<div className="bg-muted/30 p-3 rounded-lg border text-xs text-muted-foreground italic text-center">
+							Adding guess for <span className="font-bold text-foreground">{(review.movie?.title ?? review.show?.title)}</span> review by <span className="font-bold text-foreground">{review.user?.name || review.user?.email}</span>
+						</div>
+					)}
+
+					<form onSubmit={handleSubmit} className="space-y-4">
+						<div className="space-y-2">
+							<Label>Season</Label>
 							<SeasonSelect setSeasonId={setSeasonId} />
-							<label htmlFor="user">Guesser</label>
+						</div>
+						<div className="space-y-2">
+							<Label>Guesser</Label>
 							<UserSelect selectUser={setGuesser} />
-							<label htmlFor="user">Rating Guess</label>
+						</div>
+						<div className="space-y-2">
+							<Label>Rating Guess</Label>
 							<RatingSelect setRatingId={setRatingId} />
-							<div>
-								<label htmlFor="number">Number</label>
-								<input
-									title="number"
-									type="number"
-									name="number"
-									value={points}
-									onChange={handlePointsChange}
-									className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-								/>
-							</div>
-							<button className="m-2 py-2 px-4 bg-purple-600 rounded-sm" type="submit">Submit Guess</button>
-						</form>
-					</div>
+						</div>
+					</form>
 				</div>
+				<DialogFooter>
+					<Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+					<Button
+						onClick={handleSubmit}
+						disabled={isLoading || !guesser || !seasonId || !ratingId}
+						className="bg-indigo-600 hover:bg-indigo-700 text-white"
+					>
+						{isLoading ? "Submitting..." : "Submit Guess"}
+					</Button>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

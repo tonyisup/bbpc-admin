@@ -33,7 +33,11 @@ interface AudioProps {
 	refreshAudioMessages: Dispatch<void>
 }
 const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
-	const { mutate: removeAudioMessage } = trpc.episode.removeAudioMessage.useMutation()
+	const { mutate: removeAudioMessage } = trpc.episode.removeAudioMessage.useMutation({
+		onError: (err) => {
+			alert("Failed to remove audio message: " + err.message);
+		},
+	})
 	return <div className="flex gap-4 w-full items-start justify-between bg-card border rounded-xl p-4 shadow-sm hover:border-primary/20 transition-colors">
 		<div className="flex flex-col gap-3 flex-1">
 			<div className="flex justify-between items-center">
@@ -56,12 +60,25 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				</div>
 				<audio controls className="w-full max-w-md h-8 filter grayscale invert opacity-80 hover:opacity-100 transition-opacity">
 					<source src={audioMessage.url} type="audio/mpeg" />
+					{(audioMessage as any).captionsUrl && (
+						<track
+							kind="captions"
+							src={(audioMessage as any).captionsUrl}
+							srcLang="en"
+							label="English"
+							default
+						/>
+					)}
 				</audio>
 			</div>
 			{audioMessage.notes && (
-				<p className="text-xs text-muted-foreground italic border-l-2 border-primary/20 pl-3 py-1">
+				<div
+					tabIndex={0}
+					className="text-xs text-muted-foreground italic border-l-2 border-primary/20 pl-3 py-1 focus:outline-none focus:ring-1 focus:ring-primary/30 rounded-r"
+					aria-label="Audio transcript"
+				>
 					{audioMessage.notes}
-				</p>
+				</div>
 			)}
 		</div>
 		<button

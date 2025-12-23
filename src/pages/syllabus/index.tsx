@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { Trash2, BookOpen, User, Film, Loader2 } from "lucide-react";
@@ -8,9 +8,8 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
-import { Fragment } from "react";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -31,7 +30,15 @@ export async function getServerSideProps(context: any) {
 }
 
 const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const removeMutation = trpc.syllabus.remove.useMutation();
+  const utils = trpc.useContext();
+  const removeMutation = trpc.syllabus.remove.useMutation({
+    onSuccess: () => {
+      utils.syllabus.getAll.invalidate();
+    },
+    onError: (err) => {
+      alert("Failed to remove syllabus item: " + err.message);
+    }
+  });
 
   const {
     data,
@@ -47,7 +54,9 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
   const syllabusItems = data?.pages.flatMap((page) => page.items) ?? [];
 
   const handleRemove = (id: string) => {
-    removeMutation.mutate({ id });
+    if (confirm("Are you sure you want to remove this item from the syllabus?")) {
+      removeMutation.mutate({ id });
+    }
   };
 
   return (
@@ -82,7 +91,7 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                 <TableRow><TableCell colSpan={5} className="text-center h-24">No syllabus items found.</TableCell></TableRow>
               )}
 
-              {syllabusItems.map((item: any) => (
+              {syllabusItems.map((item) => (
                 <TableRow key={item.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-2">

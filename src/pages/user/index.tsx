@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, type NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage } from "next";
 import Link from "next/link";
 import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useEffect, useState } from "react";
@@ -22,7 +22,7 @@ import {
 } from "../../components/ui/select";
 import { cn } from "../../lib/utils";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -214,7 +214,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                         {item.roles && item.roles.length > 0 ? (
                           item.roles.map((ur) => (
                             <button
-+                             type="button"
+                              type="button"
                               key={ur.role.id}
                               onClick={(e) => {
                                 e.preventDefault();

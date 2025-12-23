@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -53,7 +53,8 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
   });
 
   const handleAdd = (result: any) => {
-    const releaseYear = result.release_date ? new Date(result.release_date).getFullYear() : 0;
+    const rawReleaseDate = result.release_date || result.first_air_date;
+    const releaseYear = rawReleaseDate ? new Date(rawReleaseDate).getFullYear() : 0;
     addMutation.mutate({
       title: result.title,
       year: Number.isNaN(releaseYear) ? 0 : releaseYear,

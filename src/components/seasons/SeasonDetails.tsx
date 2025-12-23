@@ -122,9 +122,13 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         assignments: Array.from(ep.assignmentsMap.values()),
       }));
 
-    const userSummary = Array.from(userPointsMap.values()).sort(
-      (a, b) => b.total - a.total
-    );
+    const userSummary = Array.from(userPointsMap.values())
+      .map(u => ({
+        ...u,
+        guessCount: season.guesses.filter(g => g.user.id === u.user.id).length,
+        gamblingCount: season.gamblingPoints.filter(gp => gp.user.id === u.user.id).length
+      }))
+      .sort((a, b) => b.total - a.total);
 
     // Chart Data Calculation
     const pointsByDate = [...season.points].sort(
@@ -169,7 +173,8 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
 
   const getInitials = (name: string | null) => {
     if (!name) return "U";
-    return name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    return parts.map(n => n[0]).join("").toUpperCase().substring(0, 2) || "U";
   }
 
   if (!season) return null;
@@ -538,8 +543,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
             Leaderboard
           </h2>
           <div className="grid gap-3">
-            {userSummary.map(({ user, total }, index) => {
-              const isTop3 = index < 3;
+            {userSummary.map(({ user, total, guessCount, gamblingCount }, index) => {
               const rankColor = index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-600" : "text-muted-foreground";
 
               return (
@@ -585,11 +589,11 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       <div className="flex items-center gap-3 mt-1">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
                           <Target className="h-2.5 w-2.5" />
-                          {season.guesses.filter(g => g.user.id === user.id).length}
+                          {guessCount}
                         </div>
                         <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
                           <Coins className="h-2.5 w-2.5" />
-                          {season.gamblingPoints.filter(gp => gp.user.id === user.id).length}
+                          {gamblingCount}
                         </div>
                       </div>
                     </div>

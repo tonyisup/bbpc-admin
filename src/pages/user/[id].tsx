@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, type NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
@@ -25,7 +25,7 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
@@ -45,7 +45,134 @@ export async function getServerSideProps(context: any) {
   }
 }
 
-const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
+interface Point {
+  id: string;
+  adjustment: number | null;
+  reason: string | null;
+  earnedOn: Date | null;
+  gamePointType: {
+    points: number;
+    title: string;
+  } | null;
+  guesses?: Guess[];
+  gamblingPoints?: GamblingPoint[];
+  assignmentPoints?: AssignmentPoint[];
+  isGuess?: boolean;
+  guess?: Guess;
+}
+
+interface Episode {
+  id: string;
+  number: number;
+  title: string;
+}
+
+interface Assignment {
+  id: string;
+  title: string;
+  type: string;
+  movie?: {
+    id: string;
+    title: string;
+    year: number;
+  };
+}
+
+interface Guess {
+  id: string;
+  created: Date;
+  point: Point | null;
+  assignmentReview: {
+    assignment: {
+      id: string;
+      episode: Episode;
+      movie: {
+        title: string;
+      };
+    } & Assignment;
+  };
+  rating?: {
+    value: number;
+  };
+}
+
+interface GamblingPoint {
+  id: string;
+  points: number;
+  successful: boolean;
+  assignment?: {
+    id: string;
+    episode: Episode;
+    movie: {
+      title: string;
+    };
+  } & Assignment;
+}
+
+interface AssignmentPoint {
+  assignment: {
+    id: string;
+    episode: Episode;
+  } & Assignment;
+}
+
+interface GroupedPoints {
+  [key: string]: {
+    episode?: Episode;
+    assignments: {
+      [key: string]: {
+        assignment: Assignment;
+        points: Point[];
+      };
+    };
+    otherPoints: Point[];
+  };
+}
+
+interface SyllabusAssignmentFormProps {
+  itemId: string;
+  onAssign: (epNum: number, type: string) => void;
+}
+
+const SyllabusAssignmentForm: React.FC<SyllabusAssignmentFormProps> = ({ itemId, onAssign }) => {
+  const [epNum, setEpNum] = useState("");
+  const [type, setType] = useState("HOMEWORK");
+
+  return (
+    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <Input
+        type="number"
+        placeholder="Ep #"
+        className="w-16 h-8 text-xs"
+        value={epNum}
+        onChange={(e) => setEpNum(e.target.value)}
+      />
+      <select
+        className="h-8 text-[10px] rounded-md border border-input bg-background px-2 py-1 font-bold uppercase tracking-wider"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+      >
+        <option value="HOMEWORK">Homework</option>
+        <option value="EXTRA_CREDIT">Extra</option>
+        <option value="BONUS">Bonus</option>
+      </select>
+      <Button
+        size="sm"
+        className="h-8 text-xs font-bold"
+        onClick={() => {
+          const parsedEp = parseInt(epNum, 10);
+          if (!isNaN(parsedEp)) {
+            onAssign(parsedEp, type);
+          }
+        }}
+      >
+        Assign
+      </Button>
+    </div>
+  );
+};
+
+const UserPage: NextPage<{ session: any }> = () => {
   const { query } = useRouter();
   const id = query.id as string;
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
@@ -135,9 +262,9 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
   };
 
   const groupedPoints = useMemo(() => {
-    const acc: any = { general: { otherPoints: [] } };
+    const acc: GroupedPoints = { general: { assignments: {}, otherPoints: [] } };
 
-    points?.forEach((point: any) => {
+    points?.forEach((point: Point) => {
       const episode = point.guesses?.[0]?.assignmentReview?.assignment?.episode
         || point.gamblingPoints?.[0]?.assignment?.episode
         || point.assignmentPoints?.[0]?.assignment?.episode;
@@ -165,7 +292,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
     });
 
     // Add un-pointed guesses
-    guesses?.filter((g: any) => !g.point).forEach((guess: any) => {
+    guesses?.filter((g: Guess) => !g.point).forEach((guess: Guess) => {
       const episode = guess.assignmentReview.assignment.episode;
       const assignment = guess.assignmentReview.assignment;
 
@@ -269,7 +396,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                         </div>
 
                         <div className="space-y-3">
-                          {Object.values(group.assignments).map((assignmentGroup: any) => (
+                          {Object.values(group.assignments).map((assignmentGroup) => (
                             <div key={assignmentGroup.assignment.id} className="bg-muted/30 p-4 rounded-lg border border-muted-foreground/10">
                               <div className="flex items-center gap-2 mb-3">
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
@@ -278,7 +405,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                                 <span className="text-sm font-semibold text-muted-foreground">{assignmentGroup.assignment.movie?.title}</span>
                               </div>
                               <div className="space-y-2">
-                                {assignmentGroup.points.map((point: any) => (
+                                {assignmentGroup.points.map((point) => (
                                   <div key={point.id} className="flex items-center justify-between bg-background/50 p-2.5 rounded border border-muted-foreground/5 transition-colors hover:border-muted-foreground/20">
                                     <div className="flex items-center gap-3">
                                       <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${point.isGuess ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
@@ -309,7 +436,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                       <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-muted-foreground border-4 border-background" />
                       <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-tight mb-4">Other Points</h3>
                       <div className="space-y-2">
-                        {groupedPoints['general'].otherPoints.map((point: any) => (
+                        {groupedPoints['general'].otherPoints.map((point) => (
                           <div key={point.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg border border-transparent hover:border-muted-foreground/10">
                             <div className="flex flex-col">
                               <span className="text-sm font-semibold">{point.reason}</span>
@@ -344,7 +471,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {gamblingPoints?.slice(0, 10).map((gp: any) => (
+                        {gamblingPoints?.slice(0, 10).map((gp) => (
                           <TableRow key={gp.id} className="text-xs">
                             <TableCell className="py-2 px-4">
                               <div className="font-medium truncate max-w-[120px]">{gp.assignment?.movie?.title}</div>
@@ -378,7 +505,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {guesses?.slice(0, 10).map((g: any) => (
+                        {guesses?.slice(0, 10).map((g) => (
                           <TableRow key={g.id} className="text-xs">
                             <TableCell className="py-2 px-4">
                               <div className="font-medium truncate max-w-[120px]">{g.assignmentReview.assignment.movie.title}</div>
@@ -413,7 +540,7 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                   </div>
                 )}
                 <div className="space-y-3">
-                  {syllabus?.map((item: any, index: number) => (
+                  {syllabus?.map((item, index) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl border border-muted-foreground/10 group">
                       <div className="flex flex-col gap-1">
                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 group-hover:opacity-100" onClick={() => handleMoveUp(index)} disabled={index === 0}>
@@ -441,25 +568,11 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                             <button type="button" className="text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleRemoveAssignment(item.id)}>
                               <X className="h-3 w-3" />
                             </button>
-                          </div>                        ) : (
-                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Input
-                              type="number"
-                              placeholder="Ep #"
-                              className="w-16 h-8 text-xs"
-                              id={`episode-${item.id}`}
-                            />
-                            <select className="h-8 text-[10px] rounded-md border border-input bg-background px-2 py-1 font-bold uppercase tracking-wider" id={`assignment-type-${item.id}`}>
-                              <option value="HOMEWORK">Homework</option>
-                              <option value="EXTRA_CREDIT">Extra</option>
-                              <option value="BONUS">Bonus</option>
-                            </select>
-                            <Button size="sm" className="h-8 text-xs font-bold" onClick={() => {
-                              const epNum = parseInt((document.getElementById(`episode-${item.id}`) as HTMLInputElement).value);
-                              const type = (document.getElementById(`assignment-type-${item.id}`) as HTMLSelectElement).value;
-                              if (!isNaN(epNum)) handleAssignEpisode(item.id, epNum, type);
-                            }}>Assign</Button>
-                          </div>
+                          </div>) : (
+                          <SyllabusAssignmentForm
+                            itemId={item.id}
+                            onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
+                          />
                         )}
                       </div>
                     </div>
@@ -513,12 +626,12 @@ const UserPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {userRoles?.length === 0 && <p className="text-sm text-muted-foreground italic">No roles assigned.</p>}
-                    {userRoles?.map((userRole: any) => (
+                    {userRoles?.map((userRole) => (
                       <div key={userRole.id} className="flex items-center gap-1.5 bg-primary/5 text-primary px-3 py-1.5 rounded-full border border-primary/20 shadow-sm transition-colors hover:bg-primary/10">
                         <Shield className="h-3.5 w-3.5" />
                         <span className="text-xs font-bold uppercase tracking-tight">{userRole.role?.name}</span>
                         <Separator orientation="vertical" className="h-3 bg-primary/30 mx-1" />
-                        <button  type="button" onClick={() => removeRole({ id: userRole.id })} className="text-primary/50 hover:text-destructive transition-colors">
+                        <button type="button" onClick={() => removeRole({ id: userRole.id })} className="text-primary/50 hover:text-destructive transition-colors">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>

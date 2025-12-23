@@ -24,12 +24,19 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
 
   const { data: gameTypes } = trpc.game.getGameTypes.useQuery();
 
+  const [titleError, setTitleError] = useState("");
+  const [lookupIDError, setLookupIDError] = useState("");
+  const [gameTypeIdError, setGameTypeIdError] = useState("");
+
   const addMutation = trpc.game.addGamePointType.useMutation({
     onSuccess: () => {
       refreshItems();
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to add point type: " + err.message);
+    }
   });
 
   const updateMutation = trpc.game.updateGamePointType.useMutation({
@@ -38,6 +45,9 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to update point type: " + err.message);
+    }
   });
 
   useEffect(() => {
@@ -59,13 +69,40 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
     setLookupID("");
     setPoints(0);
     setGameTypeId(defaultGameTypeId || 0);
+    setTitleError("");
+    setLookupIDError("");
+    setGameTypeIdError("");
   };
 
   const handleSave = () => {
+    let isValid = true;
+    if (!title.trim()) {
+      setTitleError("Title is required");
+      isValid = false;
+    } else {
+      setTitleError("");
+    }
+
+    if (!lookupID.trim()) {
+      setLookupIDError("Lookup ID is required");
+      isValid = false;
+    } else {
+      setLookupIDError("");
+    }
+
+    if (gameTypeId === 0) {
+      setGameTypeIdError("Please select a game type");
+      isValid = false;
+    } else {
+      setGameTypeIdError("");
+    }
+
+    if (!isValid) return;
+
     const data = {
-      title,
-      description: description || undefined,
-      lookupID,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      lookupID: lookupID.trim(),
       points,
       gameTypeId,
     };
@@ -88,8 +125,18 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="gameType">Game Type</Label>
-            <Select value={gameTypeId.toString()} onValueChange={(val) => setGameTypeId(parseInt(val || 0))}>
-              <SelectTrigger>
+            <Select
+              value={gameTypeId === 0 ? "" : gameTypeId.toString()}
+              onValueChange={(val) => {
+                const parsed = parseInt(val, 10);
+                if (!Number.isNaN(parsed)) {
+                  setGameTypeId(parsed);
+                } else {
+                  setGameTypeId(0);
+                }
+              }}
+            >
+              <SelectTrigger id="gameTypeId" className={gameTypeIdError ? "border-destructive" : ""}>
                 <SelectValue placeholder="Select a game type" />
               </SelectTrigger>
               <SelectContent>
@@ -98,21 +145,47 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
                 ))}
               </SelectContent>
             </Select>
+            {gameTypeIdError && <p className="text-xs text-destructive">{gameTypeIdError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={titleError ? "border-destructive" : ""}
+            />
+            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="lookupID">Lookup ID (unique code)</Label>
-            <Input id="lookupID" value={lookupID} onChange={(e) => setLookupID(e.target.value)} />
+            <Input
+              id="lookupID"
+              value={lookupID}
+              onChange={(e) => setLookupID(e.target.value)}
+              className={lookupIDError ? "border-destructive" : ""}
+            />
+            {lookupIDError && <p className="text-xs text-destructive">{lookupIDError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="points">Points Value</Label>
-            <Input id="points" type="number" value={points} onChange={(e) => setPoints(parseInt(e.target.value) || 0)} />
+            <Input
+              id="points"
+              type="number"
+              value={points}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setPoints(0);
+                } else {
+                  const parsed = parseInt(val, 10);
+                  setPoints(Number.isNaN(parsed) ? 0 : parsed);
+                }
+              }}
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (Optional)</Label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
         </div>

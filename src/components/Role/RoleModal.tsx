@@ -19,12 +19,18 @@ const RoleModal: FC<RoleModalProps> = ({ open, setOpen, refreshItems, editingIte
   const [description, setDescription] = useState("");
   const [admin, setAdmin] = useState(false);
 
+  const [nameError, setNameError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
+
   const addMutation = trpc.role.add.useMutation({
     onSuccess: () => {
       refreshItems();
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to add role: " + err.message);
+    }
   });
 
   const updateMutation = trpc.role.update.useMutation({
@@ -33,6 +39,9 @@ const RoleModal: FC<RoleModalProps> = ({ open, setOpen, refreshItems, editingIte
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to update role: " + err.message);
+    }
   });
 
   useEffect(() => {
@@ -49,12 +58,34 @@ const RoleModal: FC<RoleModalProps> = ({ open, setOpen, refreshItems, editingIte
     setName("");
     setDescription("");
     setAdmin(false);
+    setNameError("");
+    setDescriptionError("");
   };
 
   const handleSave = () => {
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+
+    let isValid = true;
+    if (!trimmedName) {
+      setNameError("Role name is required");
+      isValid = false;
+    } else {
+      setNameError("");
+    }
+
+    if (!trimmedDescription) {
+      setDescriptionError("Description is required");
+      isValid = false;
+    } else {
+      setDescriptionError("");
+    }
+
+    if (!isValid) return;
+
     const data = {
-      name,
-      description,
+      name: trimmedName,
+      description: trimmedDescription,
       admin,
     };
 
@@ -76,11 +107,23 @@ const RoleModal: FC<RoleModalProps> = ({ open, setOpen, refreshItems, editingIte
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Role Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={nameError ? "border-destructive" : ""}
+            />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="description">Description</Label>
-            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={descriptionError ? "border-destructive" : ""}
+            />
+            {descriptionError && <p className="text-xs text-destructive">{descriptionError}</p>}
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="admin" checked={admin} onCheckedChange={(checked) => setAdmin(!!checked)} />

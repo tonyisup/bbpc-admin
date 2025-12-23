@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import GameTypeModal from "../../components/Game/GameTypeModal";
 import GamePointTypeModal from "../../components/Game/GamePointTypeModal";
 import { GamePointType, GameType } from "@prisma/client";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -176,7 +176,7 @@ const GameManagementPage: NextPage<InferGetServerSidePropsType<typeof getServerS
                             {pt.title}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">{gameTypes?.find(g => g.id === pt.gameTypeId)?.title || pt.gameTypeId}</TableCell>
+                        <TableCell className="text-sm">{gameTypes?.find(g => g.id === pt.gameTypeId)?.title || "Unknown"}</TableCell>
                         <TableCell><code className="bg-muted px-1 rounded">{pt.lookupID}</code></TableCell>
                         <TableCell className="font-semibold text-lg">{pt.points > 0 ? `+${pt.points}` : pt.points}</TableCell>
                         <TableCell className="text-right">

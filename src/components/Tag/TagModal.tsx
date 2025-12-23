@@ -17,12 +17,17 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  const [nameError, setNameError] = useState("");
+
   const addMutation = trpc.tag.addTag.useMutation({
     onSuccess: () => {
       refreshItems();
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to add tag: " + err.message);
+    }
   });
 
   const updateMutation = trpc.tag.updateTag.useMutation({
@@ -31,6 +36,9 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to update tag: " + err.message);
+    }
   });
 
   useEffect(() => {
@@ -45,12 +53,20 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
   const resetForm = () => {
     setName("");
     setDescription("");
+    setNameError("");
   };
 
   const handleSave = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setNameError("Tag name is required");
+      return;
+    }
+    setNameError("");
+
     const data = {
-      name,
-      description: description || undefined,
+      name: trimmedName,
+      description: description.trim() || undefined,
     };
 
     if (editingItem) {
@@ -71,10 +87,16 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Tag Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={nameError ? "border-destructive" : ""}
+            />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (Optional)</Label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { router, publicProcedure } from "../trpc";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
 
 export const showRouter = router({
   find: publicProcedure
@@ -31,7 +31,7 @@ export const showRouter = router({
     .query(({ ctx, input }) => {
       return ctx.tmdb.getShow(input.id)
     }),
-  add: publicProcedure
+  add: protectedProcedure
     .input(z.object({
       title: z.string(),
       year: z.number(),
@@ -103,7 +103,7 @@ export const showRouter = router({
     .query(({ ctx }) => {
       return ctx.prisma.show.count();
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({
       id: z.string(),
       title: z.string(),
@@ -118,7 +118,7 @@ export const showRouter = router({
         data,
       });
     }),
-  remove: publicProcedure
+  remove: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.show.delete({

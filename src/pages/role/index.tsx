@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";
@@ -11,7 +11,7 @@ import { Button } from "../../components/ui/button";
 import RoleModal from "../../components/Role/RoleModal";
 import { Role } from "@prisma/client";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
@@ -139,7 +139,10 @@ const RolesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                      className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
+                      aria-hidden="true"
+                    >
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(role)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>

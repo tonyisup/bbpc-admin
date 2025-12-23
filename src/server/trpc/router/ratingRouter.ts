@@ -38,8 +38,8 @@ export const ratingRouter = router({
     .input(
       z.object({
         id: z.string(),
-        name: z.string(),
-        value: z.number(),
+        name: z.string().optional(),
+        value: z.number().optional(),
         sound: z.string().optional(),
         icon: z.string().optional(),
         category: z.string().optional(),

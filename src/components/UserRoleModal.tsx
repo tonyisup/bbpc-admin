@@ -31,13 +31,16 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
   setModalOpen,
   refresh,
 }) => {
-  const { data: user } = trpc.user.get.useQuery({ id: userId });
+  const { data: user, isLoading: userLoading, error: userError } = trpc.user.get.useQuery({ id: userId });
   const { data: roles } = trpc.role.getAll.useQuery();
 
   const { mutate: addUserRole, isLoading: isAdding } = trpc.user.addRole.useMutation({
     onSuccess: () => {
       refresh();
       setModalOpen(false);
+    },
+    onError: (err) => {
+      alert("Failed to assign role: " + err.message);
     }
   });
 
@@ -45,9 +48,14 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
 
   const handleAddRole = () => {
     if (selectedRoleId) {
+      const roleId = parseInt(selectedRoleId, 10);
+      if (Number.isNaN(roleId)) {
+        alert("Invalid role selected");
+        return;
+      }
       addUserRole({
         userId: userId,
-        roleId: parseInt(selectedRoleId)
+        roleId: roleId
       });
     }
   };
@@ -71,17 +79,36 @@ const UserRoleModal: FC<UserRoleModalProps> = ({
 
         <div className="grid gap-6 py-6">
           {/* User Preview */}
-          <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border border-muted-foreground/10">
-            <Avatar className="h-12 w-12 border shadow-sm">
-              <AvatarImage src={user?.image || ""} alt={user?.name || ""} />
-              <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                {user?.name?.substring(0, 2).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold truncate text-foreground">{user?.name}</span>
-              <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
-            </div>
+          <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border border-muted-foreground/10" aria-live="polite">
+            {userLoading ? (
+              <div className="flex items-center gap-4 w-full">
+                <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                </div>
+              </div>
+            ) : userError ? (
+              <div className="flex items-center gap-2 text-destructive text-sm font-medium p-2">
+                <Info className="h-4 w-4" />
+                <span>Failed to load user details</span>
+              </div>
+            ) : user ? (
+              <>
+                <Avatar className="h-12 w-12 border shadow-sm">
+                  <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+                  <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                    {user.name?.substring(0, 2).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold truncate text-foreground">{user.name}</span>
+                  <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground italic">User not found</div>
+            )}
           </div>
 
           <div className="grid gap-3">

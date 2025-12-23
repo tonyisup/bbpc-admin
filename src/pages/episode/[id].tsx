@@ -1,4 +1,4 @@
-import { InferGetServerSidePropsType, NextPage } from "next";
+import { GetServerSidePropsContext, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { UploadDropzone } from "../../utils/uploadthing";
 import { toast } from "sonner";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
@@ -42,9 +42,10 @@ export async function getServerSideProps(context: any) {
   }
 }
 
-const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session }) => {
-  const { query } = useRouter();
-  const id = typeof query.id === 'string' ? query.id : undefined;
+const EpisodePage: NextPage<{ session: any }> = ({ session }) => {
+  const router = useRouter();
+  const { id: queryId } = router.query;
+  const id = Array.isArray(queryId) ? queryId[0] : queryId;
   const [activeTab, setActiveTab] = useState("general");
 
   const { data: episode, refetch, isFetching } = trpc.episode.get.useQuery({
@@ -159,13 +160,11 @@ const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
 
           <TabsContent value="movies" className="mt-0 space-y-8 focus-visible:outline-none">
             {episode && (
-              <>
-                <div className="space-y-6">
-                  <EpisodeAssignments episode={episode} />
-                  <Separator className="my-8" />
-                  <EpisodeExtras episode={episode} />
-                </div>
-              </>
+              <div className="space-y-6">
+                <EpisodeAssignments episode={episode} />
+                <Separator className="my-8" />
+                <EpisodeExtras episode={episode} />
+              </div>
             )}
           </TabsContent>
 

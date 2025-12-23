@@ -19,6 +19,7 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
   const [sound, setSound] = useState("");
   const [icon, setIcon] = useState("");
   const [category, setCategory] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const addMutation = trpc.rating.add.useMutation({
     onSuccess: () => {
@@ -26,6 +27,9 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to add rating: " + err.message);
+    }
   });
 
   const updateMutation = trpc.rating.update.useMutation({
@@ -34,6 +38,9 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to update rating: " + err.message);
+    }
   });
 
   useEffect(() => {
@@ -54,15 +61,22 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
     setSound("");
     setIcon("");
     setCategory("");
+    setNameError("");
   };
 
   const handleSave = () => {
+    if (!name.trim()) {
+      setNameError("Name is required");
+      return;
+    }
+    setNameError("");
+
     const data = {
-      name,
+      name: name.trim(),
       value,
-      sound: sound || undefined,
-      icon: icon || undefined,
-      category: category || undefined,
+      sound: sound.trim() || undefined,
+      icon: icon.trim() || undefined,
+      category: category.trim() || undefined,
     };
 
     if (editingItem) {
@@ -83,22 +97,41 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={nameError ? "border-destructive" : ""}
+            />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="value">Value (1-5 or similar)</Label>
-            <Input id="value" type="number" value={value} onChange={(e) => setValue(parseInt(e.target.value) || 0)} />
+            <Input
+              id="value"
+              type="number"
+              value={value}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setValue(0);
+                } else {
+                  const parsed = parseInt(val, 10);
+                  setValue(Number.isNaN(parsed) ? 0 : parsed);
+                }
+              }}
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Category (Optional)</Label>
             <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="icon">Icon (URL or Name)</Label>
+            <Label htmlFor="icon">Icon (URL or Name) (Optional)</Label>
             <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="sound">Sound URL</Label>
+            <Label htmlFor="sound">Sound URL (Optional)</Label>
             <Input id="sound" value={sound} onChange={(e) => setSound(e.target.value)} />
           </div>
         </div>

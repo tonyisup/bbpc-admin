@@ -18,8 +18,12 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [url, setUrl] = useState("");
-  const [episodeId, setEpisodeId] = useState<string | undefined>(undefined);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [episodeId, setEpisodeId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const [titleError, setTitleError] = useState("");
+  const [artistError, setArtistError] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   const { data: episodes } = trpc.episode.getAll.useQuery();
   const { data: users } = trpc.user.getAll.useQuery();
@@ -30,6 +34,9 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to add banger: " + err.message);
+    },
   });
 
   const updateMutation = trpc.banger.update.useMutation({
@@ -38,6 +45,9 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
       setOpen(false);
       resetForm();
     },
+    onError: (err) => {
+      alert("Failed to update banger: " + err.message);
+    },
   });
 
   useEffect(() => {
@@ -45,8 +55,8 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
       setTitle(editingItem.title);
       setArtist(editingItem.artist);
       setUrl(editingItem.url);
-      setEpisodeId(editingItem.episodeId || undefined);
-      setUserId(editingItem.userId || undefined);
+      setEpisodeId(editingItem.episodeId || null);
+      setUserId(editingItem.userId || null);
     } else {
       resetForm();
     }
@@ -56,18 +66,54 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
     setTitle("");
     setArtist("");
     setUrl("");
-    setEpisodeId(undefined);
-    setUserId(undefined);
+    setEpisodeId(null);
+    setUserId(null);
+    setTitleError("");
+    setArtistError("");
+    setUrlError("");
   };
 
   const handleSave = () => {
-    if (!title || !artist || !url) return;
+    const trimmedTitle = title.trim();
+    const trimmedArtist = artist.trim();
+    const trimmedUrl = url.trim();
+
+    let isValid = true;
+    if (!trimmedTitle) {
+      setTitleError("Title is required");
+      isValid = false;
+    } else {
+      setTitleError("");
+    }
+
+    if (!trimmedArtist) {
+      setArtistError("Artist is required");
+      isValid = false;
+    } else {
+      setArtistError("");
+    }
+
+    if (!trimmedUrl) {
+      setUrlError("URL is required");
+      isValid = false;
+    } else {
+      try {
+        new URL(trimmedUrl);
+        setUrlError("");
+      } catch {
+        setUrlError("Invalid URL format");
+        isValid = false;
+      }
+    }
+
+    if (!isValid) return;
+
     const data = {
-      title,
-      artist,
-      url,
-      episodeId: episodeId === "none" ? undefined : episodeId,
-      userId: userId === "none" ? undefined : userId,
+      title: trimmedTitle,
+      artist: trimmedArtist,
+      url: trimmedUrl,
+      episodeId: (episodeId === "" || episodeId === null) ? null : episodeId,
+      userId: (userId === "" || userId === null) ? null : userId,
     };
 
     if (editingItem) {
@@ -88,25 +134,43 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="title">Song Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={titleError ? "border-destructive" : ""}
+            />
+            {titleError && <p className="text-xs text-destructive">{titleError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="artist">Artist</Label>
-            <Input id="artist" value={artist} onChange={(e) => setArtist(e.target.value)} />
+            <Input
+              id="artist"
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              className={artistError ? "border-destructive" : ""}
+            />
+            {artistError && <p className="text-xs text-destructive">{artistError}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="url">Spotify/URL</Label>
-            <Input id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
+            <Input
+              id="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className={urlError ? "border-destructive" : ""}
+            />
+            {urlError && <p className="text-xs text-destructive">{urlError}</p>}
           </div>
 
           <div className="grid gap-2">
             <Label>Episode (Optional)</Label>
-            <Select value={episodeId || "none"} onValueChange={(val) => setEpisodeId(val)}>
+            <Select value={episodeId || ""} onValueChange={(val) => setEpisodeId(val || null)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an episode" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="">None</SelectItem>
                 {episodes?.map(ep => (
                   <SelectItem key={ep.id} value={ep.id}>Ep {ep.number}: {ep.title}</SelectItem>
                 ))}
@@ -116,12 +180,12 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
 
           <div className="grid gap-2">
             <Label>User (Optional)</Label>
-            <Select value={userId || "none"} onValueChange={(val) => setUserId(val)}>
+            <Select value={userId || ""} onValueChange={(val) => setUserId(val || null)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a user" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="">None</SelectItem>
                 {users?.map(u => (
                   <SelectItem key={u.id} value={u.id}>{u.name || u.email}</SelectItem>
                 ))}

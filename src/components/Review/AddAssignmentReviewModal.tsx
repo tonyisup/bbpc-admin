@@ -3,70 +3,96 @@ import { type Assignment, type Episode, type Movie, type User } from "@prisma/cl
 import { trpc } from "../../utils/trpc";
 import RatingSelect from "./RatingSelect";
 import UserSelect from "../UserSelect";
-import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
 
 interface AddAssignmentReviewModalProps {
-  refreshItems: DispatchWithoutAction;
+	refreshItems: DispatchWithoutAction;
 	assignment: Assignment;
-  movie: Movie;
-  episode: Episode;
+	movie: Movie;
+	episode: Episode;
+	open: boolean;
+	setOpen: (open: boolean) => void;
 }
 
-const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshItems, movie, episode, assignment }) => {
+const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshItems, movie, episode, assignment, open, setOpen }) => {
+	const [ratingId, setRatingId] = useState<string | null>(null);
+	const [reviewer, setReviewer] = useState<User | null>(null);
 
-	const [ modalOpen, setModalOpen ] = useState(false);
-  const [ ratingId, setRatingId ] = useState<string | null>(null);
-	const [ reviewer, setReviewer ] = useState<User | null>(null);
-
-  const { mutate: AddAssignmentReview } = trpc.review.addToAssignment.useMutation({
-		onSuccess: (m) => {
-			console.log(m);
+	const { mutate: addReview, isLoading } = trpc.review.addToAssignment.useMutation({
+		onSuccess: () => {
+			refreshItems();
+			setOpen(false);
+			setRatingId(null);
+			setReviewer(null);
+		},
+		onError: (err) => {
+			alert("Failed to add review: " + err.message);
 		}
-	})
-  const closeModal = function() {
-		setRatingId(null)
-    setModalOpen(false)
-  }
-  const handleSubmit = (e: React.FormEvent) => {
-		if (!reviewer) return;
-		if (!movie) return;
-		if (!episode) return;
+	});
 
-    e.preventDefault();
-    AddAssignmentReview({
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!reviewer) {
+			alert("Please select a reviewer");
+			return;
+		}
+
+		addReview({
 			assignmentId: assignment.id,
-      userId: reviewer.id,
+			userId: reviewer.id,
 			ratingId: ratingId ?? undefined,
-      movieId: movie.id,
-    }, {
-      onSuccess: () => {
-				refreshItems();
-				closeModal();
-      }
-    });
-  };
+			movieId: movie.id,
+		});
+	};
 
-  return (
-    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Review</DialogTitle>
-        </DialogHeader>
-			<div className="p-3 space-y-4 bg-gray-800">
-				<div className="grid grid-cols-2 gap-2">
-					<form onSubmit={handleSubmit}>
-						<h2>Add Review for {movie.title} on episode {episode.number} for the {assignment.type === 'HOMEWORK' ? 'homework' : assignment.type === 'EXTRA_CREDIT' ? 'extra credit' : 'bonus'}</h2>
-						<label htmlFor="user">Reviewer</label>
-						<UserSelect selectUser={setReviewer} />
-						<label htmlFor="user">Rating</label>
-						<RatingSelect setRatingId={setRatingId} />
-						<button className="m-2 py-2 px-4 bg-purple-600 rounded-sm" type="submit">Submit Review</button>
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogContent className="sm:max-w-[425px]">
+				<DialogHeader>
+					<DialogTitle>Add Assignment Review</DialogTitle>
+				</DialogHeader>
+				<div className="py-4 space-y-6">
+					<div className="bg-muted/30 p-4 rounded-lg border space-y-2">
+						<div className="flex items-center justify-between">
+							<span className="text-sm font-bold truncate">{movie.title}</span>
+							<Badge variant="outline" className="text-[10px] uppercase font-black">
+								Ep {episode.number}
+							</Badge>
+						</div>
+						<p className="text-xs text-muted-foreground">
+							Reviewing the <span className="font-bold text-foreground lowercase">{assignment.type.replace('_', ' ')}</span> assignment
+						</p>
+					</div>
+
+					<form onSubmit={handleSubmit} className="space-y-4">
+						<div className="space-y-2">
+							<Label>Reviewer</Label>
+							<UserSelect selectUser={setReviewer} />
+						</div>
+						<div className="space-y-2">
+							<Label>Rating (Optional)</Label>
+							<RatingSelect setRatingId={setRatingId} />
+						</div>
 					</form>
 				</div>
-			</div>
-    </DialogContent>
-	</Dialog>
-  );
+				<DialogFooter>
+					<Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+					<Button
+						onClick={handleSubmit}
+						disabled={isLoading || !reviewer}
+						className="bg-indigo-600 hover:bg-indigo-700 text-white"
+					>
+						{isLoading ? "Submitting..." : "Submit Review"}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
 };
+
+export default AddAssignmentReviewModal;
 
 export default AddAssignmentReviewModal;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { router, publicProcedure } from "../trpc";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
 
 export const movieRouter = router({
   find: publicProcedure
@@ -31,7 +31,7 @@ export const movieRouter = router({
     .query(({ ctx, input }) => {
       return ctx.tmdb.getMovie(input.id)
     }),
-  add: publicProcedure
+  add: protectedProcedure
     .input(z.object({
       title: z.string(),
       year: z.number(),
@@ -112,7 +112,7 @@ export const movieRouter = router({
     .query(({ ctx }) => {
       return ctx.prisma.movie.count();
     }),
-  remove: publicProcedure
+  remove: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.movie.delete({

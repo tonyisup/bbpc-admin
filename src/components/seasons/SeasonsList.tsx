@@ -34,7 +34,8 @@ export const SeasonsList = ({ seasons }: SeasonsListProps) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {seasons?.map((season) => {
         const now = new Date();
-        const isFuture = season.startedOn && new Date(season.startedOn) > now;
+        const startDate = season.startedOn ? new Date(season.startedOn) : null;
+        const isFuture = !!startDate && !isNaN(startDate.getTime()) && startDate > now;
         const isEnded = !!season.endedOn;
         const isActive = !isFuture && !isEnded;
 

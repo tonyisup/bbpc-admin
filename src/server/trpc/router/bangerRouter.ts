@@ -31,7 +31,7 @@ export const bangerRouter = router({
       z.object({
         title: z.string(),
         artist: z.string(),
-        url: z.string(),
+        url: z.string().url(),
         episodeId: z.string().optional(),
         userId: z.string().optional(),
       })
@@ -48,7 +48,7 @@ export const bangerRouter = router({
         id: z.string(),
         title: z.string(),
         artist: z.string(),
-        url: z.string(),
+        url: z.string().url(),
         episodeId: z.string().optional(),
         userId: z.string().optional(),
       })

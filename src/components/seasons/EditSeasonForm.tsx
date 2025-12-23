@@ -33,8 +33,6 @@ type EditSeasonFormProps = {
 };
 
 export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormProps) => {
-  if (!season) return null;
-
   const {
     register,
     handleSubmit,
@@ -43,11 +41,11 @@ export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormPr
   } = useForm<EditSeasonFormInputs>({
     resolver: zodResolver(EditSeasonFormSchema),
     defaultValues: {
-      title: season.title,
-      description: season.description || "",
-      gameTypeId: season.gameTypeId.toString(),
-      startedOn: season.startedOn ? new Date(season.startedOn).toISOString().split('T')[0] : "",
-      endedOn: season.endedOn ? new Date(season.endedOn).toISOString().split('T')[0] : null,
+      title: season?.title || "",
+      description: season?.description || "",
+      gameTypeId: season?.gameTypeId.toString() || "",
+      startedOn: season?.startedOn ? new Date(season.startedOn).toISOString().split('T')[0] : "",
+      endedOn: season?.endedOn ? new Date(season.endedOn).toISOString().split('T')[0] : null,
     }
   });
 
@@ -56,13 +54,23 @@ export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormPr
   const updateSeason = trpc.season.update.useMutation({
     onSuccess: () => {
       toast.success("Season updated successfully");
-      utils.season.getById.invalidate({ id: season.id });
+      if (season) {
+        utils.season.getById.invalidate({ id: season.id });
+      }
       onSuccess?.();
     },
     onError: (error) => {
       toast.error(`Error updating season: ${error.message}`);
     }
   });
+
+  if (!season) {
+    return (
+      <div className="p-8 text-center bg-card rounded-xl border border-dashed">
+        <p className="text-muted-foreground">Season data not found</p>
+      </div>
+    );
+  }
 
   const onSubmit = (data: EditSeasonFormInputs) => {
     updateSeason.mutate({

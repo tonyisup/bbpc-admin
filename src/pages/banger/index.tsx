@@ -11,7 +11,7 @@ import { Button } from "../../components/ui/button";
 import BangerModal from "../../components/Banger/BangerModal";
 import { Banger } from "@prisma/client";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id || "");
 
