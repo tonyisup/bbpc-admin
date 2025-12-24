@@ -274,6 +274,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 					userId={guesser.id}
 					assignmentId={assignment.id}
 					bonusPoints={bonusPoints}
+					seasonId={seasonId}
 					onUpdate={() => {
 						onAddPointForGuess({
 							userId: guesser.id,

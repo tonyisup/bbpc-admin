@@ -173,6 +173,7 @@ export const gamblingRouter = router({
   confirmGamble: publicProcedure
     .input(z.object({
       gambleId: z.string(),
+      seasonId: z.string().optional(), // Fallback
     }))
     .mutation(async ({ ctx, input }) => {
       const gamble = await ctx.prisma.gamblingPoints.findUnique({
@@ -183,6 +184,17 @@ export const gamblingRouter = router({
       if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
       if (gamble.pointsId) throw new Error("Gamble already confirmed");
 
+      let seasonId = gamble.seasonId || input.seasonId;
+      if (!seasonId) {
+        const currentSeason = await ctx.prisma.season.findFirst({
+          orderBy: { startedOn: 'desc' },
+          where: { endedOn: null }
+        });
+        seasonId = currentSeason?.id;
+      }
+
+      if (!seasonId) throw new Error("No season found for point creation");
+
       const gamblingType = gamble.gamblingType;
       const earnedPoints = Math.floor(gamble.points * gamblingType.multiplier);
 
@@ -190,7 +202,7 @@ export const gamblingRouter = router({
         const point = await tx.point.create({
           data: {
             userId: gamble.userId,
-            seasonId: gamble.seasonId!,
+            seasonId: seasonId!,
             adjustment: earnedPoints,
             reason: `Gamble win: ${gamblingType.title}`,
             earnedOn: new Date(),
@@ -201,7 +213,8 @@ export const gamblingRouter = router({
           where: { id: gamble.id },
           data: {
             successful: true,
-            pointsId: point.id
+            pointsId: point.id,
+            seasonId: seasonId // Update the gamble record too if it was missing
           }
         });
       });

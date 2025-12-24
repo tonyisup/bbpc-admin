@@ -12,13 +12,15 @@ interface ManageBonusPointsPopoverProps {
 	assignmentId: string;
 	onUpdate?: () => void;
 	bonusPoints: number;
+	seasonId: string | null;
 }
 
 export function ManageBonusPointsPopover({
 	userId,
 	assignmentId,
 	onUpdate,
-	bonusPoints
+	bonusPoints,
+	seasonId
 }: ManageBonusPointsPopoverProps) {
 	const [open, setOpen] = useState(false);
 	const [isAdding, setIsAdding] = useState(false);
@@ -165,7 +167,7 @@ export function ManageBonusPointsPopover({
 													size="sm"
 													variant="outline"
 													className="h-7 px-2 text-[10px] bg-emerald-900/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
-													onClick={() => confirmGamble({ gambleId: g.id })}
+													onClick={() => confirmGamble({ gambleId: g.id, seasonId: seasonId || undefined })}
 												>
 													Confirm
 												</Button>
