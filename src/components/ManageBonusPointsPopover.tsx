@@ -25,15 +25,23 @@ export function ManageBonusPointsPopover({
 	const [reason, setReason] = useState("");
 	const [adjustment, setAdjustment] = useState(0);
 
-	const { data: points, refetch } = trpc.game.getUserAssignmentPoints.useQuery(
+	const { data: points, refetch: refetchPoints } = trpc.game.getUserAssignmentPoints.useQuery(
 		{ userId, assignmentId },
 		{ enabled: open }
 	);
 
+	const { data: gambles, refetch: refetchGambles } = trpc.gambling.getUserAssignmentGamblePoints.useQuery(
+		{ userId, assignmentId },
+		{ enabled: open }
+	);
+
+	const utils = trpc.useUtils();
+
 	const { mutate: removePoint } = trpc.user.removePoint.useMutation({
 		onSuccess: () => {
 			toast.success("Point removed");
-			refetch();
+			refetchPoints();
+			refetchGambles();
 			onUpdate?.();
 		},
 		onError: (err) => {
@@ -47,11 +55,33 @@ export function ManageBonusPointsPopover({
 			setReason("");
 			setAdjustment(0);
 			setIsAdding(false);
-			refetch();
+			refetchPoints();
 			onUpdate?.();
 		},
 		onError: (err) => {
 			toast.error("Failed to add bonus point: " + err.message);
+		}
+	});
+
+	const { mutate: confirmGamble } = trpc.gambling.confirmGamble.useMutation({
+		onSuccess: () => {
+			toast.success("Gamble confirmed");
+			refetchPoints();
+			refetchGambles();
+			onUpdate?.();
+		},
+		onError: (err) => {
+			toast.error("Failed to confirm gamble: " + err.message);
+		}
+	});
+
+	const { mutate: rejectGamble } = trpc.gambling.rejectGamble.useMutation({
+		onSuccess: () => {
+			toast.success("Gamble rejected");
+			refetchGambles();
+		},
+		onError: (err) => {
+			toast.error("Failed to reject gamble: " + err.message);
 		}
 	});
 
@@ -119,7 +149,48 @@ export function ManageBonusPointsPopover({
 						</div>
 					)}
 
-					<div className="space-y-2 max-h-60 overflow-y-auto">
+					<div className="space-y-2 max-h-80 overflow-y-auto">
+						{gambles && gambles.length > 0 && (
+							<div className="space-y-2 border-b border-gray-800 pb-2">
+								<p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Gambles</p>
+								{gambles.map(g => (
+									<div key={g.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded border border-gray-700/30">
+										<div className="flex flex-col">
+											<span className="text-xs font-medium">{g.gamblingType?.title} {g.TargetUser ? `on ${g.TargetUser.name}` : ""}</span>
+											<span className="text-[10px] text-gray-400">{g.points} pts bet</span>
+										</div>
+										{!g.pointsId && g.successful === null && (
+											<div className="flex gap-1">
+												<Button
+													size="sm"
+													variant="outline"
+													className="h-7 px-2 text-[10px] bg-emerald-900/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+													onClick={() => confirmGamble({ gambleId: g.id })}
+												>
+													Confirm
+												</Button>
+												<Button
+													size="sm"
+													variant="outline"
+													className="h-7 px-2 text-[10px] bg-rose-900/20 border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white"
+													onClick={() => rejectGamble({ gambleId: g.id })}
+												>
+													Reject
+												</Button>
+											</div>
+										)}
+										{g.pointsId && (
+											<span className="text-[10px] text-emerald-400 font-bold">WON</span>
+										)}
+										{!g.pointsId && g.successful === false && (
+											<span className="text-[10px] text-rose-400 font-bold">LOST</span>
+										)}
+									</div>
+								))}
+							</div>
+						)}
+
+						<p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-2">Adjustments</p>
 						{points?.map((ap) => (
 							<div
 								key={ap.id}

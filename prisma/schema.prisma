@@ -326,7 +326,7 @@ model GamblingPoints {
   points         Int
   notes          String?
   createdAt      DateTime      @default(now()) @db.DateTime
-  successful     Boolean?      @default(false)
+  successful     Boolean?
   seasonId       String?       @db.UniqueIdentifier
   pointsId       String?       @db.UniqueIdentifier
   Assignment     Assignment?   @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)

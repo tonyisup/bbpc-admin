@@ -745,7 +745,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	return (
 		<>
 			<Head>
-				<title>Recording {recordingData?.number} - Bad Boys Podcast Admin</title>
+				<title>{`Recording ${recordingData?.number || ""} - Bad Boys Podcast Admin`}</title>
 			</Head>
 			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8 relative">
 				{/* Audio Container for Remote Streams */}

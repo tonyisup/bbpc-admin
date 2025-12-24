@@ -416,7 +416,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
   return (
     <>
       <Head>
-        <title>{user?.name || user?.email} - Admin</title>
+        <title>{`${user?.name || user?.email || ""} - Admin`}</title>
       </Head>
 
       {modalOpen && <UserRoleModal userId={id} setModalOpen={setModalOpen} refresh={refetchRoles} />}

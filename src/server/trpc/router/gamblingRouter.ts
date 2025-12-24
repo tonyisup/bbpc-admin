@@ -60,9 +60,11 @@ export const gamblingRouter = router({
       gamblingTypeId: z.string(),
       points: z.number(),
       seasonId: z.string().optional(),
+      assignmentId: z.string().optional(),
+      targetUserId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { userId, seasonId, points, assignmentId } = input;
+      const { userId, seasonId, points, assignmentId, targetUserId } = input;
 
       if (!seasonId) {
         const season = await ctx.prisma.season.findFirst({
@@ -90,6 +92,8 @@ export const gamblingRouter = router({
             gamblingTypeId: input.gamblingTypeId,
             points,
             seasonId,
+            assignmentId,
+            targetUserId: input.targetUserId,
           },
         });
 
@@ -144,6 +148,75 @@ export const gamblingRouter = router({
               id: req.input.id
             }
           }
+        }
+      });
+    }),
+
+  getUserAssignmentGamblePoints: publicProcedure
+    .input(z.object({
+      userId: z.string(),
+      assignmentId: z.string()
+    }))
+    .query(async (req) => {
+      return await req.ctx.prisma.gamblingPoints.findMany({
+        include: {
+          gamblingType: true,
+          TargetUser: true,
+        },
+        where: {
+          userId: req.input.userId,
+          assignmentId: req.input.assignmentId
+        }
+      });
+    }),
+
+  confirmGamble: publicProcedure
+    .input(z.object({
+      gambleId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const gamble = await ctx.prisma.gamblingPoints.findUnique({
+        where: { id: input.gambleId },
+        include: { gamblingType: true }
+      });
+
+      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
+      if (gamble.pointsId) throw new Error("Gamble already confirmed");
+
+      const gamblingType = gamble.gamblingType;
+      const earnedPoints = Math.floor(gamble.points * gamblingType.multiplier);
+
+      return await ctx.prisma.$transaction(async (tx) => {
+        const point = await tx.point.create({
+          data: {
+            userId: gamble.userId,
+            seasonId: gamble.seasonId!,
+            adjustment: earnedPoints,
+            reason: `Gamble win: ${gamblingType.title}`,
+            earnedOn: new Date(),
+          }
+        });
+
+        return await tx.gamblingPoints.update({
+          where: { id: gamble.id },
+          data: {
+            successful: true,
+            pointsId: point.id
+          }
+        });
+      });
+    }),
+
+  rejectGamble: publicProcedure
+    .input(z.object({
+      gambleId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.gamblingPoints.update({
+        where: { id: input.gambleId },
+        data: {
+          successful: false,
+          pointsId: null // Ensure no point is linked if rejected
         }
       });
     }),
