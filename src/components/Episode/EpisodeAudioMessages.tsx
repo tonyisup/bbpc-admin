@@ -1,7 +1,7 @@
 import { type Dispatch, type FC } from "react";
 import { type AudioEpisodeMessage, type User, type Episode } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
-import { HiX } from "react-icons/hi";
+import { X, User as UserIcon, Calendar, Play } from "lucide-react";
 import Link from "next/link";
 
 interface EpisodeAudioMessagesProps {
@@ -10,15 +10,17 @@ interface EpisodeAudioMessagesProps {
 
 const EpisodeAudioMessages: FC<EpisodeAudioMessagesProps> = ({ episode }) => {
 	const { data: audioMessages, refetch: refreshAudioMessages } = trpc.episode.getAudioMessages.useQuery({ episodeId: episode.id })
-	const handleRefreshAudioMessages = function () {
-		refreshAudioMessages();
+
+	if (!audioMessages || audioMessages.length === 0) {
+		return <div className="text-center py-8 text-muted-foreground italic text-sm">No audio messages for this episode.</div>
 	}
-	return <div>
+
+	return <div className="space-y-4">
 		{audioMessages?.map((audioMessage) => (
 			<Audio
 				key={audioMessage.id}
 				audioMessage={audioMessage}
-				refreshAudioMessages={handleRefreshAudioMessages}
+				refreshAudioMessages={() => refreshAudioMessages()}
 			/>
 		))}
 	</div>
@@ -31,25 +33,65 @@ interface AudioProps {
 	refreshAudioMessages: Dispatch<void>
 }
 const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
-	const { mutate: removeAudioMessage } = trpc.episode.removeAudioMessage.useMutation()
-	return <div className="flex gap-4 w-full px-6 items-center justify-between">
-		<a className="text-blue-500 underline" href={audioMessage.url} target="_blank" rel="noreferrer">
-			{audioMessage.id} - {audioMessage.createdAt.toLocaleString()}
-		</a>
-		<span>
-			<Link href={`/user/${audioMessage.user?.id}`}>
-				{audioMessage.user?.name ?? audioMessage.user?.email}
-			</Link>
-		</span>
+	const { mutate: removeAudioMessage } = trpc.episode.removeAudioMessage.useMutation({
+		onError: (err) => {
+			alert("Failed to remove audio message: " + err.message);
+		},
+	})
+	return <div className="flex gap-4 w-full items-start justify-between bg-card border rounded-xl p-4 shadow-sm hover:border-primary/20 transition-colors">
+		<div className="flex flex-col gap-3 flex-1">
+			<div className="flex justify-between items-center">
+				<Link href={`/user/${audioMessage.user?.id}`} className="flex items-center gap-2 group">
+					<div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+						<UserIcon className="h-3 w-3 text-primary" />
+					</div>
+					<span className="text-sm font-bold group-hover:text-primary transition-colors">
+						{audioMessage.user?.name ?? audioMessage.user?.email}
+					</span>
+				</Link>
+				<span className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium bg-muted px-2 py-0.5 rounded-full">
+					<Calendar className="h-3 w-3" />
+					{audioMessage.createdAt.toLocaleString()}
+				</span>
+			</div>
+			<div className="flex items-center gap-3">
+				<div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+					<Play className="h-4 w-4 text-primary-foreground fill-current" />
+				</div>
+				<audio controls className="w-full max-w-md h-8 filter grayscale invert opacity-80 hover:opacity-100 transition-opacity">
+					<source src={audioMessage.url} type="audio/mpeg" />
+					{(audioMessage as any).captionsUrl && (
+						<track
+							kind="captions"
+							src={(audioMessage as any).captionsUrl}
+							srcLang="en"
+							label="English"
+							default
+						/>
+					)}
+				</audio>
+			</div>
+			{audioMessage.notes && (
+				<div
+					tabIndex={0}
+					className="text-xs text-muted-foreground italic border-l-2 border-primary/20 pl-3 py-1 focus:outline-none focus:ring-1 focus:ring-primary/30 rounded-r"
+					aria-label="Audio transcript"
+				>
+					{audioMessage.notes}
+				</div>
+			)}
+		</div>
 		<button
 			type="button"
 			title="Remove Audio Message"
-			className="ml-2 text-red-500 hover:text-red-700"
+			className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
 			onClick={() => {
-				removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
+				if (confirm("Are you sure you want to remove this audio message?")) {
+					removeAudioMessage({ id: audioMessage.id }, { onSuccess: () => refreshAudioMessages() })
+				}
 			}}
 		>
-			<HiX />
+			<X className="h-4 w-4" />
 		</button>
 	</div>
 }

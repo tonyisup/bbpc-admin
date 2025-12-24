@@ -8,24 +8,25 @@ import { ThemeProvider } from "../components/theme-provider";
 import "../styles/globals.css";
 
 
+import { Toaster } from "../components/ui/sonner";
+
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
   return (
     <SessionProvider session={session}>
-      <div>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </ThemeProvider>
-      </div>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem={false}
+        disableTransitionOnChange
+      >
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+        <Toaster />
+      </ThemeProvider>
     </SessionProvider>
   );
 };

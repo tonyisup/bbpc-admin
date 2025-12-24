@@ -22,21 +22,31 @@ export const gamblingRouter = router({
       seasonId: z.string().optional()
     }))
     .query(async (req) => {
-      let seasonId = req.input.seasonId ?? '';
-      if (!seasonId) {
+      let seasonId = req.input.seasonId;
+      const isAll = seasonId === "all";
+
+      if (!seasonId && !isAll) {
         const season = await req.ctx.prisma.season.findFirst({
           orderBy: {
             startedOn: 'desc',
           },
           where: { endedOn: null }
         });
-        seasonId = season?.id ?? '';
+        seasonId = season?.id;
       }
+
+      const filterBySeasonId = isAll ? undefined : seasonId;
+
+      const where: any = {
+        userId: req.input.userId,
+      };
+
+      if (filterBySeasonId) {
+        where.seasonId = filterBySeasonId;
+      }
+
       return await req.ctx.prisma.gamblingPoints.findMany({
-        where: {
-          userId: req.input.userId,
-          seasonId: seasonId
-        },
+        where,
         include: {
           assignment: {
             include: {
@@ -66,7 +76,10 @@ export const gamblingRouter = router({
           },
           where: { endedOn: null }
         });
-        input.seasonId = season?.id ?? '';
+        if (!season) {
+          throw new Error("No active season found to add gambling points");
+        }
+        input.seasonId = season.id;
       }
 
       return await ctx.prisma.$transaction(async (prisma) => {

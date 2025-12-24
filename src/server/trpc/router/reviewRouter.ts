@@ -146,4 +146,56 @@ export const reviewRouter = router({
 				}
 			})
 		}),
+	getAll: publicProcedure
+		.input(z.object({
+			limit: z.number().min(1).max(100).nullish(),
+			cursor: z.string().nullish(),
+			ratingId: z.string().nullish(),
+		}))
+		.query(async ({ ctx, input }) => {
+			const limit = input.limit ?? 50;
+			const { cursor, ratingId } = input;
+
+			const items = await ctx.prisma.review.findMany({
+				take: limit + 1,
+				where: {
+					ratingId: ratingId,
+				},
+				cursor: cursor ? { id: cursor } : undefined,
+				include: {
+					movie: true,
+					show: true,
+					user: true,
+					rating: true,
+					assignmentReviews: {
+						include: {
+							assignment: {
+								include: {
+									episode: true,
+								},
+							},
+						},
+					},
+					extraReviews: {
+						include: {
+							episode: true,
+						},
+					},
+				},
+				orderBy: {
+					ReviewdOn: "desc",
+				},
+			});
+
+			let nextCursor: typeof cursor | undefined = undefined;
+			if (items.length > limit) {
+				const nextItem = items.pop();
+				nextCursor = nextItem?.id;
+			}
+
+			return {
+				items,
+				nextCursor,
+			};
+		}),
 });

@@ -1,22 +1,30 @@
-import type { Dispatch, FC } from "react"
-import { trpc } from "../../utils/trpc"
+import { FC } from "react";
+import { trpc } from "../../utils/trpc";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface RatingSelectProps {
-  setRatingId: Dispatch<string | null>
+  setRatingId: (id: string | null) => void;
 }
-const RatingSelect: FC<RatingSelectProps> = ({
-  setRatingId: setRatingId,
-}) => {
-  const { data: ratings } = trpc.review.getRatings.useQuery()
-  const handleChange = function(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (!e.target.value) return
-    setRatingId(e.target.value)
-  }
-  return <select title="Rating Selection" className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-    onChange={handleChange}        
-  >
-    <option value={0}>Select a rating</option>
-    {ratings?.sort((r) => r.value).map((rating) => <option key={rating.id} value={rating.id}>{rating.name}</option>)}
-  </select>
-}
-export default RatingSelect
+
+const RatingSelect: FC<RatingSelectProps> = ({ setRatingId }) => {
+  const { data: ratings } = trpc.review.getRatings.useQuery();
+
+  return (
+    <Select onValueChange={(val) => setRatingId(val === "none" ? null : val)}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select a rating" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">No Rating</SelectItem>
+        {ratings
+          ?.sort((a, b) => b.value - a.value)
+          .map((rating) => (
+            <SelectItem key={rating.id} value={rating.id}>
+              {rating.name} ({rating.value})
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+};
+export default RatingSelect;

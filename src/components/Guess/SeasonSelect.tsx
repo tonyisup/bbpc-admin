@@ -1,22 +1,30 @@
-import { type Dispatch, type SetStateAction, type FC } from "react"
-import { trpc } from "../../utils/trpc"
+import { FC } from "react";
+import { trpc } from "../../utils/trpc";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface SeasonSelectProps {
-  setSeasonId: Dispatch<SetStateAction<string | null>> 
+  setSeasonId: (id: string | null) => void;
 }
-const RatingSelect: FC<SeasonSelectProps> = ({
-  setSeasonId: setSeasonId,
-}) => {
-  const { data: seasons } = trpc.guess.seasons.useQuery()
-  const handleChange = function(e: React.ChangeEvent<HTMLSelectElement>) {
-    setSeasonId(e.target.value)
-  }
-  return <select className="text-gray-900 w-full rounded-md border-gray-300 shadow-sm focus:border-violet-300 focus:ring focus:ring-inset"
-    title="Select a season"
-    onChange={handleChange}
-  >
-    <option value={0}>Select a season</option>
-    {seasons?.sort((season) => season.gameTypeId).map((season) => <option key={season.id} value={season.id}>{season.title}</option>)}
-  </select>
-}
-export default RatingSelect
+
+const SeasonSelect: FC<SeasonSelectProps> = ({ setSeasonId }) => {
+  const { data: seasons } = trpc.guess.seasons.useQuery();
+
+  return (
+    <Select onValueChange={(val) => setSeasonId(val === "none" ? null : val)}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select a season" />
+      </SelectTrigger>
+      <SelectContent>
+        {seasons
+          ?.sort((a, b) => b.gameTypeId - a.gameTypeId)
+          .map((season) => (
+            <SelectItem key={season.id} value={season.id}>
+              {season.title}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+export default SeasonSelect;

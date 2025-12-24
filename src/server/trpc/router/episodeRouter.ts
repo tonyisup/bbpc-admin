@@ -31,6 +31,13 @@ export const episodeRouter = router({
         }
       })
     }),
+  removeLink: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.link.delete({
+        where: { id: input.id }
+      })
+    }),
   getAssigments: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
@@ -195,6 +202,24 @@ export const episodeRouter = router({
       });
 
       return { success: true };
+    }),
+  addAudioMessage: protectedProcedure
+    .input(z.object({
+      episodeId: z.string(),
+      url: z.string(),
+      fileKey: z.string().optional(),
+      notes: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.audioEpisodeMessage.create({
+        data: {
+          episodeId: input.episodeId,
+          url: input.url,
+          fileKey: input.fileKey,
+          notes: input.notes,
+          userId: ctx.session.user.id
+        }
+      })
     }),
   updateStatus: protectedProcedure
     .input(z.object({

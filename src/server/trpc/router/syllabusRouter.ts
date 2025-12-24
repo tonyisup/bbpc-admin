@@ -2,6 +2,17 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 export const syllabusRouter = router({
+  remove: protectedProcedure
+    .input(z.object({
+      id: z.string()
+    }))
+    .mutation(async (req) => {
+      await req.ctx.prisma.syllabus.delete({
+        where: {
+          id: req.input.id
+        }
+      });
+    }),
   assignEpisode: protectedProcedure
     .input(z.object({
       syllabusId: z.string(),
@@ -95,4 +106,42 @@ export const syllabusRouter = router({
         }
       });
     }),
-}); 
+
+  getAll: publicProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).nullish(),
+      cursor: z.string().nullish(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const limit = input.limit ?? 50;
+      const { cursor } = input;
+
+      const items = await ctx.prisma.syllabus.findMany({
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        include: {
+          movie: true,
+          user: true,
+          assignment: {
+            include: {
+              episode: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+});

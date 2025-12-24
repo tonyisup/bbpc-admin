@@ -43,12 +43,12 @@ const Layout = ({ children }: LayoutProps) => {
       )}
 
       {/* Desktop Toggle Button */}
-      <div className="block fixed top-4 left-4 z-50" style={{ left: sidebarOpen ? '272px' : '16px' }}>
+      <div className="hidden md:block fixed top-4 z-[60]" style={{ left: sidebarOpen ? '272px' : '16px' }}>
         <Button
           variant="outline"
           size="icon"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="bg-background"
+          className="bg-card border-2 border-border shadow-md hover:bg-accent"
         >
           {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
