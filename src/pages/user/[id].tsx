@@ -112,13 +112,10 @@ interface GamblingPoint {
   id: string;
   points: number;
   successful: boolean;
-  assignment?: {
+  gamblingType?: {
     id: string;
-    episode: Episode;
-    movie: {
-      title: string;
-    };
-  } & Assignment;
+    title: string;
+  };
 }
 
 interface AssignmentPoint {
@@ -350,12 +347,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 
     points?.forEach((point) => {
       const episode = point.guesses?.[0]?.assignmentReview?.assignment?.episode
-        || point.gamblingPoints?.[0]?.assignment?.episode
         || point.assignmentPoints?.[0]?.assignment?.episode;
-
-      const assignment = point.guesses?.[0]?.assignmentReview?.assignment
-        || point.gamblingPoints?.[0]?.assignment
-        || point.assignmentPoints?.[0]?.assignment;
 
       if (episode) {
         let group = acc[episode.id];
@@ -596,7 +588,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                          <TableHead className="text-[10px] uppercase font-bold px-4">Movie</TableHead>
+                          <TableHead className="text-[10px] uppercase font-bold px-4">Event</TableHead>
                           <TableHead className="text-[10px] uppercase font-bold text-right px-4">Pts</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -604,8 +596,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
                         {gamblingPoints?.slice(0, 10).map((gp) => (
                           <TableRow key={gp.id} className="text-xs">
                             <TableCell className="py-2 px-4">
-                              <div className="font-medium truncate max-w-[120px]">{gp.assignment?.movie?.title}</div>
-                              <div className="text-[9px] text-muted-foreground italic">Ep {gp.assignment?.episode?.number}</div>
+                              <div className="font-medium truncate max-w-[120px]">{gp.gamblingType?.title}</div>
                             </TableCell>
                             <TableCell className="py-2 px-4 text-right">
                               <span className={gp.successful ? "text-green-600 font-bold" : "text-destructive"}>

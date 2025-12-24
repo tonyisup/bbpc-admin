@@ -3,12 +3,12 @@ import { publicProcedure, router } from "../trpc";
 import { calculateUserPoints } from "../utils/points";
 
 export const gamblingRouter = router({
-  getForAssignment: publicProcedure
-    .input(z.object({ assignmentId: z.string() }))
+  getForGamblingType: publicProcedure
+    .input(z.object({ gamblingTypeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.gamblingPoints.findMany({
         where: {
-          assignmentId: req.input.assignmentId
+          gamblingTypeId: req.input.gamblingTypeId
         },
         include: {
           user: true
@@ -48,12 +48,7 @@ export const gamblingRouter = router({
       return await req.ctx.prisma.gamblingPoints.findMany({
         where,
         include: {
-          assignment: {
-            include: {
-              episode: true,
-              movie: true
-            }
-          },
+          gamblingType: true,
           point: true
         }
       });
@@ -62,7 +57,7 @@ export const gamblingRouter = router({
   add: publicProcedure
     .input(z.object({
       userId: z.string(),
-      assignmentId: z.string(),
+      gamblingTypeId: z.string(),
       points: z.number(),
       seasonId: z.string().optional(),
     }))
@@ -92,7 +87,7 @@ export const gamblingRouter = router({
         const newGamble = await prisma.gamblingPoints.create({
           data: {
             userId,
-            assignmentId,
+            gamblingTypeId: input.gamblingTypeId,
             points,
             seasonId,
           },
@@ -152,4 +147,50 @@ export const gamblingRouter = router({
         }
       });
     }),
-}); 
+
+  // GamblingType Management
+  getAllTypes: publicProcedure.query(async ({ ctx }) => {
+    return await ctx.prisma.gamblingType.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }),
+
+  createType: publicProcedure
+    .input(z.object({
+      title: z.string(),
+      lookupId: z.string(),
+      description: z.string().optional(),
+      multiplier: z.number().default(1.5),
+      isActive: z.boolean().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.gamblingType.create({
+        data: input
+      });
+    }),
+
+  updateType: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      title: z.string().optional(),
+      lookupId: z.string().optional(),
+      description: z.string().optional(),
+      multiplier: z.number().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return await ctx.prisma.gamblingType.update({
+        where: { id },
+        data
+      });
+    }),
+
+  deleteType: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.prisma.gamblingType.delete({
+        where: { id: input.id }
+      });
+    }),
+});

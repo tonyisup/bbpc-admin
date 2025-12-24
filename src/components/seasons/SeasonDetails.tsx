@@ -89,9 +89,6 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
       } else if (assignmentPoint) {
         assignment = assignmentPoint.assignment;
         episode = assignment?.episode;
-      } else if (gamblingPoint) {
-        assignment = gamblingPoint.assignment;
-        episode = assignment?.episode;
       }
 
       if (episode && assignment) {
@@ -520,7 +517,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       <CardContent className="pt-0">
                         <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 text-xs font-semibold text-muted-foreground mt-2 group-hover:bg-muted/50 transition-colors">
                           <Coins className="h-3 w-3 text-emerald-500 opacity-50" />
-                          <span className="truncate">Wager on: {gamble.assignment?.movie?.title || gamble.assignment?.episode?.title}</span>
+                          <span className="truncate">Wager on: {gamble.gamblingType?.title}</span>
                         </div>
                       </CardContent>
                     </Card>

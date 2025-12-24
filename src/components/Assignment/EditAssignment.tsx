@@ -248,67 +248,6 @@ const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
 						)}
 					</div>
 				</div>
-
-				{/* Gambling Tracker */}
-				<div className="space-y-4">
-					<h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2 text-left">
-						<Coins className="h-3 w-3" /> User Gambling
-					</h4>
-					<div className="rounded-xl border overflow-hidden">
-						<Table>
-							<TableHeader className="bg-muted/50">
-								<TableRow>
-									<TableHead className="w-1/2">User</TableHead>
-									<TableHead className="text-right">Points</TableHead>
-									<TableHead className="text-right w-[120px]">Actions</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{guessesByUser.map((userData) => {
-									const gp = gamblingPoints?.find(p => p.userId === userData.user.id);
-									return (
-										<TableRow key={userData.user.id}>
-											<TableCell className="font-medium text-left">
-												<Link href={"/user/" + userData.user.id} className="hover:underline">{userData.user.name}</Link>
-											</TableCell>
-											<TableCell className="text-right">
-												<span className={`text-lg font-black ${gp ? (gp.points > 0 ? "text-green-500" : "text-muted-foreground") : "text-muted-foreground/30"}`}>
-													{gp?.points ?? 0}
-												</span>
-											</TableCell>
-											<TableCell className="text-right">
-												<div className="flex justify-end items-center gap-1">
-													{gp ? (
-														<>
-															<Button size="icon" variant="ghost" className="h-8 w-8 text-green-500" onClick={() => updateGambling({ id: gp.id, points: gp.points + 1 })}>
-																<PlusCircle className="h-4 w-4" />
-															</Button>
-															<Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => updateGambling({ id: gp.id, points: gp.points - 1 })}>
-																<MinusCircle className="h-4 w-4" />
-															</Button>
-															<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeGambling({ id: gp.id })}>
-																<X className="h-4 w-4" />
-															</Button>
-														</>
-													) : (
-														<Button size="sm" variant="outline" className="h-8 text-[10px] font-bold uppercase" onClick={() => addGambling({ userId: userData.user.id, assignmentId: assignment.id, points: 0 })}>
-															Add Points
-														</Button>
-													)}
-												</div>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-								{guessesByUser.length === 0 && (
-									<TableRow>
-										<TableCell colSpan={3} className="text-center py-6 text-sm text-muted-foreground italic">No guesses recorded.</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</div>
-				</div>
 			</CardContent>
 			{addGuessOpen.open && addGuessOpen.ar && (
 				<AddAssignmentReviewGuessModal
