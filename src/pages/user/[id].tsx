@@ -4,6 +4,7 @@ import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
@@ -293,6 +294,7 @@ const UserPage: NextPage<{ session: any }> = () => {
   });
 
   const [modalOpen, setModalOpen] = useState<boolean>(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
     onSuccess: () => {
@@ -706,11 +708,7 @@ const UserPage: NextPage<{ session: any }> = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => {
-                                if (confirm("Are you sure you want to remove this from the syllabus?")) {
-                                  removeSyllabusItem({ id: item.id });
-                                }
-                              }}
+                              onClick={() => setConfirmDeleteId(item.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -723,6 +721,18 @@ const UserPage: NextPage<{ session: any }> = () => {
                 </div>
               </CardContent>
             </Card>
+
+            <ConfirmModal
+              isOpen={!!confirmDeleteId}
+              onClose={() => setConfirmDeleteId(null)}
+              onConfirm={() => {
+                if (confirmDeleteId) {
+                  removeSyllabusItem({ id: confirmDeleteId });
+                }
+              }}
+              title="Remove from Syllabus"
+              description={`Are you sure you want to remove ${syllabus?.find(item => item.id === confirmDeleteId)?.movie.title} from ${user?.name}'s syllabus? This action cannot be undone.`}
+            />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

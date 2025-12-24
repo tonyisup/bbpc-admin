@@ -2,6 +2,8 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState } from "react";
+import { toast } from "sonner";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import { Trash2, Search, Plus, Film } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -40,16 +42,27 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
     { searchTerm },
     { enabled: searchTerm.length > 2 }
   );
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const addMutation = trpc.show.add.useMutation({
     onSuccess: () => {
       refetch();
       setSearchTerm("");
+      toast.success("Show added successfully");
     },
+    onError: (err) => {
+      toast.error("Failed to add show: " + err.message);
+    }
   });
 
   const removeMutation = trpc.show.remove.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      refetch();
+      toast.success("Show deleted successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to delete show: " + err.message);
+    }
   });
 
   const handleAdd = (result: any) => {
@@ -64,9 +77,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
   };
 
   const handleRemove = (id: string) => {
-    if (confirm("Are you sure you want to delete this show?")) {
-      removeMutation.mutate({ id });
-    }
+    setDeleteId(id);
   };
 
   return (
@@ -230,6 +241,18 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            removeMutation.mutate({ id: deleteId });
+          }
+        }}
+        title="Delete Show"
+        description="Are you sure you want to delete this show? This will permanently remove it from the system."
+      />
     </>
   );
 };

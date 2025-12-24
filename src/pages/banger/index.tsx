@@ -4,6 +4,7 @@ import { trpc } from "../../utils/trpc";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Trash2, Plus, Edit2, Music } from "lucide-react";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -46,6 +47,7 @@ const BangersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Banger | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleEdit = (banger: Banger) => {
     setEditingItem(banger);
@@ -58,9 +60,7 @@ const BangersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
   };
 
   const handleRemove = (id: string) => {
-    if (confirm("Are you sure you want to delete this banger?")) {
-      removeMutation.mutate({ id });
-    }
+    setDeleteId(id);
   };
 
   return (
@@ -156,6 +156,18 @@ const BangersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
           </Table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            removeMutation.mutate({ id: deleteId });
+          }
+        }}
+        title="Delete Banger"
+        description="Are you sure you want to delete this banger? This will permanently remove the song from the collection."
+      />
     </>
   );
 };

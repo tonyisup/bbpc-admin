@@ -4,6 +4,7 @@ import { trpc } from "../../utils/trpc";
 import { DispatchWithoutAction, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Trash2, Plus, Search, UserCheck, ShieldAlert, Filter, X } from "lucide-react";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import UserModal from "../../components/UserModal";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -62,6 +63,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
     }
   })
   const [modalOpen, setModalOpen] = useState<boolean>(false)
+  const [deleteUser, setDeleteUser] = useState<{ id: string, name: string } | null>(null);
 
   useEffect(() => {
     if (items) {
@@ -251,11 +253,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
-                            removeItem({ id: item.id })
-                          }
-                        }}
+                        onClick={() => setDeleteUser({ id: item.id, name: item.name || "Unnamed User" })}
                         title="Delete User"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -267,6 +265,18 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
             </TableBody>
           </Table>
         </Card>
+
+        <ConfirmModal
+          isOpen={!!deleteUser}
+          onClose={() => setDeleteUser(null)}
+          onConfirm={() => {
+            if (deleteUser) {
+              removeItem({ id: deleteUser.id });
+            }
+          }}
+          title="Delete User"
+          description={`Are you sure you want to delete ${deleteUser?.name}? This will remove all their data from the system and cannot be undone.`}
+        />
       </div>
     </>
   );

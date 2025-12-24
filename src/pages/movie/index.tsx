@@ -2,6 +2,8 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import { Trash2, Search, Plus, Film, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -39,6 +41,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
     key: 'title',
     direction: 'asc'
   });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: existingMovies, isLoading: loadingExisting, refetch } = trpc.movie.getAll.useQuery();
   const { data: searchResults, isLoading: loadingSearch } = trpc.movie.search.useQuery(
@@ -93,15 +96,21 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
     onSuccess: () => {
       refetch();
       setSearchTerm("");
+      toast.success("Movie added successfully");
     },
+    onError: (err) => {
+      toast.error("Failed to add movie: " + err.message);
+    }
   });
 
   const removeMutation = trpc.movie.remove.useMutation({
-    // Error handling since movies might be linked to assignments/reviews
-    onError: (err) => {
-      alert("Failed to delete movie: " + err.message);
+    onSuccess: () => {
+      refetch();
+      toast.success("Movie deleted successfully");
     },
-    onSettled: () => refetch(),
+    onError: (err) => {
+      toast.error("Failed to delete movie: " + err.message);
+    },
   });
 
   const handleAdd = (result: any) => {
@@ -114,9 +123,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
   };
 
   const handleRemove = (id: string) => {
-    if (confirm("Are you sure you want to delete this movie? This might fail if it's linked to episodes or reviews.")) {
-      removeMutation.mutate({ id });
-    }
+    setDeleteId(id);
   };
 
   return (
@@ -316,6 +323,18 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            removeMutation.mutate({ id: deleteId });
+          }
+        }}
+        title="Delete Movie"
+        description="Are you sure you want to delete this movie? This action might fail if it's linked to episodes or reviews."
+      />
     </>
   );
 };
