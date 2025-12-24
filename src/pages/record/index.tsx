@@ -29,6 +29,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
 import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
 import BonusPointEventButton from "@/components/BonusPointEventButton";
+import { ManageBonusPointsPopover } from "@/components/ManageBonusPointsPopover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/router";
 import { useAudioSession } from "../../hooks/useAudioSession";
@@ -269,23 +270,17 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				);
 			})}
 			<td className="p-2">
-				<span className="text-sm text-gray-400">{bonusPoints} pts</span>
-				<BonusPointEventButton
+				<ManageBonusPointsPopover
 					userId={guesser.id}
 					assignmentId={assignment.id}
-					event={{
-						gamePointLookupId: 'bonus',
-						reason: "",
-						adjustment: 0,
-					}}
-					onSaved={(pointEvent) => {
-						// Points are refetched in the parent AssignmentGrid
+					bonusPoints={bonusPoints}
+					onUpdate={() => {
 						onAddPointForGuess({
 							userId: guesser.id,
 							seasonId: seasonId || "",
-							id: pointEvent.id,
+							id: "update",
 							adjustment: 0,
-							reason: "bonus"
+							reason: "bonus-updated"
 						});
 					}}
 				/>

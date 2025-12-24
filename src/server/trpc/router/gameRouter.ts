@@ -137,6 +137,27 @@ export const gameRouter = router({
 			return points.reduce((acc, point) => acc + (point.point?.gamePointType?.points ?? 0) + (point.point?.adjustment ?? 0), 0);
 		}),
 
+	getUserAssignmentPoints: publicProcedure
+		.input(z.object({
+			userId: z.string(),
+			assignmentId: z.string()
+		}))
+		.query(async (req) => {
+			return await req.ctx.prisma.assignmentPoints.findMany({
+				include: {
+					point: {
+						include: {
+							gamePointType: true
+						}
+					}
+				},
+				where: {
+					userId: req.input.userId,
+					assignmentId: req.input.assignmentId
+				}
+			});
+		}),
+
 	getUsersPointTotalsForAssignments: publicProcedure
 		.input(z.object({
 			userIds: z.array(z.string()),
