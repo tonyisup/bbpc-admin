@@ -66,7 +66,7 @@ export const ourFileRouter = {
 
       console.log("file url", file.url);
 
-      const triggerN8NWebhook = await fetch(env.AUDIO_UPOLOADER_URL, {
+      const triggerN8NWebhook = await fetch(env.AUDIO_CHAPTERIZER_WEBHOOK_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
