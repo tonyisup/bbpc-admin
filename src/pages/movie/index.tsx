@@ -62,7 +62,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
   const sortedMovies = useMemo(() => {
     if (!existingMovies) return [];
 
-    let items = existingMovies.filter(movie =>
+    const items = existingMovies.filter(movie =>
       movie.title.toLowerCase().includes(existingFilter.toLowerCase())
     );
 

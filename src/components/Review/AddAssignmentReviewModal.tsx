@@ -94,5 +94,3 @@ const AddAssignmentReviewModal: FC<AddAssignmentReviewModalProps> = ({ refreshIt
 };
 
 export default AddAssignmentReviewModal;
-
-export default AddAssignmentReviewModal;

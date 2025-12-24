@@ -7,7 +7,7 @@ import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, 
 import { ConfirmModal } from "../../components/ui/confirm-modal";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { useForm } from "react-hook-form";
@@ -184,7 +184,7 @@ const SyllabusAssignmentForm: React.FC<SyllabusAssignmentFormProps> = ({ itemId,
   );
 };
 
-const UserPage: NextPage<{ session: any }> = () => {
+const UserPage: NextPage<{ session: Session | null }> = () => {
   const { query } = useRouter();
   const id = query.id as string;
   const { data: user, refetch: refetchUser } = trpc.user.get.useQuery({ id });
@@ -687,7 +687,7 @@ const UserPage: NextPage<{ session: any }> = () => {
                           <h3 className="font-bold truncate">{item.movie.title}</h3>
                           <span className="text-xs text-muted-foreground font-medium">({item.movie.year})</span>
                         </div>
-                        {item.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic text-left">"{item.notes}"</p>}
+                        {item.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic text-left">&quot;{item.notes}&quot;</p>}
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -796,7 +796,7 @@ const UserPage: NextPage<{ session: any }> = () => {
                   <div className="bg-muted/50 p-4 rounded-lg border border-muted-foreground/5">
                     <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2">Security Note</h4>
                     <p className="text-[11px] leading-relaxed text-muted-foreground/80">
-                      Roles grant access to various admin panels. Removing the 'Admin' role will immediately revoke this user's access to this management dashboard.
+                      Roles grant access to various admin panels. Removing the &apos;Admin&apos; role will immediately revoke this user&apos;s access to this management dashboard.
                     </p>
                   </div>
                 </CardContent>
