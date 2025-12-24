@@ -124,6 +124,7 @@ model Assignment {
   assignmentReviews AssignmentReview[]
   audioMessages     AudioMessage[]
   syllabus          Syllabus[]
+  gamblingPoints    GamblingPoints[]
 
   @@index([userId])
   @@index([episodeId])
@@ -219,6 +220,7 @@ model User {
   sessions             Session[]
   syllabus             Syllabus[]
   roles                UserRole[]
+  gambledOn            GamblingPoints[]      @relation("TargetUser")
 }
 
 model Guess {
@@ -319,19 +321,25 @@ model GamblingPoints {
   id             String        @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId         String
   gamblingTypeId String?       @db.UniqueIdentifier
+  assignmentId   String?       @db.UniqueIdentifier
+  targetUserId   String?
   points         Int
   notes          String?
   createdAt      DateTime      @default(now()) @db.DateTime
   successful     Boolean?      @default(false)
   seasonId       String?       @db.UniqueIdentifier
   pointsId       String?       @db.UniqueIdentifier
+  Assignment     Assignment?   @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   gamblingType   GamblingType? @relation(fields: [gamblingTypeId], references: [id], onUpdate: NoAction)
   point          Point?        @relation(fields: [pointsId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   season         Season?       @relation(fields: [seasonId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  TargetUser     User?         @relation("TargetUser", fields: [targetUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([userId])
   @@index([gamblingTypeId])
+  @@index([assignmentId])
+  @@index([targetUserId])
   @@index([seasonId])
   @@index([pointsId])
 }
