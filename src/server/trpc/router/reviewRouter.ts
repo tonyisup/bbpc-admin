@@ -69,6 +69,27 @@ export const reviewRouter = router({
 	remove: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
+			// Delete dependent ExtraReviews
+			await req.ctx.prisma.extraReview.deleteMany({
+				where: { reviewId: req.input.id }
+			});
+
+			// Delete dependent AssignmentReviews and their Guesses
+			const assignmentReviews = await req.ctx.prisma.assignmentReview.findMany({
+				where: { reviewId: req.input.id },
+				select: { id: true }
+			});
+
+			if (assignmentReviews.length > 0) {
+				const arIds = assignmentReviews.map(ar => ar.id);
+				await req.ctx.prisma.guess.deleteMany({
+					where: { assignmntReviewId: { in: arIds } }
+				});
+				await req.ctx.prisma.assignmentReview.deleteMany({
+					where: { id: { in: arIds } }
+				});
+			}
+
 			return await req.ctx.prisma.review.delete({
 				where: {
 					id: req.input.id
