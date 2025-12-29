@@ -156,12 +156,32 @@ export const episodeRouter = router({
       })
     }),
   getAll: publicProcedure
-    .query(({ ctx }) => {
-      return ctx.prisma.episode.findMany({
+    .input(z.object({
+      limit: z.number().min(1).max(100).nullish(),
+      cursor: z.string().nullish(),
+    }).nullish())
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 10;
+      const cursor = input?.cursor;
+
+      const items = await ctx.prisma.episode.findMany({
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
         orderBy: {
           number: 'desc'
         }
       });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {

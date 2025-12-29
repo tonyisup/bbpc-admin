@@ -26,7 +26,8 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
   const [artistError, setArtistError] = useState("");
   const [urlError, setUrlError] = useState("");
 
-  const { data: episodes } = trpc.episode.getAll.useQuery();
+  const { data: episodesData } = trpc.episode.getAll.useQuery({ limit: 100 });
+  const episodes = episodesData?.items;
   const { data: users } = trpc.user.getAll.useQuery();
 
   const addMutation = trpc.banger.add.useMutation({

@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { trpc } from "../../utils/trpc";
 import { type DispatchWithoutAction } from "react";
-import { Trash2, Eye } from "lucide-react";
+import { Trash2, Eye, Loader2 } from "lucide-react";
 import AddEpisodeModal from "../../components/Episode/AddEpisodeModal";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -32,13 +32,26 @@ export async function getServerSideProps(context: any) {
 }
 
 const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const refresh: DispatchWithoutAction = () => refetchEpisodes()
-  const {data: episodes, isLoading, refetch: refetchEpisodes } = trpc.episode.getAll.useQuery()
-  const {mutate: removeEpisode} = trpc.episode.remove.useMutation({
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch
+  } = trpc.episode.getAll.useInfiniteQuery(
+    { limit: 10 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
+
+  const episodes = data?.pages.flatMap((page) => page.items) ?? [];
+  const refresh = () => refetch();
+
+  const { mutate: removeEpisode } = trpc.episode.remove.useMutation({
     onSuccess: () => {
-      refresh()
+      refresh();
     }
-  })
+  });
 
   return (
     <>
@@ -48,11 +61,11 @@ const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
 
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-           <div>
+          <div>
             <h2 className="text-3xl font-bold tracking-tight">Episodes</h2>
             <p className="text-muted-foreground">Manage your podcast episodes here.</p>
-           </div>
-           <AddEpisodeModal refreshItems={refresh} />
+          </div>
+          <AddEpisodeModal refreshItems={refresh} />
         </div>
 
         <div className="rounded-md border bg-card">
@@ -69,7 +82,7 @@ const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
               {isLoading && <TableRow><TableCell colSpan={4} className="text-center h-24">Loading...</TableCell></TableRow>}
 
               {!isLoading && episodes?.length === 0 && (
-                 <TableRow><TableCell colSpan={4} className="text-center h-24">No episodes found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center h-24">No episodes found.</TableCell></TableRow>
               )}
 
               {episodes?.map((episode) => (
@@ -83,14 +96,14 @@ const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                   <TableCell>{episode.date ? new Date(episode.date).toLocaleDateString() : "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                       <Link href={`/episode/plain/${encodeURIComponent(episode.id)}`}>
-                         <Button variant="ghost" size="icon" title="View">
-                            <Eye className="h-4 w-4" />
-                         </Button>
-                       </Link>
-                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeEpisode({ id: episode.id})} title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                       </Button>
+                      <Link href={`/episode/plain/${encodeURIComponent(episode.id)}`}>
+                        <Button variant="ghost" size="icon" title="View">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeEpisode({ id: episode.id })} title="Delete">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -98,6 +111,26 @@ const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
             </TableBody>
           </Table>
         </div>
+
+        {hasNextPage && (
+          <div className="flex justify-center py-4">
+            <Button
+              variant="outline"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="w-full max-w-xs"
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading more...
+                </>
+              ) : (
+                "Load More"
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
