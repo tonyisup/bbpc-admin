@@ -306,6 +306,26 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
     }
   });
 
+  const { mutate: addAlternateEmail } = trpc.user.addAlternateEmail.useMutation({
+    onSuccess: () => {
+      refetchUser();
+      toast.success("Alternate email added successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to add alternate email: " + err.message);
+    }
+  });
+
+  const { mutate: removeAlternateEmail } = trpc.user.removeAlternateEmail.useMutation({
+    onSuccess: () => {
+      refetchUser();
+      toast.success("Alternate email removed successfully");
+    },
+    onError: (err) => {
+      toast.error("Failed to remove alternate email: " + err.message);
+    }
+  });
+
   const handleRemoveAssignment = (syllabusId: string) => {
     removeAssignment({ syllabusId });
   };
@@ -318,6 +338,15 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     updateUser({ id, name: data.name, email: data.email });
   }
+
+  const [newAltEmail, setNewAltEmail] = useState("");
+  const handleAddAltEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newAltEmail) {
+      addAlternateEmail({ userId: id, email: newAltEmail });
+      setNewAltEmail("");
+    }
+  };
 
   const handleAssignEpisode = (syllabusId: string, episodeNumber: number, assignmentType: string) => {
     assignEpisode({ syllabusId, episodeNumber, assignmentType });
@@ -798,6 +827,52 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
                     <p className="text-[11px] leading-relaxed text-muted-foreground/80">
                       Roles grant access to various admin panels. Removing the &apos;Admin&apos; role will immediately revoke this user&apos;s access to this management dashboard.
                     </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Alternate Emails */}
+              <Card className="shadow-none border bg-card">
+                <CardHeader>
+                  <CardTitle>Alternate Emails</CardTitle>
+                  <CardDescription>Manage alternate email addresses for this user</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {user?.alternateEmails?.map((altEmail) => (
+                      <div key={altEmail.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg border border-muted-foreground/10">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{altEmail.email}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeAlternateEmail({ id: altEmail.id })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    {(!user?.alternateEmails || user.alternateEmails.length === 0) && (
+                      <p className="text-sm text-muted-foreground italic text-center py-4">No alternate emails added.</p>
+                    )}
+
+                    <Separator className="my-4" />
+
+                    <form onSubmit={handleAddAltEmail} className="flex items-center gap-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter email address"
+                        value={newAltEmail}
+                        onChange={(e) => setNewAltEmail(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button type="submit" size="sm" className="gap-1.5" disabled={!newAltEmail}>
+                        <Plus className="h-3.5 w-3.5" /> Add
+                      </Button>
+                    </form>
                   </div>
                 </CardContent>
               </Card>

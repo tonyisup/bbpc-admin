@@ -81,9 +81,71 @@ export const userRouter = router({
             include: {
               role: true
             }
-          }
+          },
+          alternateEmails: true,
         }
       })
+    }),
+  addAlternateEmail: protectedProcedure
+    .input(z.object({
+      userId: z.string(),
+      email: z.string().email(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Authorization check
+      const isAdmin = await ctx.prisma.userRole.findFirst({
+        where: { userId: ctx.session.user.id, role: { admin: true } }
+      });
+
+      if (ctx.session.user.id !== input.userId && !isAdmin) {
+        throw new Error("Unauthorized");
+      }
+
+      // Check if email is already used by any user
+      const existingUser = await ctx.prisma.user.findUnique({
+        where: { email: input.email },
+      });
+      if (existingUser) {
+        throw new Error("Email already in use by a user");
+      }
+
+      const existingAlternate = await ctx.prisma.alternateEmail.findUnique({
+        where: { email: input.email },
+      });
+      if (existingAlternate) {
+        throw new Error("Email already in use as an alternate email");
+      }
+
+      return await ctx.prisma.alternateEmail.create({
+        data: {
+          userId: input.userId,
+          email: input.email,
+        },
+      });
+    }),
+  removeAlternateEmail: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const emailToRemove = await ctx.prisma.alternateEmail.findUnique({
+        where: { id: input.id }
+      });
+
+      if (!emailToRemove) {
+        throw new Error("Email not found");
+      }
+
+      // Authorization check
+      const isAdmin = await ctx.prisma.userRole.findFirst({
+        where: { userId: ctx.session.user.id, role: { admin: true } }
+      });
+
+      if (ctx.session.user.id !== emailToRemove.userId && !isAdmin) {
+        throw new Error("Unauthorized");
+      }
+
+      return await ctx.prisma.alternateEmail.delete({
+        where: { id: input.id },
+      });
     }),
   getRoles: publicProcedure
     .input(z.object({ id: z.string() }))

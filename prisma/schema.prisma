@@ -208,6 +208,7 @@ model User {
   emailVerified        DateTime?
   image                String?
   accounts             Account[]
+  alternateEmails      AlternateEmail[]
   assignments          Assignment[]
   assignmentPoints     AssignmentPoints[]
   audioEpisodeMessages AudioEpisodeMessage[]
@@ -220,6 +221,13 @@ model User {
   sessions             Session[]
   syllabus             Syllabus[]
   roles                UserRole[]
+}
+
+model AlternateEmail {
+  id       String    @id @default(cuid())
+  userId   String
+  email    String    @unique
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Guess {
