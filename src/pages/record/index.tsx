@@ -816,32 +816,34 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				</Dialog>
 
 				{/* Header Actions: Audio Session */}
-				<div className="w-full max-w-6xl flex justify-between items-center mb-4">
-					<h1 className="text-2xl font-bold">Podcast Studio</h1>
-					<div className="flex gap-2 items-center">
-						{isAudioSessionActive ? (
-							<div className="flex items-center gap-2 bg-green-900/50 p-2 rounded-full px-4 border border-green-700">
-								<RadioIcon className="text-red-500 animate-pulse w-4 h-4" />
-								<span className="text-sm font-medium text-green-100">Live Audio</span>
-								<div className="h-4 w-px bg-green-700 mx-1"></div>
-								<span className="text-xs text-green-300 flex items-center gap-1">
-									<HeadphonesIcon className="w-3 h-3" />
-									{connectedUsers.length + 1}
-								</span>
-								<Button size="icon" variant="ghost" className="h-6 w-6 rounded-full ml-2" onClick={toggleMute}>
-									{isMuted ? <MicOffIcon className="w-3 h-3" /> : <MicIcon className="w-3 h-3" />}
+				{isAdmin && (
+					<div className="w-full max-w-6xl flex justify-between items-center mb-4">
+						<h1 className="text-2xl font-bold">Podcast Studio</h1>
+						<div className="flex gap-2 items-center">
+							{isAudioSessionActive ? (
+								<div className="flex items-center gap-2 bg-green-900/50 p-2 rounded-full px-4 border border-green-700">
+									<RadioIcon className="text-red-500 animate-pulse w-4 h-4" />
+									<span className="text-sm font-medium text-green-100">Live Audio</span>
+									<div className="h-4 w-px bg-green-700 mx-1"></div>
+									<span className="text-xs text-green-300 flex items-center gap-1">
+										<HeadphonesIcon className="w-3 h-3" />
+										{connectedUsers.length + 1}
+									</span>
+									<Button size="icon" variant="ghost" className="h-6 w-6 rounded-full ml-2" onClick={toggleMute}>
+										{isMuted ? <MicOffIcon className="w-3 h-3" /> : <MicIcon className="w-3 h-3" />}
+									</Button>
+									<Button size="sm" variant="ghost" className="h-6 px-2 rounded-full ml-1 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200" onClick={disconnect}>
+										End
+									</Button>
+								</div>
+							) : (
+								<Button onClick={handleStartSessionClick} variant="outline" className="gap-2">
+									<MicIcon className="w-4 h-4" /> Start Audio Session
 								</Button>
-								<Button size="sm" variant="ghost" className="h-6 px-2 rounded-full ml-1 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200" onClick={disconnect}>
-									End
-								</Button>
-							</div>
-						) : (
-							<Button onClick={handleStartSessionClick} variant="outline" className="gap-2">
-								<MicIcon className="w-4 h-4" /> Start Audio Session
-							</Button>
-						)}
+							)}
+						</div>
 					</div>
-				</div>
+				)}
 
 				{/* Connected Users List (Only when active) */}
 				{isAudioSessionActive && (
