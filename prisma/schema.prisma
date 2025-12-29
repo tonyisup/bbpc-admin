@@ -208,6 +208,7 @@ model User {
   email                String?               @unique
   emailVerified        DateTime?
   image                String?
+  impersonatedUserId   String?
   accounts             Account[]
   assignments          Assignment[]
   assignmentPoints     AssignmentPoints[]
@@ -220,6 +221,7 @@ model User {
   reviews              Review[]
   sessions             Session[]
   syllabus             Syllabus[]
+  TagVote              TagVote[]
   roles                UserRole[]
 }
 
@@ -324,8 +326,8 @@ model GamblingPoints {
   points       Int
   createdAt    DateTime   @default(now()) @db.DateTime
   successful   Boolean?   @default(false)
-  seasonId     String?    @db.UniqueIdentifier
   pointsId     String?    @db.UniqueIdentifier
+  seasonId     String?    @db.UniqueIdentifier
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onUpdate: NoAction)
   point        Point?     @relation(fields: [pointsId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   season       Season?    @relation(fields: [seasonId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -388,6 +390,11 @@ model TagVote {
   isTag     Boolean?
   createdAt DateTime @default(now())
   sessionId String?
+  userId    String?
+  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tag, userId])
+  @@index([userId])
 }
 
 model Tag {

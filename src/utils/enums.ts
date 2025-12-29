@@ -7,6 +7,7 @@ export enum GamePointLookup {
 	BBFL_AUDIO = 'bbfl_audio',
 	BBFL_VIDEO = 'bbfl_video',
 	BBFL_POST = 'bbfl_post',
+	TAG_VOTE = 'tag-vote',
 }
 export enum GameTypeLookup {
 	WTFIR = 'wtfir',
