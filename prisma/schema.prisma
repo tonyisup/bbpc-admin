@@ -14,6 +14,7 @@ model Episode {
   date                 DateTime?             @db.Date
   description          String?
   status               String?               @default("published")
+  notes                String?
   assignments          Assignment[]
   audioEpisodeMessages AudioEpisodeMessage[]
   bangers              Banger[]

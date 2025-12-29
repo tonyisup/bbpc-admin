@@ -33,6 +33,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useRouter } from "next/router";
 import { useAudioSession } from "../../hooks/useAudioSession";
 import AudioStream from "../../components/AudioStream";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 // --- Types ---
 type Admin = User;
@@ -524,9 +526,11 @@ interface EpisodeHeaderEditorProps {
 const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUpdate }) => {
 	const [title, setTitle] = useState(episode.title);
 	const [description, setDescription] = useState(episode.description || "");
+	const [notes, setNotes] = useState(episode.notes || "");
 
 	const { mutate: updateDetails, isLoading } = trpc.episode.updateDetails.useMutation({
 		onSuccess: () => {
+			toast.success("Changes saved");
 			onUpdate();
 		}
 	});
@@ -534,13 +538,15 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 	useEffect(() => {
 		setTitle(episode.title);
 		setDescription(episode.description || "");
-	}, [episode.id, episode.title, episode.description]);
+		setNotes(episode.notes || "");
+	}, [episode.id, episode.title, episode.description, episode.notes]);
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		updateDetails({
 			id: episode.id,
 			title,
-			description
+			description,
+			notes
 		});
 	};
 
@@ -566,6 +572,16 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 						onChange={e => setDescription(e.target.value)}
 						placeholder="Episode description..."
 						rows={3}
+					/>
+				</div>
+				<div className="space-y-2">
+					<label className="text-sm font-medium text-amber-500 uppercase tracking-wider">Admin Notes (Internal)</label>
+					<Textarea
+						value={notes}
+						onChange={e => setNotes(e.target.value)}
+						placeholder="Internal notes for this episode..."
+						rows={4}
+						className="bg-amber-500/5 border-amber-500/20 focus-visible:ring-amber-500/30"
 					/>
 				</div>
 				<div className="text-sm text-muted-foreground">Status: {episode.status}</div>
@@ -600,6 +616,7 @@ export async function getServerSideProps(context: any) {
 const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ session, isAdmin }) => {
 	const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
 	const [newEpisodeTitle, setNewEpisodeTitle] = useState("");
+	const [notes, setNotes] = useState("");
 
 	const router = useRouter();
 
@@ -622,7 +639,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 	// Queries
 	const { data: pendingEpisode } = trpc.episode.getByStatus.useQuery({ status: "pending" });
-	const { data: nextEpisode } = trpc.episode.getByStatus.useQuery({ status: "next" });
+	const { data: nextEpisode, refetch: refetchNextEpisode } = trpc.episode.getByStatus.useQuery({ status: "next" });
 	const { data: admins } = trpc.user.getAdmins.useQuery();
 	const { data: ratings } = trpc.review.getRatings.useQuery();
 	const { data: users } = trpc.user.getAll.useQuery();
@@ -631,6 +648,14 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		{ status: "recording" },
 		{ enabled: !currentEpisodeId }
 	);
+
+	useEffect(() => {
+		if (nextEpisode?.notes) {
+			setNotes(nextEpisode.notes);
+		} else if (nextEpisode) {
+			setNotes("");
+		}
+	}, [nextEpisode]);
 
 	const { data: recordingData, refetch: refetchRecordingData } = trpc.episode.getRecordingData.useQuery(
 		{ episodeId: currentEpisodeId || recordingEpisode?.id || "" },
@@ -687,6 +712,13 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		onSuccess: () => {
 			refetchRecordingData();
 			refetchBonusPoints();
+		}
+	});
+
+	const { mutate: updateNotes, isLoading: isSavingNotes } = trpc.episode.updateNotes.useMutation({
+		onSuccess: () => {
+			toast.success("Notes saved");
+			refetchNextEpisode();
 		}
 	});
 
@@ -844,8 +876,30 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							</EmptyMedia>
 						</EmptyHeader>
 						<EmptyTitle>Ready to Record</EmptyTitle>
-						<EmptyDescription className="mb-4">
-							Next Episode: {nextEpisode.number} - {nextEpisode.title}
+						<EmptyDescription className="mb-4 space-y-4">
+							<div>Next Episode: {nextEpisode.number} - {nextEpisode.title}</div>
+
+							<div className="w-full max-w-lg mx-auto space-y-2 text-left">
+								<label className="text-sm font-semibold text-amber-500 uppercase tracking-wider flex items-center gap-2">
+									Admin Notes (Internal)
+								</label>
+								<Textarea
+									value={notes}
+									onChange={(e) => setNotes(e.target.value)}
+									placeholder="Internal notes for this episode..."
+									className="min-h-[120px] bg-amber-500/5 border-amber-500/20 focus-visible:ring-amber-500/30"
+								/>
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={() => updateNotes({ id: nextEpisode.id, notes })}
+									disabled={isSavingNotes || notes === (nextEpisode.notes ?? "")}
+									className="w-full h-8 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+								>
+									{isSavingNotes ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <SaveIcon className="w-3 h-3 mr-2" />}
+									Save Notes
+								</Button>
+							</div>
 						</EmptyDescription>
 						<EmptyContent>
 							<Button onClick={handleStartRecording}>Start Episode Log</Button>

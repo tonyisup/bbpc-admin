@@ -75,7 +75,8 @@ export const episodeRouter = router({
       description: z.string(),
       date: z.date().optional(),
       recording: z.string().optional(),
-      status: z.string().optional()
+      status: z.string().optional(),
+      notes: z.string().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
@@ -88,7 +89,8 @@ export const episodeRouter = router({
           description: req.input.description,
           date: req.input.date,
           recording: req.input.recording,
-          status: req.input.status
+          status: req.input.status,
+          notes: req.input.notes
         }
       })
     }),
@@ -257,14 +259,29 @@ export const episodeRouter = router({
     .input(z.object({
       id: z.string(),
       title: z.string().optional(),
-      description: z.string().optional()
+      description: z.string().optional(),
+      notes: z.string().optional()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
         where: { id: req.input.id },
         data: {
           title: req.input.title,
-          description: req.input.description
+          description: req.input.description,
+          notes: req.input.notes
+        }
+      })
+    }),
+  updateNotes: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      notes: z.string().optional()
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.episode.update({
+        where: { id: req.input.id },
+        data: {
+          notes: req.input.notes
         }
       })
     }),

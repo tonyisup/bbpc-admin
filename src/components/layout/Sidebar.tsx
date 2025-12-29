@@ -46,7 +46,7 @@ export function Sidebar({ className }: SidebarProps) {
           active: pathname === "/",
         },
         {
-          label: "Record",
+          label: "Up Next",
           icon: Mic2,
           href: "/record",
           active: pathname === "/record",
