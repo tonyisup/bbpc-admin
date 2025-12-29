@@ -159,7 +159,7 @@ export const episodeRouter = router({
     .input(z.object({
       limit: z.number().min(1).max(100).nullish(),
       cursor: z.string().nullish(),
-    }).nullish())
+    }))
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 10;
       const cursor = input?.cursor;
