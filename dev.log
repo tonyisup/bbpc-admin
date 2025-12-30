@@ -24,3 +24,5 @@ https://nextjs.org/telemetry
  ✓ Compiled /api/trpc/[trpc] in 220ms (239 modules)
 `unstable_getServerSession` has been renamed to `getServerSession`.
 prisma:query SELECT [dbo].[RankedListType].[id], [dbo].[RankedListType].[name], [dbo].[RankedListType].[description], [dbo].[RankedListType].[maxItems], [dbo].[RankedListType].[targetType], [dbo].[RankedListType].[createdAt], [dbo].[RankedListType].[updatedAt] FROM [dbo].[RankedListType] WHERE 1=1 ORDER BY [dbo].[RankedListType].[createdAt] DESC OFFSET @P1 ROWS
+ ✓ Compiled in 2.5s (587 modules)
+ ✓ Compiled in 481ms (587 modules)

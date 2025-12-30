@@ -8,7 +8,6 @@ import { HiPlus } from "react-icons/hi";
 const ListsDashboard = () => {
   const { data: session } = useSession();
   const router = useRouter();
-  const utils = trpc.useContext();
 
   const { data: myLists, isLoading: isLoadingLists } = trpc.rankedList.getLists.useQuery(
     { userId: session?.user?.id },
@@ -79,7 +78,7 @@ const ListsDashboard = () => {
         {isLoadingLists ? (
           <div>Loading your lists...</div>
         ) : myLists?.length === 0 ? (
-          <p className="text-zinc-500 italic">You haven't created any lists yet.</p>
+          <p className="text-zinc-500 italic">You haven&apos;t created any lists yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myLists?.map((list) => (
