@@ -161,6 +161,7 @@ export const episodeRouter = router({
     .input(z.object({
       limit: z.number().min(1).max(100).nullish(),
       cursor: z.string().nullish(),
+      searchTerm: z.string().optional(),
     }))
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 10;
@@ -169,6 +170,11 @@ export const episodeRouter = router({
       const items = await ctx.prisma.episode.findMany({
         take: limit + 1,
         cursor: cursor ? { id: cursor } : undefined,
+        where: input.searchTerm ? {
+          title: {
+             contains: input.searchTerm,
+          }
+        } : undefined,
         orderBy: {
           number: 'desc'
         }
