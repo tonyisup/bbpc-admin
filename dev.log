@@ -1,6 +1,6 @@
 
 > bbpc-admin@0.1.0 dev
-> next dev --port 3000
+> next dev --port 3001
 
 Attention: Next.js now collects completely anonymous telemetry regarding usage.
 This information is used to shape Next.js' roadmap and prioritize features.
@@ -8,19 +8,19 @@ You can learn more, including how to opt-out if you'd not like to participate in
 https://nextjs.org/telemetry
 
   ▲ Next.js 13.5.11
-  - Local:        http://localhost:3000
-  - Environments: .env
+  - Local:        http://localhost:3001
 
- ✓ Ready in 1845ms
- ○ Compiling /record ...
- ✓ Compiled /record in 8.4s (741 modules)
-Warning: A title element received an array with more than 1 element as children. In browsers title Elements can only have Text Nodes as children. If the children being rendered output more than a single text node in aggregate the browser will display markup and comments as text in the title and hydration will likely fail and fall back to client rendering
-    at title
-    at head
-    at Head (webpack-internal:///./node_modules/next/dist/pages/_document.js:258:1)
-    at html
-    at Html (webpack-internal:///./node_modules/next/dist/pages/_document.js:676:132)
-    at Document (webpack-internal:///./node_modules/next/dist/pages/_document.js:692:1)
- ○ Compiling /api/trpc/[trpc] ...
- ✓ Compiled /api/trpc/[trpc] in 3.4s (252 modules)
- ✓ Compiled (279 modules)
+ ✓ Ready in 2.3s
+ ○ Compiling /lists ...
+ ✓ Compiled /lists in 5.5s (587 modules)
+ ✓ Compiled /api/auth/[...nextauth] in 1757ms (205 modules)
+ ✓ Compiled /api/trpc/[trpc] in 864ms (239 modules)
+ ✓ Compiled in 514ms (409 modules)
+ ✓ Compiled in 457ms (587 modules)
+ ✓ Compiled in 327ms (409 modules)
+ ✓ Compiled in 354ms (409 modules)
+ ✓ Compiled in 321ms (409 modules)
+ ✓ Compiled /api/auth/[...nextauth] in 143ms (205 modules)
+ ✓ Compiled /api/trpc/[trpc] in 220ms (239 modules)
+`unstable_getServerSession` has been renamed to `getServerSession`.
+prisma:query SELECT [dbo].[RankedListType].[id], [dbo].[RankedListType].[name], [dbo].[RankedListType].[description], [dbo].[RankedListType].[maxItems], [dbo].[RankedListType].[targetType], [dbo].[RankedListType].[createdAt], [dbo].[RankedListType].[updatedAt] FROM [dbo].[RankedListType] WHERE 1=1 ORDER BY [dbo].[RankedListType].[createdAt] DESC OFFSET @P1 ROWS
