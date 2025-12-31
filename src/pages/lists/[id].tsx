@@ -1,398 +1,550 @@
 import React, { useState } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { trpc } from "../../utils/trpc";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { HiCheck, HiPencil, HiTrash, HiX, HiChevronUp, HiChevronDown } from "react-icons/hi";
-import Image from "next/image";
+import {
+	Check,
+	ChevronLeft,
+	ChevronUp,
+	ChevronDown,
+	Trash2,
+	X,
+	Pencil,
+	Search,
+	ExternalLink,
+	MessageSquare,
+	Globe,
+	Star,
+	Users as UsersIcon
+} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../../components/ui/select";
+import { toast } from "sonner";
+import { cn } from "../../lib/utils";
 
 // Helper component for searching items
 const ItemSearch = ({ targetType, onSelect }: { targetType: string; onSelect: (item: any) => void }) => {
-  const [query, setQuery] = useState("");
+	const [query, setQuery] = useState("");
 
-  // Conditionally use different search queries based on type
-  // Note: For simplicity, I'm using movie.search and show.search.
-  // Episode search is trickier as discussed, so for EPISODE targetType, we might need a different approach.
-  // But given the "support shows and episodes too" requirement and the schema, I'll focus on Movie/Show first.
-  // For 'EPISODE', user likely wants to pick an episode from the podcast DB (prisma.episode) OR search TV episodes?
-  // Given schema relation `episode Episode?` points to the Podcast Episode model, I'll search local episodes.
+	const movieSearch = trpc.movie.search.useQuery(
+		{ searchTerm: query },
+		{ enabled: targetType === "MOVIE" && query.length > 2 }
+	);
 
-  const movieSearch = trpc.movie.search.useQuery(
-    { searchTerm: query },
-    { enabled: targetType === "MOVIE" && query.length > 2 }
-  );
+	const showSearch = trpc.show.search.useQuery(
+		{ searchTerm: query },
+		{ enabled: targetType === "SHOW" && query.length > 2 }
+	);
 
-  const showSearch = trpc.show.search.useQuery(
-    { searchTerm: query },
-    { enabled: targetType === "SHOW" && query.length > 2 }
-  );
+	const episodeSearch = trpc.episode.getAll.useQuery(
+		{ searchTerm: query, limit: 10 },
+		{ enabled: targetType === "EPISODE" && query.length > 2 }
+	);
 
-  const episodeSearch = trpc.episode.getAll.useQuery(
-    { searchTerm: query, limit: 10 },
-    { enabled: targetType === "EPISODE" && query.length > 2 }
-  );
+	let results: any[] | undefined = [];
+	let isLoading = false;
 
-  let results: any[] | undefined = [];
-  let isLoading = false;
+	if (targetType === "MOVIE") {
+		results = movieSearch.data?.results;
+		isLoading = movieSearch.isLoading;
+	} else if (targetType === "SHOW") {
+		results = showSearch.data?.results;
+		isLoading = showSearch.isLoading;
+	} else if (targetType === "EPISODE") {
+		results = episodeSearch.data?.items;
+		isLoading = episodeSearch.isLoading;
+	}
 
-  if (targetType === "MOVIE") {
-    results = movieSearch.data?.results;
-    isLoading = movieSearch.isLoading;
-  } else if (targetType === "SHOW") {
-    results = showSearch.data?.results;
-    isLoading = showSearch.isLoading;
-  } else if (targetType === "EPISODE") {
-    results = episodeSearch.data?.items;
-    isLoading = episodeSearch.isLoading;
-  }
+	return (
+		<div className="relative w-full">
+			<div className="relative">
+				<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+				<Input
+					placeholder={`Search for a ${targetType.toLowerCase()}...`}
+					className="pl-10 h-10 bg-muted/50 border-dashed"
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+				/>
+			</div>
 
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        placeholder={`Search for a ${targetType.toLowerCase()}...`}
-        className="w-full p-2 bg-zinc-800 border border-zinc-700 rounded text-white"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-
-      {query.length > 2 && (
-        <div className="absolute z-10 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded max-h-60 overflow-y-auto shadow-lg">
-          {isLoading ? (
-            <div className="p-2 text-zinc-400">Searching...</div>
-          ) : results?.length === 0 ? (
-            <div className="p-2 text-zinc-400">No results found.</div>
-          ) : (
-            results?.map((item: any) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                   setQuery("");
-                   onSelect(item);
-                }}
-                className="w-full text-left p-2 hover:bg-zinc-700 flex items-center gap-2 border-b border-zinc-700 last:border-0"
-              >
-                 {item.poster_path && (
-                    <img src={item.poster_path} alt={item.title} className="w-8 h-12 object-cover rounded" />
-                 )}
-                 <div>
-                   <div className="font-bold text-sm">{item.title || item.name}</div>
-                   <div className="text-xs text-zinc-400">
-                     {item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || (item.date ? new Date(item.date).getFullYear() : "")}
-                   </div>
-                 </div>
-              </button>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
+			{query.length > 2 && (
+				<Card className="absolute z-50 w-full mt-2 shadow-2xl border-primary/20 overflow-hidden">
+					<div className="max-h-72 overflow-y-auto">
+						{isLoading ? (
+							<div className="p-8 text-center text-muted-foreground">
+								<div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+								Searching...
+							</div>
+						) : results?.length === 0 ? (
+							<div className="p-8 text-center text-muted-foreground italic">No results found.</div>
+						) : (
+							<div className="flex flex-col">
+								{results?.map((item: any) => (
+									<button
+										key={item.id}
+										onClick={() => {
+											setQuery("");
+											onSelect(item);
+										}}
+										className="flex items-center gap-3 p-3 hover:bg-muted text-left transition-colors border-b last:border-0"
+									>
+										<div className="shrink-0 w-10 h-14 bg-muted rounded overflow-hidden">
+											{(item.poster_path || item.poster) ? (
+												<img
+													src={item.poster_path || item.poster}
+													alt=""
+													className="w-full h-full object-cover"
+												/>
+											) : (
+												<div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground uppercase font-black">N/A</div>
+											)}
+										</div>
+										<div className="min-w-0">
+											<div className="font-bold text-sm truncate">{item.title || item.name}</div>
+											<div className="text-xs text-muted-foreground">
+												{item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || (item.date ? new Date(item.date).getFullYear() : "Unknown Year")}
+											</div>
+										</div>
+									</button>
+								))}
+							</div>
+						)}
+					</div>
+				</Card>
+			)}
+		</div>
+	);
 };
 
 const ListEditor = () => {
-  const router = useRouter();
-  const { id } = router.query;
-  const { data: session } = useSession();
-  const utils = trpc.useContext();
+	const router = useRouter();
+	const { id } = router.query;
+	const { data: session } = useSession();
+	const utils = trpc.useContext();
 
-  const [editTitle, setEditTitle] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+	const [editTitle, setEditTitle] = useState(false);
+	const [newTitle, setNewTitle] = useState("");
 
-  const { data: list, isLoading } = trpc.rankedList.getById.useQuery(
-    { id: id as string },
-    { enabled: !!id }
-  );
+	const { data: list, isLoading } = trpc.rankedList.getById.useQuery(
+		{ id: id as string },
+		{ enabled: !!id }
+	);
 
-  // Mutations
-  const updateList = trpc.rankedList.upsertList.useMutation({
-    onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
-  });
+	const userRoles = trpc.user.getRoles.useQuery();
+	const isAdmin = userRoles.data?.some((ur) => ur.role.admin);
+	const { data: allUsers } = trpc.user.getAll.useQuery(undefined, { enabled: isAdmin });
 
-  const upsertItem = trpc.rankedList.upsertItem.useMutation({
-    onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
-  });
+	// Mutations
+	const updateList = trpc.rankedList.upsertList.useMutation({
+		onSuccess: () => {
+			utils.rankedList.getById.invalidate({ id: id as string });
+			utils.rankedList.getLists.invalidate();
+		},
+	});
 
-  const removeItem = trpc.rankedList.removeItem.useMutation({
-    onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
-  });
+	const changeOwner = trpc.rankedList.changeOwner.useMutation({
+		onSuccess: () => {
+			utils.rankedList.getById.invalidate({ id: id as string });
+			toast.success("List ownership transferred");
+		},
+		onError: (err) => toast.error(`Failed to transfer: ${err.message}`),
+	});
 
-  // Movie/Show Add Helpers
-  const addMovie = trpc.movie.add.useMutation();
-  // const getMovieTitle = trpc.movie.getTitle.useQuery({ id: 0 }, { enabled: false }); // We'll trigger manually
+	const upsertItem = trpc.rankedList.upsertItem.useMutation({
+		onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
+	});
 
-  const addShow = trpc.show.add.useMutation();
-  // const getShowTitle = trpc.show.getTitle.useQuery({ id: 0 }, { enabled: false });
+	const reorderItem = trpc.rankedList.reorderItem.useMutation({
+		onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
+	});
 
-  const handleTitleSave = () => {
-    if (!list) return;
-    updateList.mutate({
-      id: list.id,
-      rankedListTypeId: list.rankedListTypeId,
-      status: list.status as "DRAFT" | "PUBLISHED",
-      title: newTitle,
-    });
-    setEditTitle(false);
-  };
+	const removeItem = trpc.rankedList.removeItem.useMutation({
+		onSuccess: () => utils.rankedList.getById.invalidate({ id: id as string }),
+	});
 
-  const handleStatusToggle = () => {
-    if (!list) return;
-    const newStatus = list.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
-    updateList.mutate({
-      id: list.id,
-      rankedListTypeId: list.rankedListTypeId,
-      status: newStatus,
-      title: list.title || undefined,
-    });
-  };
+	const addMovie = trpc.movie.add.useMutation();
+	const addShow = trpc.show.add.useMutation();
 
-  const handleAddItem = async (tmdbItem: any, rank: number) => {
-    if (!list) return;
+	const handleTitleSave = () => {
+		if (!list) return;
+		updateList.mutate({
+			id: list.id,
+			rankedListTypeId: list.rankedListTypeId,
+			status: list.status as "DRAFT" | "PUBLISHED",
+			title: newTitle,
+		});
+		setEditTitle(false);
+	};
 
-    // 1. Ensure item exists in local DB
-    let localItemId: string | undefined;
+	const handleStatusToggle = () => {
+		if (!list) return;
+		const newStatus = list.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
+		updateList.mutate({
+			id: list.id,
+			rankedListTypeId: list.rankedListTypeId,
+			status: newStatus,
+			title: list.title || undefined,
+		});
+		toast.success(`List ${newStatus === 'PUBLISHED' ? 'published' : 'saved as draft'}`);
+	};
 
-    if (list.type.targetType === "MOVIE") {
-      const fullDetails = await utils.movie.getTitle.fetch({ id: tmdbItem.id });
-      const added = await addMovie.mutateAsync({
-        title: fullDetails.title,
-        year: parseInt(fullDetails.release_date.substring(0, 4)) || 0,
-        poster: fullDetails.poster_path || "",
-        url: fullDetails.imdb_path || `tmdb:${tmdbItem.id}`,
-      });
-      localItemId = added.id;
-    } else if (list.type.targetType === "SHOW") {
-      const fullDetails = await utils.show.getTitle.fetch({ id: tmdbItem.id });
-      const added = await addShow.mutateAsync({
-        title: fullDetails.title,
-        year: parseInt(fullDetails.release_date.substring(0, 4)) || 0,
-        poster: fullDetails.poster_path || "",
-        url: fullDetails.imdb_path || `tmdb:${tmdbItem.id}`,
-      });
-      localItemId = added.id;
-    } else if (list.type.targetType === "EPISODE") {
-       // For Episode, tmdbItem is already the local episode object from episodeSearch
-       localItemId = tmdbItem.id;
-    }
+	const handleAddItem = async (tmdbItem: any, rank: number) => {
+		if (!list) return;
 
-    // 2. Add to ranked list
-    if (localItemId) {
-      upsertItem.mutate({
-        rankedListId: list.id,
-        movieId: list.type.targetType === "MOVIE" ? localItemId : undefined,
-        showId: list.type.targetType === "SHOW" ? localItemId : undefined,
-        episodeId: list.type.targetType === "EPISODE" ? localItemId : undefined,
-        rank: rank,
-      });
-    }
-  };
+		let localItemId: string | undefined;
+		const toastId = toast.loading("Adding item...");
 
-  const handleUpdateRank = (item: any, newRank: number) => {
-    // If swapping or moving, we might need to handle other items.
-    // But for MVP, let's just allow setting the rank.
-    // Ideally, swapping logic should be here.
-    // For now, let's just update the item's rank.
-    // Note: If multiple items have same rank, the UI might look weird but DB allows it (constraint-wise).
-    // Better UX: Swap with the item at newRank.
+		try {
+			if (list.type.targetType === "MOVIE") {
+				const fullDetails = await utils.movie.getTitle.fetch({ id: tmdbItem.id });
+				const added = await addMovie.mutateAsync({
+					title: fullDetails.title,
+					year: parseInt(fullDetails.release_date.substring(0, 4)) || 0,
+					poster: fullDetails.poster_path || "",
+					url: fullDetails.imdb_path || `tmdb:${tmdbItem.id}`,
+				});
+				localItemId = added.id;
+			} else if (list.type.targetType === "SHOW") {
+				const fullDetails = await utils.show.getTitle.fetch({ id: tmdbItem.id });
+				const added = await addShow.mutateAsync({
+					title: fullDetails.title,
+					year: parseInt(fullDetails.release_date?.substring(0, 4)) || 0,
+					poster: fullDetails.poster_path || "",
+					url: fullDetails.imdb_path || `tmdb:${tmdbItem.id}`,
+				});
+				localItemId = added.id;
+			} else if (list.type.targetType === "EPISODE") {
+				localItemId = tmdbItem.id;
+			}
 
-    // Find item at target rank
-    const targetItem = list?.items.find(i => i.rank === newRank);
+			if (localItemId) {
+				await upsertItem.mutateAsync({
+					rankedListId: list.id,
+					movieId: list.type.targetType === "MOVIE" ? localItemId : undefined,
+					showId: list.type.targetType === "SHOW" ? localItemId : undefined,
+					episodeId: list.type.targetType === "EPISODE" ? localItemId : undefined,
+					rank: rank,
+				});
+				toast.success("Added to list", { id: toastId });
+			}
+		} catch (error: any) {
+			toast.error(`Failed to add: ${error.message}`, { id: toastId });
+		}
+	};
 
-    if (targetItem) {
-      // Swap!
-      // 1. Move target to old rank (temp)
-      upsertItem.mutate({
-         rankedListId: list!.id,
-         movieId: targetItem.movieId || undefined,
-         showId: targetItem.showId || undefined,
-         episodeId: targetItem.episodeId || undefined,
-         rank: item.rank,
-         comment: targetItem.comment || undefined
-      });
-    }
+	const handleMove = (itemId: string, direction: 'up' | 'down') => {
+		const item = list?.items.find(i => i.id === itemId);
+		if (!item) return;
 
-    // 2. Move current to new rank
-    upsertItem.mutate({
-       rankedListId: list!.id,
-       movieId: item.movieId || undefined,
-       showId: item.showId || undefined,
-       episodeId: item.episodeId || undefined,
-       rank: newRank,
-       comment: item.comment || undefined
-    });
-  };
+		const newRank = direction === 'up' ? item.rank - 1 : item.rank + 1;
+		reorderItem.mutate({ id: itemId, newRank });
+	};
 
-  if (isLoading || !list) {
-    return <div className="p-8 text-white">Loading...</div>;
-  }
+	if (isLoading || !list) {
+		return (
+			<div className="flex flex-col items-center justify-center p-24">
+				<div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-4" />
+				<p className="text-muted-foreground animate-pulse">Loading your ranked list...</p>
+			</div>
+		);
+	}
 
-  const isOwner = session?.user?.id === list.userId;
+	const isOwner = session?.user?.id === list.userId;
+	const canEdit = isOwner || isAdmin;
+	const slots = Array.from({ length: list.type.maxItems }, (_, i) => i + 1);
 
-  // Generate slots based on maxItems
-  const slots = Array.from({ length: list.type.maxItems }, (_, i) => i + 1);
+	return (
+		<div className="container mx-auto p-6 max-w-5xl space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+			<Head>
+				<title>{list.title || list.type.name} | BBPC Admin</title>
+			</Head>
 
-  return (
-    <div className="container mx-auto p-4 text-zinc-100 max-w-4xl">
-      <Link href="/lists" className="text-zinc-400 hover:text-white mb-4 block">&larr; Back to Dashboard</Link>
+			<div className="flex items-center gap-2">
+				<Link href="/lists">
+					<Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+						<ChevronLeft className="w-4 h-4" /> Back to Dashboard
+					</Button>
+				</Link>
+			</div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8 bg-zinc-800 p-6 rounded-lg border border-zinc-700">
-        <div>
-           {editTitle ? (
-             <div className="flex items-center gap-2">
-               <input
-                 value={newTitle}
-                 onChange={(e) => setNewTitle(e.target.value)}
-                 className="bg-zinc-700 text-2xl font-bold p-1 rounded"
-                 placeholder={list.type.name}
-               />
-               <button onClick={handleTitleSave} className="text-green-400"><HiCheck className="w-6 h-6"/></button>
-               <button onClick={() => setEditTitle(false)} className="text-red-400"><HiX className="w-6 h-6"/></button>
-             </div>
-           ) : (
-             <h1 className="text-3xl font-bold flex items-center gap-3">
-               {list.title || list.type.name}
-               {isOwner && (
-                 <button onClick={() => { setNewTitle(list.title || list.type.name); setEditTitle(true); }} className="text-zinc-500 hover:text-white">
-                   <HiPencil className="w-5 h-5"/>
-                 </button>
-               )}
-             </h1>
-           )}
-           <p className="text-zinc-400 mt-1">{list.type.description}</p>
-        </div>
+			{/* Header */}
+			<Card className="bg-muted/30 border-none shadow-none overflow-hidden">
+				<CardContent className="p-8">
+					<div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+						<div className="space-y-2 flex-grow">
+							<div className="flex items-center gap-2">
+								<Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter">
+									{list.type.targetType}
+								</Badge>
+								<Badge
+									variant={list.status === 'PUBLISHED' ? 'default' : 'secondary'}
+									className="text-[10px] font-black uppercase tracking-tighter"
+								>
+									{list.status}
+								</Badge>
 
-        {isOwner && (
-          <div className="flex items-center gap-4">
-             <div className="text-sm">
-               Status:
-               <span className={`ml-2 font-bold ${list.status === 'PUBLISHED' ? 'text-green-400' : 'text-yellow-400'}`}>
-                 {list.status}
-               </span>
-             </div>
-             <button
-               onClick={handleStatusToggle}
-               className={`px-4 py-2 rounded font-bold text-sm ${list.status === 'DRAFT' ? 'bg-green-700 hover:bg-green-600' : 'bg-yellow-700 hover:bg-yellow-600'}`}
-             >
-               {list.status === 'DRAFT' ? 'Publish' : 'Unpublish'}
-             </button>
-          </div>
-        )}
-      </div>
+								{isAdmin ? (
+									<div className="flex items-center gap-2 ml-2 pl-2 border-l border-muted-foreground/20">
+										<UsersIcon className="w-3 h-3 text-muted-foreground" />
+										<Select
+											value={list.userId}
+											onValueChange={(newUserId) => {
+												if (confirm(`Transfer this list to ${allUsers?.find(u => u.id === newUserId)?.name}?`)) {
+													changeOwner.mutate({ id: list.id, newUserId });
+												}
+											}}
+										>
+											<SelectTrigger className="h-6 text-[10px] font-bold uppercase tracking-tighter bg-transparent border-none focus:ring-0 w-auto gap-1 px-1">
+												<SelectValue placeholder="Select Owner" />
+											</SelectTrigger>
+											<SelectContent>
+												{allUsers?.map((u) => (
+													<SelectItem key={u.id} value={u.id} className="text-xs">
+														{u.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								) : (
+									<div className="flex items-center gap-1 ml-2 pl-2 border-l border-muted-foreground/20 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+										<UsersIcon className="w-3 h-3" />
+										{list.user.name}
+									</div>
+								)}
+							</div>
 
-      {/* List Slots */}
-      <div className="space-y-4">
-        {slots.map((rank) => {
-          const item = list.items.find((i) => i.rank === rank);
+							{editTitle ? (
+								<div className="flex items-center gap-2 max-w-2xl">
+									<Input
+										value={newTitle}
+										onChange={(e) => setNewTitle(e.target.value)}
+										className="text-3xl font-black h-12 bg-background shadow-lg"
+										placeholder={list.type.name}
+										autoFocus
+									/>
+									<Button size="icon" onClick={handleTitleSave} className="shrink-0 bg-green-600 hover:bg-green-700">
+										<Check className="w-5 h-5" />
+									</Button>
+									<Button size="icon" variant="ghost" onClick={() => setEditTitle(false)} className="shrink-0">
+										<X className="w-5 h-5" />
+									</Button>
+								</div>
+							) : (
+								<div className="group flex items-center gap-3">
+									<h1 className="text-4xl font-black tracking-tight">{list.title || list.type.name}</h1>
+									{canEdit && (
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() => { setNewTitle(list.title || list.type.name); setEditTitle(true); }}
+											className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+										>
+											<Pencil className="w-4 h-4" />
+										</Button>
+									)}
+								</div>
+							)}
+							<p className="text-muted-foreground">{list.type.description}</p>
+						</div>
 
-          return (
-            <div key={rank} className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 flex gap-4 items-start">
-              <div className="text-4xl font-black text-zinc-700 w-12 text-center shrink-0 select-none">
-                {rank}
-              </div>
+						{canEdit && (
+							<div className="shrink-0">
+								<Button
+									onClick={handleStatusToggle}
+									variant={list.status === 'DRAFT' ? 'default' : 'outline'}
+									className={cn("w-full md:w-auto font-bold uppercase tracking-widest px-8", list.status === 'DRAFT' ? 'bg-green-600 hover:bg-green-700' : '')}
+								>
+									{list.status === 'DRAFT' ? 'Publish Now' : 'Revert to Draft'}
+								</Button>
+							</div>
+						)}
+					</div>
+				</CardContent>
+			</Card>
 
-              <div className="flex-grow">
-                {item ? (
-                  <div className="flex gap-4">
-                     {/* Poster */}
-                     <div className="shrink-0 w-24 h-36 bg-zinc-900 rounded overflow-hidden relative">
-                        {(item.movie?.poster || item.show?.poster) ? (
-                          <img
-                            src={item.movie?.poster || item.show?.poster || ""}
-                            alt="Poster"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-zinc-700 text-xs">No Image</div>
-                        )}
-                     </div>
+			{/* List Slots */}
+			<div className="space-y-6">
+				{slots.map((rank) => {
+					const item = list.items.find((i) => i.rank === rank);
 
-                     {/* Content */}
-                     <div className="flex-grow">
-                        <div className="flex justify-between items-start">
-                           <h3 className="text-xl font-bold">
-                             {item.movie?.title || item.show?.title || item.episode?.title}
-                             <span className="text-zinc-500 text-base font-normal ml-2">
-                               ({item.movie?.year || item.show?.year || item.episode?.date ? new Date(item.episode!.date!).getFullYear() : '?'})
-                             </span>
-                           </h3>
-                           {isOwner && (
-                             <div className="flex items-center gap-2">
-                               <div className="flex flex-col gap-1">
-                                 <button
-                                   disabled={rank === 1}
-                                   onClick={() => handleUpdateRank(item, rank - 1)}
-                                   className="text-zinc-500 hover:text-white disabled:opacity-30"
-                                 >
-                                   <HiChevronUp/>
-                                 </button>
-                                 <button
-                                   disabled={rank === list.type.maxItems}
-                                   onClick={() => handleUpdateRank(item, rank + 1)}
-                                   className="text-zinc-500 hover:text-white disabled:opacity-30"
-                                 >
-                                   <HiChevronDown/>
-                                 </button>
-                               </div>
-                               <button
-                                 onClick={() => removeItem.mutate({ itemId: item.id })}
-                                 className="text-zinc-500 hover:text-red-400 p-2"
-                               >
-                                 <HiTrash className="w-5 h-5"/>
-                               </button>
-                             </div>
-                           )}
-                        </div>
+					return (
+						<div key={rank} className="flex gap-4 items-start group">
+							<div className="relative pt-4 w-12 shrink-0">
+								<span className="text-5xl font-black text-muted-foreground/10 absolute -top-1 left-0 select-none group-hover:text-primary/20 transition-colors">
+									{rank}
+								</span>
+								<span className="text-lg font-black relative z-10 text-muted-foreground drop-shadow-sm px-1">
+									{rank}
+								</span>
+							</div>
 
-                        {/* Blurb */}
-                        <div className="mt-2">
-                           {isOwner ? (
-                             <textarea
-                               placeholder="Why did you pick this? (Optional)"
-                               className="w-full bg-zinc-900/50 border border-zinc-700 rounded p-2 text-sm text-zinc-300 focus:outline-none focus:border-blue-500 transition-colors"
-                               rows={2}
-                               defaultValue={item.comment || ""}
-                               onBlur={(e) => {
-                                 if (e.target.value !== item.comment) {
-                                   upsertItem.mutate({
-                                     rankedListId: list.id,
-                                     movieId: item.movieId || undefined,
-                                     showId: item.showId || undefined,
-                                     episodeId: item.episodeId || undefined,
-                                     rank: rank,
-                                     comment: e.target.value
-                                   });
-                                 }
-                               }}
-                             />
-                           ) : (
-                             <p className="text-zinc-300 text-sm italic">{item.comment}</p>
-                           )}
-                        </div>
-                     </div>
-                  </div>
-                ) : (
-                  // Empty Slot
-                  isOwner ? (
-                    <div className="h-full flex flex-col justify-center">
-                       <ItemSearch
-                         targetType={list.type.targetType}
-                         onSelect={(tmdbItem) => handleAddItem(tmdbItem, rank)}
-                       />
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center text-zinc-500 italic">
-                      Empty slot
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+							<Card className={cn(
+								"flex-grow transition-all duration-300 border-none shadow-sm",
+								item ? "bg-card" : "bg-muted/20 border-2 border-dashed border-muted-foreground/10"
+							)}>
+								<CardContent className="p-4">
+									{item ? (
+										<div className="flex flex-col sm:flex-row gap-6">
+											{/* Poster */}
+											<div className="shrink-0 w-full sm:w-28 h-40 bg-muted rounded-lg overflow-hidden relative shadow-lg group/poster">
+												{(item.movie?.poster || item.show?.poster) ? (
+													<img
+														src={item.movie?.poster || item.show?.poster || ""}
+														alt=""
+														className="w-full h-full object-cover transition-transform duration-500 group-hover/poster:scale-110"
+													/>
+												) : (
+													<div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground uppercase font-black text-[10px] p-2 text-center">
+														No Image
+													</div>
+												)}
+												<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/poster:opacity-100 transition-all flex items-end p-2">
+													<Badge className="w-full justify-center text-[8px] h-4 bg-primary/80 backdrop-blur-sm border-none uppercase">Details</Badge>
+												</div>
+											</div>
+
+											{/* Content */}
+											<div className="flex-grow flex flex-col justify-between min-w-0">
+												<div className="space-y-1">
+													<div className="flex justify-between items-start gap-2">
+														<div className="min-w-0">
+															<h3 className="text-xl font-black truncate leading-tight">
+																{item.movie?.title || item.show?.title || item.episode?.title}
+															</h3>
+															<div className="flex items-center gap-2 mt-1">
+																<span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+																	{item.movie?.year || item.show?.year || (item.episode?.date ? new Date(item.episode!.date!).getFullYear() : 'Unknown Year')}
+																</span>
+																{canEdit && (
+																	<div className="flex items-center gap-1">
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-muted-foreground hover:text-foreground"
+																			asChild
+																		>
+																			<a href={item.movie?.url || item.show?.url || '#'} target="_blank" rel="noreferrer">
+																				<Globe className="w-3 h-3" />
+																			</a>
+																		</Button>
+																	</div>
+																)}
+															</div>
+														</div>
+
+														{canEdit && (
+															<div className="flex items-center gap-1 self-start">
+																<div className="flex flex-col gap-1 border-r pr-2 mr-2">
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		disabled={rank === 1}
+																		onClick={() => handleMove(item.id, 'up')}
+																		className="h-7 w-7 text-muted-foreground hover:text-primary disabled:opacity-0"
+																	>
+																		<ChevronUp className="w-4 h-4" />
+																	</Button>
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		disabled={rank === list.type.maxItems}
+																		onClick={() => handleMove(item.id, 'down')}
+																		className="h-7 w-7 text-muted-foreground hover:text-primary disabled:opacity-0"
+																	>
+																		<ChevronDown className="w-4 h-4" />
+																	</Button>
+																</div>
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	onClick={() => {
+																		if (confirm("Remove this item?")) {
+																			removeItem.mutate({ itemId: item.id });
+																		}
+																	}}
+																	className="h-8 w-8 text-muted-foreground hover:text-destructive"
+																>
+																	<Trash2 className="w-4 h-4" />
+																</Button>
+															</div>
+														)}
+													</div>
+
+													<div className="relative mt-4 group/comment">
+														<MessageSquare className="absolute -left-1 -top-1 w-3 h-3 text-primary/30 rotate-12" />
+														{canEdit ? (
+															<Textarea
+																placeholder="Add your thoughts or a review blurb..."
+																className="bg-muted/30 border-none resize-none min-h-[80px] text-sm italic focus-visible:ring-primary/20"
+																defaultValue={item.comment || ""}
+																onBlur={(e) => {
+																	if (e.target.value !== item.comment) {
+																		upsertItem.mutate({
+																			rankedListId: list.id,
+																			movieId: item.movieId || undefined,
+																			showId: item.showId || undefined,
+																			episodeId: item.episodeId || undefined,
+																			rank: rank,
+																			comment: e.target.value
+																		});
+																	}
+																}}
+															/>
+														) : (
+															<p className="text-muted-foreground text-sm italic py-2 pl-4 border-l-2 border-primary/20">
+																&ldquo;{item.comment}&rdquo;
+															</p>
+														)}
+													</div>
+												</div>
+
+												{!canEdit && !item.comment && (
+													<p className="text-xs text-muted-foreground/50 italic py-2">No comment provided.</p>
+												)}
+											</div>
+										</div>
+									) : (
+										// Empty Slot
+										isOwner ? (
+											<div className="py-8 px-4 flex flex-col items-center gap-4">
+												<div className="flex flex-col items-center text-center space-y-1">
+													<Badge variant="outline" className="text-[10px] font-bold uppercase bg-background">Rank #{rank}</Badge>
+													<h4 className="text-sm font-bold text-muted-foreground">Empty Slot</h4>
+													<p className="text-[10px] text-muted-foreground/60">Search for an item to add to your list</p>
+												</div>
+												<ItemSearch
+													targetType={list.type.targetType}
+													onSelect={(tmdbItem) => handleAddItem(tmdbItem, rank)}
+												/>
+											</div>
+										) : (
+											<div className="py-12 flex flex-col items-center justify-center gap-2 opacity-30 select-none">
+												<Star className="w-8 h-8 text-muted-foreground" />
+												<span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Slot Open</span>
+											</div>
+										)
+									)}
+								</CardContent>
+							</Card>
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
 };
 
 export default ListEditor;
