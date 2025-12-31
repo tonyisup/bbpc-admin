@@ -151,7 +151,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			<CardFooter>
 				<Button onClick={handleSave}>Save</Button>
 			</CardFooter>
-		</Card>
+		</Card >
 	);
 };
 

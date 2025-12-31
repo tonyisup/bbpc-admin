@@ -172,15 +172,17 @@ export const reviewRouter = router({
 			limit: z.number().min(1).max(100).nullish(),
 			cursor: z.string().nullish(),
 			ratingId: z.string().nullish(),
+			userId: z.string().nullish(),
 		}))
 		.query(async ({ ctx, input }) => {
 			const limit = input.limit ?? 50;
-			const { cursor, ratingId } = input;
+			const { cursor, ratingId, userId } = input;
 
 			const items = await ctx.prisma.review.findMany({
 				take: limit + 1,
 				where: {
 					ratingId: ratingId,
+					userId: userId,
 				},
 				cursor: cursor ? { id: cursor } : undefined,
 				include: {

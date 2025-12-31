@@ -1,4 +1,5 @@
 import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
+import { useRouter } from "next/router";
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { Trash2, Star, User, Film, Tv, Loader2, Filter } from "lucide-react";
@@ -11,6 +12,7 @@ import Image from "next/image";
 import { useState } from "react";
 import RatingIcon from "../../components/Review/RatingIcon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import Link from "next/link";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -84,7 +86,23 @@ interface Review {
 }
 
 const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const router = useRouter();
+  const ratingFilter = (router.query.rating as string) || "all";
+  const userFilter = (router.query.user as string) || "all";
+
+  const setRatingFilter = (value: string) => {
+    const query = { ...router.query };
+    if (value === "all") delete query.rating;
+    else query.rating = value;
+    router.push({ query }, undefined, { shallow: true });
+  };
+
+  const setUserFilter = (value: string) => {
+    const query = { ...router.query };
+    if (value === "all") delete query.user;
+    else query.user = value;
+    router.push({ query }, undefined, { shallow: true });
+  };
 
   const {
     data,
@@ -96,12 +114,14 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
   } = trpc.review.getAll.useInfiniteQuery(
     {
       limit: 50,
-      ratingId: ratingFilter === "all" ? undefined : (ratingFilter === "none" ? null : ratingFilter)
+      ratingId: ratingFilter === "all" ? undefined : (ratingFilter === "none" ? null : ratingFilter),
+      userId: userFilter === "all" ? undefined : userFilter
     },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
 
   const { data: ratings } = trpc.review.getRatings.useQuery();
+  const { data: users } = trpc.user.getAll.useQuery();
 
   const setRatingMutation = trpc.review.setReviewRating.useMutation({
     onSuccess: () => refetch(),
@@ -134,6 +154,19 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
 
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by user" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                {users?.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name || user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={ratingFilter} onValueChange={setRatingFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by rating" />
@@ -174,15 +207,17 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
               {reviews.map((review: Review) => (
                 <TableRow key={review.id} className="group">
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">{review.user?.name || review.user?.email}</span>
-                    </div>
+                    <Link href={`/users/${review.user?.id}`}>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">{review.user?.name || review.user?.email}</span>
+                      </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {review.movie ? (
-                        <>
+                        <Link href={`/movie/${review.movie.id}`} className="flex items-center gap-3">
                           {review.movie.poster && (
                             <div className="w-8 h-12 relative rounded overflow-hidden shadow-sm flex-shrink-0">
                               <Image unoptimized src={review.movie.poster} alt={review.movie.title} fill className="object-cover" />
@@ -194,9 +229,9 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                             </span>
                             <span className="text-[10px] text-muted-foreground">{review.movie.year}</span>
                           </div>
-                        </>
+                        </Link>
                       ) : review.show ? (
-                        <>
+                        <Link href={`/show/${review.show.id}`} className="flex items-center gap-3">
                           {review.show.poster && (
                             <div className="w-8 h-12 relative rounded overflow-hidden shadow-sm flex-shrink-0">
                               <Image unoptimized src={review.show.poster} alt={review.show.title} fill className="object-cover" />
@@ -208,7 +243,7 @@ const ReviewsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProp
                             </span>
                             <span className="text-[10px] text-muted-foreground">{review.show.year}</span>
                           </div>
-                        </>
+                        </Link>
                       ) : "Unknown Content"}
                     </div>
                   </TableCell>

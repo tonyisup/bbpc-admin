@@ -19,8 +19,10 @@ import { azureRouter } from "./azureRouter";
 import { ratingRouter } from "./ratingRouter";
 import { bangerRouter } from "./bangerRouter";
 import { tagRouter } from "./tagRouter";
+import { rankedListRouter } from "./rankedListRouter";
 
 export const appRouter = router({
+  rankedList: rankedListRouter,
   review: reviewRouter,
   assignment: assignmentRouter,
   episode: episodeRouter,

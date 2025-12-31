@@ -1,5 +1,6 @@
 import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ interface Point {
   gamePointType: {
     points: number;
     title: string;
+    lookupID: string;
   } | null;
   guesses?: Guess[];
   gamblingPoints?: GamblingPoint[];
@@ -405,7 +407,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
             guess: guess as Guess,
             earnedOn: guess.created,
             reason: 'Pending Guess',
-            gamePointType: { points: 0, title: 'Guess' },
+            gamePointType: { points: 0, title: 'Guess', lookupID: 'pending-guess' },
             adjustment: 0
           });
         }
@@ -541,7 +543,31 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
                                           {point.isGuess ? '?' : `+${(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)}`}
                                         </div>
                                         <div className="flex flex-col">
-                                          <span className="text-sm font-medium">{point.reason}</span>
+                                          <span className="text-sm font-medium">
+                                            {(() => {
+                                              if (!point.reason) return null;
+                                              const movieIdMatch = point.reason.match(/\[movieId:([a-fA-F0-9-]+)\]/);
+                                              const tmdbIdMatchNew = point.reason.match(/\[tmdbId:(\d+)\]/);
+                                              const tmdbIdMatchOld = point.reason.match(/movie (\d+)$/);
+
+                                              if (movieIdMatch) {
+                                                const id = movieIdMatch[1];
+                                                const title = point.reason.match(/for (.*?) \[/)?.[1] || "Movie";
+                                                return <>{point.reason.split(" [")[0]} <Link href={`/movie/${id}`} className="text-primary hover:underline font-bold">{title}</Link></>;
+                                              }
+                                              if (tmdbIdMatchNew) {
+                                                const id = tmdbIdMatchNew[1];
+                                                const title = point.reason.match(/for (.*?) \[/)?.[1] || "Movie";
+                                                return <>{point.reason.split(" [")[0]} <a href={`https://www.themoviedb.org/movie/${id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">{title}</a></>;
+                                              }
+                                              if (tmdbIdMatchOld) {
+                                                const id = tmdbIdMatchOld[1];
+                                                const prefix = point.reason.split("movie")[0];
+                                                return <>{prefix} <a href={`https://www.themoviedb.org/movie/${id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">movie {id}</a></>;
+                                              }
+                                              return point.reason;
+                                            })()}
+                                          </span>
                                           <span className="text-[10px] text-muted-foreground/70">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                       </div>
@@ -569,7 +595,31 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
                         {groupedPoints?.['general']?.otherPoints?.map((point) => (
                           <div key={point.id} className="flex items-center justify-between bg-muted/20 p-3 rounded-lg border border-transparent hover:border-muted-foreground/10">
                             <div className="flex flex-col">
-                              <span className="text-sm font-semibold">{point.reason}</span>
+                              <span className="text-sm font-semibold">
+                                {(() => {
+                                  if (!point.reason) return null;
+                                  const movieIdMatch = point.reason.match(/\[movieId:([a-fA-F0-9-]+)\]/);
+                                  const tmdbIdMatchNew = point.reason.match(/\[tmdbId:(\d+)\]/);
+                                  const tmdbIdMatchOld = point.reason.match(/movie (\d+)$/);
+
+                                  if (movieIdMatch) {
+                                    const id = movieIdMatch[1];
+                                    const title = point.reason.match(/for (.*?) \[/)?.[1] || "Movie";
+                                    return <>{point.reason.split(" [")[0]} <Link href={`/movie/${id}`} className="text-primary hover:underline font-bold">{title}</Link></>;
+                                  }
+                                  if (tmdbIdMatchNew) {
+                                    const id = tmdbIdMatchNew[1];
+                                    const title = point.reason.match(/for (.*?) \[/)?.[1] || "Movie";
+                                    return <>{point.reason.split(" [")[0]} <a href={`https://www.themoviedb.org/movie/${id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">{title}</a></>;
+                                  }
+                                  if (tmdbIdMatchOld) {
+                                    const id = tmdbIdMatchOld[1];
+                                    const prefix = point.reason.split("movie")[0];
+                                    return <>{prefix} <a href={`https://www.themoviedb.org/movie/${id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold">movie {id}</a></>;
+                                  }
+                                  return point.reason;
+                                })()}
+                              </span>
                               <span className="text-[10px] text-muted-foreground">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
                             </div>
                             <div className="flex items-center gap-3">
