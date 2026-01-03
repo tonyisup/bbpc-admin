@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Separator } from "../ui/separator";
 import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
 import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
+import EditableRating from "../Review/EditableRating";
 
 interface EditAssignmentProps {
 	assignment: Assignment;
@@ -172,6 +173,9 @@ const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
 	const { mutate: updateGambling } = trpc.gambling.update.useMutation({ onSuccess: () => refreshGambling() });
 	const { mutate: removeGambling } = trpc.gambling.remove.useMutation({ onSuccess: () => refreshGambling() });
 
+	const { mutate: updateReviewRating } = trpc.review.setReviewRating.useMutation({ onSuccess: () => refreshReviews() });
+	const { mutate: updateGuessRating } = trpc.guess.update.useMutation({ onSuccess: () => refreshReviews() });
+
 	const guessesByUser = useMemo(() => {
 		const map = new Map<string, { user: User; items: Array<{ guess: any; ar: any }> }>();
 		assignmentReviews?.forEach(ar => {
@@ -203,7 +207,11 @@ const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
 							<div key={ar.id} className="bg-muted/30 p-4 rounded-xl border group">
 								<div className="flex justify-between items-center mb-4">
 									<div className="flex items-center gap-2">
-										<RatingIcon value={ar.review.rating?.value} />
+										<EditableRating
+											currentRatingId={ar.review.ratingId}
+											currentRatingValue={ar.review.rating?.value}
+											onUpdate={(ratingId) => updateReviewRating({ reviewId: ar.review.id, ratingId })}
+										/>
 										<span className="text-sm font-bold">{ar.review.user?.name}</span>
 									</div>
 									<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -227,7 +235,11 @@ const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
 											<div key={g.id} className="flex items-center justify-between bg-background/50 p-2 rounded border text-xs">
 												<span className="font-medium text-muted-foreground italic">{g.user.name}</span>
 												<div className="flex items-center gap-2">
-													<RatingIcon value={g.rating?.value} />
+													<EditableRating
+														currentRatingId={g.ratingId}
+														currentRatingValue={g.rating?.value}
+														onUpdate={(ratingId) => ratingId && updateGuessRating({ id: g.id, ratingId })}
+													/>
 													<Button
 														variant="ghost"
 														size="icon"

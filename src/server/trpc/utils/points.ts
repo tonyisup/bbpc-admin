@@ -13,11 +13,18 @@ export const calculateUserPoints = async (
   let seasonIdToUse = seasonId;
   // undefined means use current season
   if (seasonIdToUse === undefined) {
+    const now = new Date();
     const season = await prisma.season.findFirst({
       orderBy: {
         startedOn: 'desc',
       },
-      where: { endedOn: null }
+      where: {
+        startedOn: { lte: now },
+        OR: [
+          { endedOn: { gte: now } },
+          { endedOn: null },
+        ],
+      }
     });
     seasonIdToUse = season?.id;
   }
@@ -64,11 +71,18 @@ where [a].[userid] = ${userId}
 };
 
 export const getCurrentSeasonID = async (prisma: PrismaTransactionClient) => {
+  const now = new Date();
   const season = await prisma.season.findFirst({
     orderBy: {
       startedOn: 'desc',
     },
-    where: { endedOn: null }
+    where: {
+      startedOn: { lte: now },
+      OR: [
+        { endedOn: { gte: now } },
+        { endedOn: null },
+      ],
+    }
   });
   return season?.id ?? null;
 };

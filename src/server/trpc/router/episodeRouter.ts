@@ -75,7 +75,8 @@ export const episodeRouter = router({
       description: z.string(),
       date: z.date().optional(),
       recording: z.string().optional(),
-      status: z.string().optional()
+      status: z.string().optional(),
+      notes: z.string().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
@@ -88,7 +89,8 @@ export const episodeRouter = router({
           description: req.input.description,
           date: req.input.date,
           recording: req.input.recording,
-          status: req.input.status
+          status: req.input.status,
+          notes: req.input.notes
         }
       })
     }),
@@ -156,12 +158,38 @@ export const episodeRouter = router({
       })
     }),
   getAll: publicProcedure
-    .query(({ ctx }) => {
-      return ctx.prisma.episode.findMany({
+    .input(z.object({
+      limit: z.number().min(1).max(100).nullish(),
+      cursor: z.string().nullish(),
+      searchTerm: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? 10;
+      const cursor = input?.cursor;
+
+      const items = await ctx.prisma.episode.findMany({
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        where: input.searchTerm ? {
+          title: {
+             contains: input.searchTerm,
+          }
+        } : undefined,
         orderBy: {
           number: 'desc'
         }
       });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
     }),
   getSummary: publicProcedure
     .query(({ ctx }) => {
@@ -237,14 +265,29 @@ export const episodeRouter = router({
     .input(z.object({
       id: z.string(),
       title: z.string().optional(),
-      description: z.string().optional()
+      description: z.string().optional(),
+      notes: z.string().optional()
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.update({
         where: { id: req.input.id },
         data: {
           title: req.input.title,
-          description: req.input.description
+          description: req.input.description,
+          notes: req.input.notes
+        }
+      })
+    }),
+  updateNotes: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      notes: z.string().optional()
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.episode.update({
+        where: { id: req.input.id },
+        data: {
+          notes: req.input.notes
         }
       })
     }),

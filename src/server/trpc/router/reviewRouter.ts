@@ -69,6 +69,27 @@ export const reviewRouter = router({
 	remove: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
+			// Delete dependent ExtraReviews
+			await req.ctx.prisma.extraReview.deleteMany({
+				where: { reviewId: req.input.id }
+			});
+
+			// Delete dependent AssignmentReviews and their Guesses
+			const assignmentReviews = await req.ctx.prisma.assignmentReview.findMany({
+				where: { reviewId: req.input.id },
+				select: { id: true }
+			});
+
+			if (assignmentReviews.length > 0) {
+				const arIds = assignmentReviews.map(ar => ar.id);
+				await req.ctx.prisma.guess.deleteMany({
+					where: { assignmntReviewId: { in: arIds } }
+				});
+				await req.ctx.prisma.assignmentReview.deleteMany({
+					where: { id: { in: arIds } }
+				});
+			}
+
 			return await req.ctx.prisma.review.delete({
 				where: {
 					id: req.input.id
@@ -151,15 +172,17 @@ export const reviewRouter = router({
 			limit: z.number().min(1).max(100).nullish(),
 			cursor: z.string().nullish(),
 			ratingId: z.string().nullish(),
+			userId: z.string().nullish(),
 		}))
 		.query(async ({ ctx, input }) => {
 			const limit = input.limit ?? 50;
-			const { cursor, ratingId } = input;
+			const { cursor, ratingId, userId } = input;
 
 			const items = await ctx.prisma.review.findMany({
 				take: limit + 1,
 				where: {
 					ratingId: ratingId,
+					userId: userId,
 				},
 				cursor: cursor ? { id: cursor } : undefined,
 				include: {
