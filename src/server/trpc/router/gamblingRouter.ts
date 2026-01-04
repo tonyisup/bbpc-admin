@@ -152,6 +152,23 @@ export const gamblingRouter = router({
       });
     }),
 
+  getForAssignment: publicProcedure
+    .input(z.object({ assignmentId: z.string() }))
+    .query(async (req) => {
+      return await req.ctx.prisma.gamblingPoints.findMany({
+        where: {
+          assignmentId: req.input.assignmentId
+        },
+        include: {
+          user: true,
+          gamblingType: true,
+          targetUser: true,
+          point: true,
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    }),
+
   getUserAssignmentGamblePoints: publicProcedure
     .input(z.object({
       userId: z.string(),
@@ -161,7 +178,7 @@ export const gamblingRouter = router({
       return await req.ctx.prisma.gamblingPoints.findMany({
         include: {
           gamblingType: true,
-          TargetUser: true,
+          targetUser: true,
         },
         where: {
           userId: req.input.userId,

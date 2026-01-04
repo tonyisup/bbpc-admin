@@ -71,6 +71,7 @@ export const seasonRouter = router({
               },
               gamblingPoints: {
                 include: {
+                  gamblingType: true,
                   assignment: {
                     include: {
                       episode: true,
@@ -90,6 +91,7 @@ export const seasonRouter = router({
                   episode: true,
                 },
               },
+              gamblingType: true,
             },
           },
         },
