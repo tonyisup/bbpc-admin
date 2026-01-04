@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../trpc";
+import { adminProcedure, publicProcedure, router } from "../trpc";
 import { calculateUserPoints } from "../utils/points";
 
 export const gamblingRouter = router({
@@ -258,7 +258,7 @@ export const gamblingRouter = router({
     });
   }),
 
-  createType: publicProcedure
+  createType: adminProcedure
     .input(z.object({
       title: z.string(),
       lookupId: z.string(),
@@ -272,7 +272,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  updateType: publicProcedure
+  updateType: adminProcedure
     .input(z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -289,7 +289,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  deleteType: publicProcedure
+  deleteType: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.gamblingType.delete({
