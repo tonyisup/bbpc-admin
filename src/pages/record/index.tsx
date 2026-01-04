@@ -29,12 +29,14 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
 import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
 import BonusPointEventButton from "@/components/BonusPointEventButton";
+import { ManageBonusPointsPopover } from "@/components/ManageBonusPointsPopover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/router";
 import { useAudioSession } from "../../hooks/useAudioSession";
 import AudioStream from "../../components/AudioStream";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
 
 // --- Types ---
 type Admin = User;
@@ -271,23 +273,18 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				);
 			})}
 			<td className="p-2">
-				<span className="text-sm text-gray-400">{bonusPoints} pts</span>
-				<BonusPointEventButton
+				<ManageBonusPointsPopover
 					userId={guesser.id}
 					assignmentId={assignment.id}
-					event={{
-						gamePointLookupId: 'bonus',
-						reason: "",
-						adjustment: 0,
-					}}
-					onSaved={(pointEvent) => {
-						// Points are refetched in the parent AssignmentGrid
+					bonusPoints={bonusPoints}
+					seasonId={seasonId}
+					onUpdate={() => {
 						onAddPointForGuess({
 							userId: guesser.id,
 							seasonId: seasonId || "",
-							id: pointEvent.id,
+							id: "update",
 							adjustment: 0,
-							reason: "bonus"
+							reason: "bonus-updated"
 						});
 					}}
 				/>
@@ -782,7 +779,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	return (
 		<>
 			<Head>
-				<title>Recording {recordingData?.number} - Bad Boys Podcast Admin</title>
+				<title>{`Recording ${recordingData?.number || ""} - Bad Boys Podcast Admin`}</title>
 			</Head>
 			<main className="flex w-full min-h-screen flex-col items-center gap-6 p-8 relative">
 				{/* Audio Container for Remote Streams */}
@@ -1003,6 +1000,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 				)}
 
 				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
+				{pendingEpisode && isAdmin && <EpisodeAssignments episode={pendingEpisode} />}
 				{pendingEpisode && isAdmin && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
 			</main>
 		</>
