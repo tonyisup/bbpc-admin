@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 interface AddPointPopoverProps {
 	userId: string;
 	seasonId: string;
+	seasonName?: string;
 	onSuccess?: () => void;
 }
 
-export function AddPointPopover({ userId, seasonId, onSuccess }: AddPointPopoverProps) {
+export function AddPointPopover({ userId, seasonId, seasonName, onSuccess }: AddPointPopoverProps) {
 	const [open, setOpen] = useState(false);
 	const [points, setPoints] = useState<string>("");
 	const [reason, setReason] = useState("");
@@ -76,7 +77,7 @@ export function AddPointPopover({ userId, seasonId, onSuccess }: AddPointPopover
 					<div className="space-y-2">
 						<h4 className="font-medium leading-none">Add Points</h4>
 						<p className="text-sm text-muted-foreground">
-							Manually add points to this user for the current season.
+							Manually add points to this user for {seasonName || "this season"}.
 						</p>
 					</div>
 					<div className="grid gap-2">
