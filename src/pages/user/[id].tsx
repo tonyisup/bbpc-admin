@@ -214,6 +214,18 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 		return selectedSeasonId; // "all" or specific UUID
 	}, [selectedSeasonId]);
 
+	const targetSeasonId = useMemo(() => {
+		if (selectedSeasonId === "current") return currentSeason?.id;
+		if (selectedSeasonId === "all") return undefined;
+		return selectedSeasonId;
+	}, [selectedSeasonId, currentSeason]);
+
+	const targetSeasonName = useMemo(() => {
+		if (selectedSeasonId === "current") return currentSeason?.title;
+		if (selectedSeasonId === "all") return undefined;
+		return allSeasons?.find(s => s.id === selectedSeasonId)?.title;
+	}, [selectedSeasonId, currentSeason, allSeasons]);
+
 	const { data: totalPoints, refetch: refetchTotalPoints } = trpc.user.getTotalPointsForSeason.useQuery({
 		userId: id,
 		seasonId: querySeasonId
@@ -496,8 +508,8 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 										<CardTitle>Point Events</CardTitle>
 										<CardDescription>History of earned points by episode</CardDescription>
 									</div>
-									{currentSeason && (
-										<AddPointPopover userId={id} seasonId={currentSeason.id} onSuccess={refreshAllPoints} />
+									{targetSeasonId && (
+										<AddPointPopover userId={id} seasonId={targetSeasonId} seasonName={targetSeasonName} onSuccess={refreshAllPoints} />
 									)}
 								</CardHeader>
 								<CardContent className="space-y-6 mt-4">
