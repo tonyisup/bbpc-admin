@@ -18,7 +18,7 @@ const EpisodeAssignments: FC<EpisodeAssignmentsProps> = ({ episode }) => {
 				<h2 className="text-xl font-semibold">Assignments ({assignments?.length ?? 0})</h2>
 				{episode && <AddEpisodeAssignmentModal episode={episode} refreshItems={refreshAssignments} />}
 			</div>
-			<div className="flex gap-4">
+			<div className="flex flex-col gap-4">
 				{assignments?.map((assignment) => <AssignmentAdminCard key={assignment.id} assignment={assignment} refreshAssignments={refreshAssignments} />)}
 			</div>
 		</section>

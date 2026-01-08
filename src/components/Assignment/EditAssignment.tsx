@@ -14,6 +14,8 @@ import { Separator } from "../ui/separator";
 import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
 import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
 import EditableRating from "../Review/EditableRating";
+import AssignmentReviews from "./AssignmentReviews";
+import AssignmentBets from "./AssignmentBets";
 
 interface EditAssignmentProps {
 	assignment: Assignment;
@@ -25,7 +27,16 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId });
 	const { data: episode } = trpc.episode.get.useQuery({ id: assignment.episodeId });
 
+	const { data: assignmentReviews, refetch: refreshReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id });
+	const { data: gamblingPoints, refetch: refreshGambling } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id });
+
 	const [addReviewOpen, setAddReviewOpen] = useState(false);
+
+	const handleRefresh = () => {
+		refreshAssignment();
+		refreshReviews();
+		refreshGambling();
+	};
 
 	return (
 		<div className="flex flex-col gap-8 max-w-4xl mx-auto w-full py-8 px-4">
@@ -66,7 +77,11 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 
 			{movie && episode && (
 				<>
-					<Reviews assignment={assignment} onUpdate={refreshAssignment} />
+					<AssignmentReviews
+						assignment={assignment}
+						assignmentReviews={assignmentReviews || []}
+						onRefresh={handleRefresh}
+					/>
 					{addReviewOpen && (
 						<AddAssignmentReviewModal
 							open={addReviewOpen}
@@ -74,7 +89,7 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 							assignment={assignment}
 							movie={movie}
 							episode={episode}
-							refreshItems={refreshAssignment}
+							refreshItems={handleRefresh}
 						/>
 					)}
 				</>
@@ -86,112 +101,12 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 
 			<Separator />
 
-			<GamblingBets assignment={assignment} />
+			<AssignmentBets
+				assignment={assignment}
+				gamblingPoints={gamblingPoints || []}
+				onRefresh={handleRefresh}
+			/>
 		</div>
-	);
-};
-
-interface GamblingBetsProps {
-	assignment: Assignment;
-}
-const GamblingBets: FC<GamblingBetsProps> = ({ assignment }) => {
-	const { data: gamblingPoints, refetch } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id });
-	const { data: gamblingTypes } = trpc.gambling.getAllTypes.useQuery();
-	const { data: hosts } = trpc.user.getAdmins.useQuery();
-
-	const { mutate: confirmGamble, isLoading: isConfirming } = trpc.gambling.confirmGamble.useMutation({ onSuccess: () => refetch() });
-	const { mutate: rejectGamble, isLoading: isRejecting } = trpc.gambling.rejectGamble.useMutation({ onSuccess: () => refetch() });
-
-	const getStatusBadge = (gp: any) => {
-		if (gp.successful === true) return <Badge className="bg-emerald-600 text-white">Won</Badge>;
-		if (gp.successful === false) return <Badge variant="destructive">Lost</Badge>;
-		return <Badge variant="outline" className="text-amber-500 border-amber-500">Pending</Badge>;
-	};
-
-	const groupedByUser = useMemo(() => {
-		const map = new Map<string, { user: any; bets: any[] }>();
-		gamblingPoints?.forEach(gp => {
-			const userId = gp.userId;
-			if (!map.has(userId)) map.set(userId, { user: gp.user, bets: [] });
-			map.get(userId)?.bets.push(gp);
-		});
-		return Array.from(map.values());
-	}, [gamblingPoints]);
-
-	return (
-		<Card className="shadow-none border bg-card">
-			<CardHeader className="flex flex-row items-center justify-between">
-				<div className="flex items-center gap-2">
-					<Coins className="h-5 w-5 text-amber-500" />
-					<CardTitle className="text-xl">Gambling Bets</CardTitle>
-				</div>
-				<Badge variant="secondary" className="font-bold">{gamblingPoints?.length || 0}</Badge>
-			</CardHeader>
-			<CardContent className="space-y-6">
-				{groupedByUser.length === 0 ? (
-					<p className="text-center py-6 text-sm text-muted-foreground italic">No bets for this assignment.</p>
-				) : (
-					groupedByUser.map(({ user, bets }) => (
-						<div key={user.id} className="space-y-3">
-							<div className="flex items-center gap-2 text-sm font-bold">
-								<UserIcon className="h-4 w-4 text-primary" />
-								{user.name || user.email}
-							</div>
-							<div className="grid gap-2 pl-6">
-								{bets.map((gp) => (
-									<div key={gp.id} className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border group">
-										<div className="flex items-center gap-4">
-											{getStatusBadge(gp)}
-											<div className="space-y-1">
-												<div className="flex items-center gap-2 text-sm font-medium">
-													<Coins className="h-3 w-3 text-amber-500" />
-													<span>{gp.points} pts</span>
-													<span className="text-muted-foreground">×</span>
-													<span className="text-primary">{gp.gamblingType?.multiplier ?? 1}x</span>
-													<span className="text-xs text-muted-foreground">({gp.gamblingType?.title})</span>
-												</div>
-												{gp.TargetUser && (
-													<div className="text-xs text-muted-foreground">
-														Target: {gp.TargetUser.name}
-													</div>
-												)}
-												{gp.successful === true && gp.point && (
-													<div className="text-xs text-emerald-500">
-														Won: +{gp.point.adjustment} pts
-													</div>
-												)}
-											</div>
-										</div>
-										{gp.successful === null && (
-											<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-													onClick={() => confirmGamble({ gambleId: gp.id })}
-													disabled={isConfirming || isRejecting}
-												>
-													<PlusCircle className="h-4 w-4" />
-												</Button>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-													onClick={() => rejectGamble({ gambleId: gp.id })}
-													disabled={isConfirming || isRejecting}
-												>
-													<MinusCircle className="h-4 w-4" />
-												</Button>
-											</div>
-										)}
-									</div>
-								))}
-							</div>
-						</div>
-					))
-				)}
-			</CardContent>
-		</Card>
 	);
 };
 
@@ -262,122 +177,6 @@ const Audio: FC<AudioProps> = ({ audioMessage, refresh }) => {
 				<Trash2 className="h-4 w-4" />
 			</Button>
 		</div>
-	);
-};
-
-interface ReviewsProps {
-	assignment: Assignment;
-	onUpdate: () => void;
-}
-const Reviews: FC<ReviewsProps> = ({ assignment, onUpdate }) => {
-	const { data: assignmentReviews, refetch: refreshReviews } = trpc.review.getForAssignment.useQuery({ assignmentId: assignment.id });
-	const { data: gamblingPoints, refetch: refreshGambling } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id });
-
-	const [addGuessOpen, setAddGuessOpen] = useState<{ open: boolean; ar: any }>({ open: false, ar: null });
-
-	const { mutate: removeReview } = trpc.review.removeAssignment.useMutation({ onSuccess: () => refreshReviews() });
-	const { mutate: removeGuess } = trpc.guess.remove.useMutation({ onSuccess: () => refreshReviews() });
-	const { mutate: addGambling } = trpc.gambling.add.useMutation({ onSuccess: () => refreshGambling() });
-	const { mutate: updateGambling } = trpc.gambling.update.useMutation({ onSuccess: () => refreshGambling() });
-	const { mutate: removeGambling } = trpc.gambling.remove.useMutation({ onSuccess: () => refreshGambling() });
-
-	const { mutate: updateReviewRating } = trpc.review.setReviewRating.useMutation({ onSuccess: () => refreshReviews() });
-	const { mutate: updateGuessRating } = trpc.guess.update.useMutation({ onSuccess: () => refreshReviews() });
-
-	const guessesByUser = useMemo(() => {
-		const map = new Map<string, { user: User; items: Array<{ guess: any; ar: any }> }>();
-		assignmentReviews?.forEach(ar => {
-			ar.guesses?.forEach(guess => {
-				const userId = guess.user.id;
-				if (!map.has(userId)) map.set(userId, { user: guess.user, items: [] });
-				map.get(userId)?.items.push({ guess, ar });
-			});
-		});
-		return Array.from(map.values());
-	}, [assignmentReviews]);
-
-	return (
-		<Card className="shadow-none border bg-card">
-			<CardHeader className="flex flex-row items-center justify-between">
-				<div className="flex items-center gap-2">
-					<MessageSquare className="h-5 w-5 text-primary" />
-					<CardTitle className="text-xl">Reviews & Guesses</CardTitle>
-				</div>
-			</CardHeader>
-			<CardContent className="space-y-8">
-				{/* Admin Reviews */}
-				<div className="space-y-4">
-					<h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2 text-left">
-						<UserIcon className="h-3 w-3" /> Admin Reviews
-					</h4>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						{assignmentReviews?.map((ar) => (
-							<div key={ar.id} className="bg-muted/30 p-4 rounded-xl border group">
-								<div className="flex justify-between items-center mb-4">
-									<div className="flex items-center gap-2">
-										<EditableRating
-											currentRatingId={ar.review.ratingId}
-											currentRatingValue={ar.review.rating?.value}
-											onUpdate={(ratingId) => updateReviewRating({ reviewId: ar.review.id, ratingId })}
-										/>
-										<span className="text-sm font-bold">{ar.review.user?.name}</span>
-									</div>
-									<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-										<Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setAddGuessOpen({ open: true, ar })}>
-											<Plus className="h-4 w-4" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-8 w-8 text-destructive"
-											onClick={() => confirm("Delete this review?") && removeReview({ id: ar.id })}
-										>
-											<Trash2 className="h-4 w-4" />
-										</Button>
-									</div>
-								</div>
-								{ar.guesses && ar.guesses.length > 0 && (
-									<div className="space-y-2 mt-4 pt-4 border-t border-muted-foreground/10">
-										<span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 text-left block">Guesses</span>
-										{ar.guesses.map((g: any) => (
-											<div key={g.id} className="flex items-center justify-between bg-background/50 p-2 rounded border text-xs">
-												<span className="font-medium text-muted-foreground italic">{g.user.name}</span>
-												<div className="flex items-center gap-2">
-													<EditableRating
-														currentRatingId={g.ratingId}
-														currentRatingValue={g.rating?.value}
-														onUpdate={(ratingId) => ratingId && updateGuessRating({ id: g.id, ratingId })}
-													/>
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-5 w-5 text-destructive"
-														onClick={() => confirm("Delete this guess?") && removeGuess({ id: g.id })}
-													>
-														<Trash2 className="h-3 w-3" />
-													</Button>
-												</div>
-											</div>
-										))}
-									</div>
-								)}
-							</div>
-						))}
-						{assignmentReviews?.length === 0 && (
-							<p className="col-span-full text-center py-6 text-sm text-muted-foreground italic border-2 border-dashed rounded-xl">No reviews yet.</p>
-						)}
-					</div>
-				</div>
-			</CardContent>
-			{addGuessOpen.open && addGuessOpen.ar && (
-				<AddAssignmentReviewGuessModal
-					open={addGuessOpen.open}
-					setOpen={(open) => setAddGuessOpen(prev => ({ ...prev, open }))}
-					assignmentReview={addGuessOpen.ar}
-					refreshItems={refreshReviews}
-				/>
-			)}
-		</Card>
 	);
 };
 

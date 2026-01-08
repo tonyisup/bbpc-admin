@@ -10,19 +10,14 @@ https://nextjs.org/telemetry
   ▲ Next.js 13.5.11
   - Local:        http://localhost:3001
 
- ✓ Ready in 2.3s
- ○ Compiling /lists ...
- ✓ Compiled /lists in 5.5s (587 modules)
- ✓ Compiled /api/auth/[...nextauth] in 1757ms (205 modules)
- ✓ Compiled /api/trpc/[trpc] in 864ms (239 modules)
- ✓ Compiled in 514ms (409 modules)
- ✓ Compiled in 457ms (587 modules)
- ✓ Compiled in 327ms (409 modules)
- ✓ Compiled in 354ms (409 modules)
- ✓ Compiled in 321ms (409 modules)
- ✓ Compiled /api/auth/[...nextauth] in 143ms (205 modules)
- ✓ Compiled /api/trpc/[trpc] in 220ms (239 modules)
-`unstable_getServerSession` has been renamed to `getServerSession`.
-prisma:query SELECT [dbo].[RankedListType].[id], [dbo].[RankedListType].[name], [dbo].[RankedListType].[description], [dbo].[RankedListType].[maxItems], [dbo].[RankedListType].[targetType], [dbo].[RankedListType].[createdAt], [dbo].[RankedListType].[updatedAt] FROM [dbo].[RankedListType] WHERE 1=1 ORDER BY [dbo].[RankedListType].[createdAt] DESC OFFSET @P1 ROWS
- ✓ Compiled in 2.5s (587 modules)
- ✓ Compiled in 481ms (587 modules)
+ ✓ Ready in 3s
+ ○ Compiling /episode/[id] ...
+ ✓ Compiled /episode/[id] in 12.3s (884 modules)
+ ⨯ Error: Invalid port number: //bbpc.database.windows.net
+    at parseConnectionString (file:///app/node_modules/@prisma/adapter-mssql/dist/index.mjs:57:13)
+    at new PrismaMssqlAdapterFactory (file:///app/node_modules/@prisma/adapter-mssql/dist/index.mjs:718:22)
+    at eval (webpack-internal:///./src/server/db/client.ts:19:17) {
+  page: '/episode/1'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 6.9s (886 modules)

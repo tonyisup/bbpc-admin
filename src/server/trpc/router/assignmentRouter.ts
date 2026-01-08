@@ -64,7 +64,30 @@ export const assignmentRouter = router({
           episodeId: req.input.episodeId
         },
         include: {
-          assignmentReviews: true,
+          assignmentReviews: {
+            include: {
+              review: {
+                include: {
+                  rating: true,
+                  user: true
+                }
+              },
+              guesses: {
+                include: {
+                  user: true,
+                  rating: true,
+                }
+              }
+            }
+          },
+          gamblingPoints: {
+            include: {
+              user: true,
+              gamblingType: true,
+              targetUser: true,
+              point: true
+            }
+          },
           movie: true,
           user: true
         }
