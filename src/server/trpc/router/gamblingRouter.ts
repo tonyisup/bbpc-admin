@@ -66,6 +66,17 @@ export const gamblingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { userId, seasonId, points, assignmentId, targetUserId } = input;
 
+      if (assignmentId) {
+        const assignment = await ctx.prisma.assignment.findUnique({
+          where: { id: assignmentId },
+          include: { episode: true }
+        });
+
+        if (assignment?.episode?.status === "recording" || assignment?.episode?.status === "published") {
+          throw new Error("Bets are locked for this episode");
+        }
+      }
+
       if (!seasonId) {
         const season = await ctx.prisma.season.findFirst({
           orderBy: {
@@ -107,6 +118,15 @@ export const gamblingRouter = router({
       points: z.number()
     }))
     .mutation(async (req) => {
+      const gamble = await req.ctx.prisma.gamblingPoints.findUnique({
+        where: { id: req.input.id },
+        include: { assignment: { include: { episode: true } } }
+      });
+
+      if (gamble?.assignment?.episode?.status === "recording" || gamble?.assignment?.episode?.status === "published") {
+        throw new Error("Bets are locked for this episode");
+      }
+
       return await req.ctx.prisma.gamblingPoints.update({
         where: {
           id: req.input.id
@@ -120,6 +140,15 @@ export const gamblingRouter = router({
   remove: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
+      const gamble = await req.ctx.prisma.gamblingPoints.findUnique({
+        where: { id: req.input.id },
+        include: { assignment: { include: { episode: true } } }
+      });
+
+      if (gamble?.assignment?.episode?.status === "recording" || gamble?.assignment?.episode?.status === "published") {
+        throw new Error("Bets are locked for this episode");
+      }
+
       return await req.ctx.prisma.gamblingPoints.delete({
         where: {
           id: req.input.id
