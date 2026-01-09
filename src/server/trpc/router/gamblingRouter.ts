@@ -91,6 +91,20 @@ export const gamblingRouter = router({
       }
 
       return await ctx.prisma.$transaction(async (prisma) => {
+        if (assignmentId) {
+          const assignment = await prisma.assignment.findUnique({
+            where: { id: assignmentId },
+            include: { episode: true },
+          });
+
+          if (
+            assignment?.episode?.status === "recording" ||
+            assignment?.episode?.status === "published"
+          ) {
+            throw new Error("Bets are locked for this episode");
+          }
+        }
+
         const userTotalPoints = await calculateUserPoints(prisma, userId, seasonId);
 
         if (userTotalPoints < points) {
