@@ -161,7 +161,7 @@ export function ManageBonusPointsPopover({
 											<span className="text-xs font-medium">{g.gamblingType?.title} {g.targetUser ? `on ${g.targetUser.name}` : ""}</span>
 											<span className="text-[10px] text-gray-400">{g.points} pts bet</span>
 										</div>
-										{!g.pointsId && g.successful === null && (
+										{!g.pointsId && (g.status === "pending" || g.status === "locked") && (
 											<div className="flex gap-1">
 												<Button
 													size="sm"
@@ -184,7 +184,7 @@ export function ManageBonusPointsPopover({
 										{g.pointsId && (
 											<span className="text-[10px] text-emerald-400 font-bold">WON</span>
 										)}
-										{!g.pointsId && g.successful === false && (
+										{!g.pointsId && g.status === "lost" && (
 											<span className="text-[10px] text-rose-400 font-bold">LOST</span>
 										)}
 									</div>

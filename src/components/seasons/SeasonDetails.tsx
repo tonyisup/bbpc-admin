@@ -491,7 +491,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                     <Card key={gamble.id} className="border-none shadow-sm bg-card overflow-hidden">
                       <div className={cn(
                         "h-1 w-full",
-                        gamble.successful ? "bg-emerald-500" : "bg-muted"
+                        gamble.status === "won" ? "bg-emerald-500" : (gamble.status === "lost" ? "bg-rose-500" : "bg-muted")
                       )} />
                       <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
                         <div className="flex items-center gap-3">
@@ -503,9 +503,9 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                             <span className="font-bold text-sm tracking-tight">{gamble.user.name}</span>
                             <Badge className={cn(
                               "w-fit px-1.5 py-0 text-[8px] font-black uppercase mt-1",
-                              gamble.successful ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+                              gamble.status === "won" ? "bg-emerald-100 text-emerald-700" : (gamble.status === "lost" ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground")
                             )}>
-                              {gamble.successful ? "Successful" : "Pending/Failed"}
+                              {gamble.status === "won" ? "Successful" : (gamble.status === "lost" ? "Lost" : "Pending/Locked")}
                             </Badge>
                           </div>
                         </div>
