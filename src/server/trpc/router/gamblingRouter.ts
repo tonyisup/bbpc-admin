@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { adminProcedure, publicProcedure, router } from "../trpc";
-import { calculateUserPoints } from "../utils/points";
+import { calculateUserPoints, getCurrentSeasonID } from "../utils/points";
 
 export const gamblingRouter = router({
   getForGamblingType: publicProcedure
@@ -26,13 +26,8 @@ export const gamblingRouter = router({
       const isAll = seasonId === "all";
 
       if (!seasonId && !isAll) {
-        const season = await req.ctx.prisma.season.findFirst({
-          orderBy: {
-            startedOn: 'desc',
-          },
-          where: { endedOn: null }
-        });
-        seasonId = season?.id;
+        const currentSeasonId = await getCurrentSeasonID(req.ctx.prisma);
+        seasonId = currentSeasonId ?? undefined;
       }
 
       const filterBySeasonId = isAll ? undefined : seasonId;
@@ -64,7 +59,7 @@ export const gamblingRouter = router({
       targetUserId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { userId, seasonId, points, assignmentId, targetUserId } = input;
+      let { userId, seasonId, points, assignmentId, targetUserId } = input;
 
       if (assignmentId) {
         const assignment = await ctx.prisma.assignment.findUnique({
@@ -78,16 +73,12 @@ export const gamblingRouter = router({
       }
 
       if (!seasonId) {
-        const season = await ctx.prisma.season.findFirst({
-          orderBy: {
-            startedOn: 'desc',
-          },
-          where: { endedOn: null }
-        });
-        if (!season) {
+        const currentSeasonId = await getCurrentSeasonID(ctx.prisma);
+        if (!currentSeasonId) {
           throw new Error("No active season found to add gambling points");
         }
-        input.seasonId = season.id;
+        seasonId = currentSeasonId;
+        input.seasonId = seasonId;
       }
 
       return await ctx.prisma.$transaction(async (prisma) => {
@@ -137,8 +128,8 @@ export const gamblingRouter = router({
         include: { assignment: { include: { episode: true } } }
       });
 
-      if (gamble?.assignment?.episode?.status === "recording" || gamble?.assignment?.episode?.status === "published") {
-        throw new Error("Bets are locked for this episode");
+      if (gamble?.status !== "pending") {
+        throw new Error("Cannot update a bet that is already locked or resolved");
       }
 
       return await req.ctx.prisma.gamblingPoints.update({
@@ -159,8 +150,8 @@ export const gamblingRouter = router({
         include: { assignment: { include: { episode: true } } }
       });
 
-      if (gamble?.assignment?.episode?.status === "recording" || gamble?.assignment?.episode?.status === "published") {
-        throw new Error("Bets are locked for this episode");
+      if (gamble?.status !== "pending") {
+        throw new Error("Cannot delete a bet that is already locked or resolved");
       }
 
       return await req.ctx.prisma.gamblingPoints.delete({
@@ -246,11 +237,7 @@ export const gamblingRouter = router({
 
       let seasonId = gamble.seasonId || input.seasonId;
       if (!seasonId) {
-        const currentSeason = await ctx.prisma.season.findFirst({
-          orderBy: { startedOn: 'desc' },
-          where: { endedOn: null }
-        });
-        seasonId = currentSeason?.id;
+        seasonId = (await getCurrentSeasonID(ctx.prisma)) ?? undefined;
       }
 
       if (!seasonId) throw new Error("No season found for point creation");
@@ -272,7 +259,7 @@ export const gamblingRouter = router({
         return await tx.gamblingPoints.update({
           where: { id: gamble.id },
           data: {
-            successful: true,
+            status: "won",
             pointsId: point.id,
             seasonId: seasonId // Update the gamble record too if it was missing
           }
@@ -285,12 +272,54 @@ export const gamblingRouter = router({
       gambleId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      return await ctx.prisma.gamblingPoints.update({
-        where: { id: input.gambleId },
-        data: {
-          successful: false,
-          pointsId: null // Ensure no point is linked if rejected
+      const gamble = await ctx.prisma.gamblingPoints.findUnique({
+        where: { id: input.gambleId }
+      });
+
+      if (!gamble) throw new Error("Gamble not found");
+
+      return await ctx.prisma.$transaction(async (tx) => {
+        if (gamble.pointsId) {
+          await tx.point.delete({ where: { id: gamble.pointsId } });
         }
+
+        return await tx.gamblingPoints.update({
+          where: { id: input.gambleId },
+          data: {
+            status: "lost",
+            pointsId: null
+          }
+        });
+      });
+    }),
+
+  updateStatus: adminProcedure
+    .input(z.object({
+      id: z.string(),
+      status: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { id, status } = input;
+      const gamble = await ctx.prisma.gamblingPoints.findUnique({
+        where: { id },
+        include: { point: true }
+      });
+
+      if (!gamble) throw new Error("Gamble not found");
+
+      return await ctx.prisma.$transaction(async (tx) => {
+        // If we are moving away from "won" status, remove the point record
+        if (gamble.status === "won" && gamble.pointsId && status !== "won") {
+          await tx.point.delete({ where: { id: gamble.pointsId } });
+        }
+
+        return await tx.gamblingPoints.update({
+          where: { id },
+          data: {
+            status,
+            pointsId: status === "won" ? gamble.pointsId : null
+          }
+        });
       });
     }),
 

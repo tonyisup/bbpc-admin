@@ -4,7 +4,7 @@ import Link from "next/link";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp, Lock, Unlock, RotateCcw, PlusCircle, MinusCircle } from "lucide-react";
 import { ConfirmModal } from "../../components/ui/confirm-modal";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
@@ -113,7 +113,7 @@ interface Guess {
 interface GamblingPoint {
 	id: string;
 	points: number;
-	successful: boolean;
+	status: string;
 	gamblingType?: {
 		id: string;
 		title: string;
@@ -260,6 +260,12 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 		refetchGuesses();
 		refetchGamblingPoints();
 	}
+
+	const { mutate: confirmGamble, isLoading: isConfirming } = trpc.gambling.confirmGamble.useMutation({ onSuccess: refreshAllPoints });
+	const { mutate: rejectGamble, isLoading: isRejecting } = trpc.gambling.rejectGamble.useMutation({ onSuccess: refreshAllPoints });
+	const { mutate: updateStatus, isLoading: isUpdatingStatus } = trpc.gambling.updateStatus.useMutation({ onSuccess: refreshAllPoints });
+
+	const isProcessingGamble = isConfirming || isRejecting || isUpdatingStatus;
 
 	const { mutate: updateUser } = trpc.user.update.useMutation({
 		onSuccess: () => {
@@ -664,6 +670,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 												<TableRow className="hover:bg-transparent">
 													<TableHead className="text-[10px] uppercase font-bold px-4">Event</TableHead>
 													<TableHead className="text-[10px] uppercase font-bold text-right px-4">Pts</TableHead>
+													<TableHead className="text-[10px] uppercase font-bold text-right px-4 w-[100px]">Actions</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -673,14 +680,64 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 															<div className="font-medium truncate max-w-[120px]">{gp.gamblingType?.title}</div>
 														</TableCell>
 														<TableCell className="py-2 px-4 text-right">
-															<span className={gp.successful ? "text-green-600 font-bold" : "text-destructive"}>
-																{gp.successful ? "+" : "-"}{gp.points}
+															<span className={gp.status === "won" ? "text-green-600 font-bold" : (gp.status === "lost" ? "text-destructive" : "text-muted-foreground")}>
+																{gp.status === "won" ? "+" : (gp.status === "lost" ? "-" : "")}{gp.points}
 															</span>
+														</TableCell>
+														<TableCell className="py-1 px-4 text-right">
+															<div className="flex items-center justify-end gap-0.5">
+																{(gp.status === "pending" || gp.status === "locked") && (
+																	<>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-emerald-500"
+																			onClick={() => confirmGamble({ gambleId: gp.id })}
+																			disabled={isProcessingGamble}
+																			title="Confirm Win"
+																		>
+																			<PlusCircle className="h-3 w-3" />
+																		</Button>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-destructive"
+																			onClick={() => rejectGamble({ gambleId: gp.id })}
+																			disabled={isProcessingGamble}
+																			title="Confirm Loss"
+																		>
+																			<MinusCircle className="h-3 w-3" />
+																		</Button>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-blue-500"
+																			onClick={() => updateStatus({ id: gp.id, status: gp.status === "pending" ? "locked" : "pending" })}
+																			disabled={isProcessingGamble}
+																			title={gp.status === "pending" ? "Lock" : "Unlock"}
+																		>
+																			{gp.status === "pending" ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+																		</Button>
+																	</>
+																)}
+																{(gp.status === "won" || gp.status === "lost") && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-6 w-6 text-gray-400"
+																		onClick={() => updateStatus({ id: gp.id, status: "pending" })}
+																		disabled={isProcessingGamble}
+																		title="Reset to Pending"
+																	>
+																		<RotateCcw className="h-3 w-3" />
+																	</Button>
+																)}
+															</div>
 														</TableCell>
 													</TableRow>
 												))}
 												{(!gamblingPoints || gamblingPoints.length === 0) && (
-													<TableRow><TableCell colSpan={2} className="text-center py-4 text-muted-foreground text-[10px] italic">No gambling history</TableCell></TableRow>
+													<TableRow><TableCell colSpan={3} className="text-center py-4 text-muted-foreground text-[10px] italic">No gambling history</TableCell></TableRow>
 												)}
 											</TableBody>
 										</Table>

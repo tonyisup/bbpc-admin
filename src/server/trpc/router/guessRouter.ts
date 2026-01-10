@@ -28,14 +28,8 @@ export const guessRouter = router({
 			}
 
 			// 1. Get current season
-			const latestSeason = await ctx.prisma.season.findFirst({
-				orderBy: {
-					startedOn: 'desc',
-				},
-				where: {
-					endedOn: null,
-				}
-			});
+			const latestSeasonId = await getCurrentSeasonID(ctx.prisma);
+			const latestSeason = latestSeasonId ? await ctx.prisma.season.findUnique({ where: { id: latestSeasonId } }) : null;
 
 			if (!latestSeason) {
 				throw new Error("No active season found");
@@ -278,13 +272,18 @@ export const guessRouter = router({
 		}),
 
 	currentSeason: publicProcedure
-		.query(async (req) => {
-			return await req.ctx.prisma.season.findFirst({
+		.query(async ({ ctx }) => {
+			const now = new Date();
+			return await ctx.prisma.season.findFirst({
 				orderBy: {
 					startedOn: 'desc',
 				},
 				where: {
-					endedOn: null,
+					startedOn: { lte: now },
+					OR: [
+						{ endedOn: { gte: now } },
+						{ endedOn: null },
+					],
 				},
 				include: {
 					gameType: true
