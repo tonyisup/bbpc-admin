@@ -32,16 +32,11 @@ export const gamblingRouter = router({
 
       const filterBySeasonId = isAll ? undefined : seasonId;
 
-      const where: any = {
-        userId: req.input.userId,
-      };
-
-      if (filterBySeasonId) {
-        where.seasonId = filterBySeasonId;
-      }
-
       return await req.ctx.prisma.gamblingPoints.findMany({
-        where,
+        where: {
+          userId: req.input.userId,
+          ...(filterBySeasonId ? { seasonId: filterBySeasonId } : {}),
+        },
         include: {
           gamblingType: true,
           point: true
@@ -59,7 +54,8 @@ export const gamblingRouter = router({
       targetUserId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      let { userId, seasonId, points, assignmentId, targetUserId } = input;
+      const { userId, points, assignmentId, targetUserId, gamblingTypeId } = input;
+      let { seasonId } = input;
 
       if (assignmentId) {
         const assignment = await ctx.prisma.assignment.findUnique({
@@ -78,7 +74,6 @@ export const gamblingRouter = router({
           throw new Error("No active season found to add gambling points");
         }
         seasonId = currentSeasonId;
-        input.seasonId = seasonId;
       }
 
       return await ctx.prisma.$transaction(async (prisma) => {
@@ -105,11 +100,11 @@ export const gamblingRouter = router({
         const newGamble = await prisma.gamblingPoints.create({
           data: {
             userId,
-            gamblingTypeId: input.gamblingTypeId,
+            gamblingTypeId,
             points,
             seasonId,
             assignmentId,
-            targetUserId: input.targetUserId,
+            targetUserId,
           },
         });
 
@@ -128,7 +123,7 @@ export const gamblingRouter = router({
         include: { assignment: { include: { episode: true } } }
       });
 
-      if (gamble?.status !== "pending") {
+      if ((gamble as any)?.status !== "pending") {
         throw new Error("Cannot update a bet that is already locked or resolved");
       }
 
@@ -150,7 +145,7 @@ export const gamblingRouter = router({
         include: { assignment: { include: { episode: true } } }
       });
 
-      if (gamble?.status !== "pending") {
+      if ((gamble as any)?.status !== "pending") {
         throw new Error("Cannot delete a bet that is already locked or resolved");
       }
 
@@ -262,7 +257,7 @@ export const gamblingRouter = router({
             status: "won",
             pointsId: point.id,
             seasonId: seasonId // Update the gamble record too if it was missing
-          }
+          } as any
         });
       });
     }),
@@ -288,7 +283,7 @@ export const gamblingRouter = router({
           data: {
             status: "lost",
             pointsId: null
-          }
+          } as any
         });
       });
     }),
@@ -309,7 +304,7 @@ export const gamblingRouter = router({
 
       return await ctx.prisma.$transaction(async (tx) => {
         // If we are moving away from "won" status, remove the point record
-        if (gamble.status === "won" && gamble.pointsId && status !== "won") {
+        if ((gamble as any).status === "won" && gamble.pointsId && status !== "won") {
           await tx.point.delete({ where: { id: gamble.pointsId } });
         }
 
@@ -318,7 +313,7 @@ export const gamblingRouter = router({
           data: {
             status,
             pointsId: status === "won" ? gamble.pointsId : null
-          }
+          } as any
         });
       });
     }),

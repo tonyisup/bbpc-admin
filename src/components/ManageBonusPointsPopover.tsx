@@ -155,7 +155,7 @@ export function ManageBonusPointsPopover({
 						{gambles && gambles.length > 0 && (
 							<div className="space-y-2 border-b border-gray-800 pb-2">
 								<p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Gambles</p>
-								{gambles.map(g => (
+								{(gambles as any[])?.map(g => (
 									<div key={g.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded border border-gray-700/30">
 										<div className="flex flex-col">
 											<span className="text-xs font-medium">{g.gamblingType?.title} {g.targetUser ? `on ${g.targetUser.name}` : ""}</span>

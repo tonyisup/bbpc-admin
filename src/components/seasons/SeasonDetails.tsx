@@ -486,8 +486,8 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
 
             <TabsContent value="gambling" className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {season.gamblingPoints.length > 0 ? (
-                  season.gamblingPoints.map((gamble) => (
+                {(season.gamblingPoints as any[]).length > 0 ? (
+                  (season.gamblingPoints as any[]).map((gamble) => (
                     <Card key={gamble.id} className="border-none shadow-sm bg-card overflow-hidden">
                       <div className={cn(
                         "h-1 w-full",

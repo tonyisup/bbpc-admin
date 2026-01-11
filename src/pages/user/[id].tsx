@@ -394,14 +394,14 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 						assignmentGroup = { assignment, points: [] };
 						group.assignments[assignment.id] = assignmentGroup;
 					}
-					assignmentGroup.points.push(point as Point);
+					assignmentGroup.points.push(point as any);
 				} else {
-					group.otherPoints.push(point as Point);
+					group.otherPoints.push(point as any);
 				}
 			} else {
 				const generalGroup = acc['general'];
 				if (generalGroup) {
-					generalGroup.otherPoints.push(point as Point);
+					generalGroup.otherPoints.push(point as any);
 				}
 			}
 		});
@@ -674,7 +674,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{gamblingPoints?.slice(0, 10).map((gp) => (
+												{(gamblingPoints as any[])?.slice(0, 10).map((gp) => (
 													<TableRow key={gp.id} className="text-xs">
 														<TableCell className="py-2 px-4">
 															<div className="font-medium truncate max-w-[120px]">{gp.gamblingType?.title}</div>

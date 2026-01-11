@@ -96,16 +96,20 @@ export const episodeRouter = router({
         });
 
         if (req.input.status === "recording" || req.input.status === "published") {
+          const assignments = await tx.assignment.findMany({
+            where: { episodeId: req.input.id },
+            select: { id: true }
+          });
+          const assignmentIds = assignments.map(a => a.id);
+
           await tx.gamblingPoints.updateMany({
             where: {
-              assignment: {
-                episodeId: req.input.id
-              },
+              assignmentId: { in: assignmentIds },
               status: "pending"
-            },
+            } as any,
             data: {
               status: "locked"
-            }
+            } as any
           });
         }
 
@@ -281,16 +285,20 @@ export const episodeRouter = router({
         });
 
         if (req.input.status === "recording" || req.input.status === "published") {
+          const assignments = await tx.assignment.findMany({
+            where: { episodeId: req.input.id },
+            select: { id: true }
+          });
+          const assignmentIds = assignments.map(a => a.id);
+
           await tx.gamblingPoints.updateMany({
             where: {
-              assignment: {
-                episodeId: req.input.id
-              },
+              assignmentId: { in: assignmentIds },
               status: "pending"
-            },
+            } as any,
             data: {
               status: "locked"
-            }
+            } as any
           });
         }
 
