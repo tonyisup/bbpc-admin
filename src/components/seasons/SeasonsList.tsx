@@ -36,8 +36,8 @@ export const SeasonsList = ({ seasons }: SeasonsListProps) => {
         const now = new Date();
         const startDate = season.startedOn ? new Date(season.startedOn) : null;
         const isFuture = !!startDate && !isNaN(startDate.getTime()) && startDate > now;
-        const isEnded = !!season.endedOn;
-        const isActive = !isFuture && !isEnded;
+        const isEnded = !!season.endedOn && new Date(season.endedOn) < now;
+        const isActive = !isFuture && (!season.endedOn || new Date(season.endedOn) >= now);
 
         return (
           <Link key={season.id} href={`/season/${season.id}`} className="group block focus:outline-none">

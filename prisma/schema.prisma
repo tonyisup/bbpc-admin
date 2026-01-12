@@ -324,6 +324,13 @@ model AudioEpisodeMessage {
   @@index([episodeId])
 }
 
+// enum GamblingPointsStatus {
+//   pending
+//   locked
+//   won
+//   lost
+// }
+
 model GamblingPoints {
   id             String       @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId         String
@@ -333,7 +340,7 @@ model GamblingPoints {
   points         Int
   notes          String?
   createdAt      DateTime     @default(now()) @db.DateTime
-  successful     Boolean?
+  status         String       @default("pending") @db.VarChar(20)
   seasonId       String?      @db.UniqueIdentifier
   pointsId       String?      @db.UniqueIdentifier
   assignment     Assignment?  @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)

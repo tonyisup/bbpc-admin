@@ -1,9 +1,10 @@
 import type { Assignment } from "@prisma/client";
 import { type FC, useMemo } from "react";
+import { toast } from "sonner";
 import { trpc } from "../../utils/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Coins, User as UserIcon, PlusCircle, MinusCircle } from "lucide-react";
+import { Coins, User as UserIcon, PlusCircle, MinusCircle, Lock, Unlock, RotateCcw } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface AssignmentBetsProps {
@@ -13,12 +14,34 @@ interface AssignmentBetsProps {
 }
 
 const AssignmentBets: FC<AssignmentBetsProps> = ({ assignment, gamblingPoints, onRefresh }) => {
-	const { mutate: confirmGamble, isLoading: isConfirming } = trpc.gambling.confirmGamble.useMutation({ onSuccess: () => onRefresh() });
-	const { mutate: rejectGamble, isLoading: isRejecting } = trpc.gambling.rejectGamble.useMutation({ onSuccess: () => onRefresh() });
+	const { mutate: confirmGamble, isLoading: isConfirming } = trpc.gambling.confirmGamble.useMutation({
+		onSuccess: () => {
+			onRefresh();
+			toast.success("Gamble confirmed");
+		},
+		onError: (err) => toast.error(err.message)
+	});
+	const { mutate: rejectGamble, isLoading: isRejecting } = trpc.gambling.rejectGamble.useMutation({
+		onSuccess: () => {
+			onRefresh();
+			toast.success("Gamble rejected");
+		},
+		onError: (err) => toast.error(err.message)
+	});
+	const { mutate: updateStatus, isLoading: isUpdatingStatus } = trpc.gambling.updateStatus.useMutation({
+		onSuccess: () => {
+			onRefresh();
+			toast.success("Status updated");
+		},
+		onError: (err) => toast.error(err.message)
+	});
+
+	const isProcessing = isConfirming || isRejecting || isUpdatingStatus;
 
 	const getStatusBadge = (gp: any) => {
-		if (gp.successful === true) return <Badge className="bg-emerald-600 text-white">Won</Badge>;
-		if (gp.successful === false) return <Badge variant="destructive">Lost</Badge>;
+		if (gp.status === "won") return <Badge className="bg-emerald-600 text-white">Won</Badge>;
+		if (gp.status === "lost") return <Badge variant="destructive">Lost</Badge>;
+		if (gp.status === "locked") return <Badge variant="outline" className="text-blue-500 border-blue-500">Locked</Badge>;
 		return <Badge variant="outline" className="text-amber-500 border-amber-500">Pending</Badge>;
 	};
 
@@ -69,35 +92,74 @@ const AssignmentBets: FC<AssignmentBetsProps> = ({ assignment, gamblingPoints, o
 														Target: {gp.TargetUser.name}
 													</div>
 												)}
-												{gp.successful === true && gp.point && (
+												{gp.status === "won" && gp.point && (
 													<div className="text-xs text-emerald-500">
 														Won: +{gp.point.adjustment} pts
 													</div>
 												)}
 											</div>
 										</div>
-										{gp.successful === null && (
-											<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+										<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+											{(gp.status === "pending" || gp.status === "locked") && (
+												<>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+														onClick={() => confirmGamble({ gambleId: gp.id })}
+														disabled={isProcessing}
+														title="Confirm Win"
+													>
+														<PlusCircle className="h-4 w-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+														onClick={() => rejectGamble({ gambleId: gp.id })}
+														disabled={isProcessing}
+														title="Confirm Loss"
+													>
+														<MinusCircle className="h-4 w-4" />
+													</Button>
+													{gp.status === "pending" ? (
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
+															onClick={() => updateStatus({ id: gp.id, status: "locked" })}
+															disabled={isProcessing}
+															title="Lock Bet"
+														>
+															<Lock className="h-4 w-4" />
+														</Button>
+													) : (
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
+															onClick={() => updateStatus({ id: gp.id, status: "pending" })}
+															disabled={isProcessing}
+															title="Unlock Bet"
+														>
+															<Unlock className="h-4 w-4" />
+														</Button>
+													)}
+												</>
+											)}
+											{(gp.status === "won" || gp.status === "lost") && (
 												<Button
 													variant="ghost"
 													size="icon"
-													className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-													onClick={() => confirmGamble({ gambleId: gp.id })}
-													disabled={isConfirming || isRejecting}
+													className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
+													onClick={() => updateStatus({ id: gp.id, status: "pending" })}
+													disabled={isProcessing}
+													title="Reset to Pending"
 												>
-													<PlusCircle className="h-4 w-4" />
+													<RotateCcw className="h-4 w-4" />
 												</Button>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-													onClick={() => rejectGamble({ gambleId: gp.id })}
-													disabled={isConfirming || isRejecting}
-												>
-													<MinusCircle className="h-4 w-4" />
-												</Button>
-											</div>
-										)}
+											)}
+										</div>
 									</div>
 								))}
 							</div>

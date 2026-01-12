@@ -79,20 +79,42 @@ export const episodeRouter = router({
       notes: z.string().optional(),
     }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.update({
-        where: {
-          id: req.input.id
-        },
-        data: {
-          number: req.input.number,
-          title: req.input.title,
-          description: req.input.description,
-          date: req.input.date,
-          recording: req.input.recording,
-          status: req.input.status,
-          notes: req.input.notes
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        const episode = await tx.episode.update({
+          where: {
+            id: req.input.id
+          },
+          data: {
+            number: req.input.number,
+            title: req.input.title,
+            description: req.input.description,
+            date: req.input.date,
+            recording: req.input.recording,
+            status: req.input.status,
+            notes: req.input.notes
+          }
+        });
+
+        if (req.input.status === "recording" || req.input.status === "published") {
+          const assignments = await tx.assignment.findMany({
+            where: { episodeId: req.input.id },
+            select: { id: true }
+          });
+          const assignmentIds = assignments.map(a => a.id);
+
+          await tx.gamblingPoints.updateMany({
+            where: {
+              assignmentId: { in: assignmentIds },
+              status: "pending"
+            } as any,
+            data: {
+              status: "locked"
+            } as any
+          });
         }
-      })
+
+        return episode;
+      });
     }),
   get: publicProcedure
     .input(z.object({ id: z.string() }))
@@ -172,7 +194,7 @@ export const episodeRouter = router({
         cursor: cursor ? { id: cursor } : undefined,
         where: input.searchTerm ? {
           title: {
-             contains: input.searchTerm,
+            contains: input.searchTerm,
           }
         } : undefined,
         orderBy: {
@@ -256,9 +278,31 @@ export const episodeRouter = router({
       title: z.string().optional()
     }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.update({
-        where: { id: req.input.id },
-        data: { status: req.input.status, title: req.input.title }
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        const episode = await tx.episode.update({
+          where: { id: req.input.id },
+          data: { status: req.input.status, title: req.input.title }
+        });
+
+        if (req.input.status === "recording" || req.input.status === "published") {
+          const assignments = await tx.assignment.findMany({
+            where: { episodeId: req.input.id },
+            select: { id: true }
+          });
+          const assignmentIds = assignments.map(a => a.id);
+
+          await tx.gamblingPoints.updateMany({
+            where: {
+              assignmentId: { in: assignmentIds },
+              status: "pending"
+            } as any,
+            data: {
+              status: "locked"
+            } as any
+          });
+        }
+
+        return episode;
       });
     }),
   updateDetails: protectedProcedure

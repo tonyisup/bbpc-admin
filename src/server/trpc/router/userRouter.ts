@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
-import { calculateUserPoints } from "../utils/points";
+import { calculateUserPoints, getCurrentSeasonID } from "../utils/points";
 
 export const userRouter = router({
 	add: publicProcedure
@@ -121,15 +121,8 @@ export const userRouter = router({
 			const isAll = seasonId === "all";
 
 			if (!seasonId && !isAll) {
-				const season = await req.ctx.prisma.season.findFirst({
-					orderBy: {
-						startedOn: 'desc',
-					},
-					where: {
-						endedOn: null,
-					},
-				});
-				seasonId = season?.id;
+				const currentSeasonId = await getCurrentSeasonID(req.ctx.prisma);
+				seasonId = currentSeasonId ?? undefined;
 			}
 
 			const where: any = {
