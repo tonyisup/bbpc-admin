@@ -20,9 +20,11 @@ import { ratingRouter } from "./ratingRouter";
 import { bangerRouter } from "./bangerRouter";
 import { tagRouter } from "./tagRouter";
 import { rankedListRouter } from "./rankedListRouter";
+import { pointRouter } from "./pointRouter";
 
 export const appRouter = router({
   rankedList: rankedListRouter,
+  point: pointRouter,
   review: reviewRouter,
   assignment: assignmentRouter,
   episode: episodeRouter,

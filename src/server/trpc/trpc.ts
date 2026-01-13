@@ -11,6 +11,7 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const router = t.router;
+export const createCallerFactory = t.createCallerFactory;
 
 /**
  * Unprotected procedure
