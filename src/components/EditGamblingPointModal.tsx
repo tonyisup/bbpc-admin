@@ -16,7 +16,7 @@ interface EditGamblingPointModalProps {
 	gamble: {
 		id: string;
 		points: number;
-		gamblingType: {
+		gamblingType?: {
 			title: string;
 		};
 	} | null;
@@ -65,7 +65,7 @@ export function EditGamblingPointModal({ gamble, isOpen, onClose, onSuccess }: E
 					<div className="grid gap-4 py-4">
 						<div className="space-y-1">
 							<Label className="text-muted-foreground">Type</Label>
-							<div className="font-semibold">{gamble?.gamblingType.title}</div>
+							<div className="font-semibold">{gamble?.gamblingType?.title || "Unknown Type"}</div>
 						</div>
 						<div className="grid grid-cols-4 items-center gap-4">
 							<Label htmlFor="edit-points" className="text-right">
