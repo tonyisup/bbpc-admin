@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import TagModal from "../../components/Tag/TagModal";
 import { Tag } from "@prisma/client";
 import Link from "next/link";
+import Image from "next/image";
+import { User as UserIcon } from "lucide-react";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -176,18 +178,35 @@ const TagManagementPage: NextPage<InferGetServerSidePropsType<typeof getServerSi
                     votes?.map(vote => (
                       <TableRow key={vote.id} className="group">
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Link href={`/user/${vote.user?.id}`}>
-                              {vote.user?.image && (
-                                <img
-                                  src={vote.user.image}
-                                  alt={vote.user.name || "User"}
-                                  className="h-6 w-6 rounded-full"
-                                />
-                              )}
-                              <span className="text-sm font-medium">{vote.user?.name || "Unknown"}</span>
+                          {vote.user ? (
+                            <Link href={`/user/${vote.user.id}`}>
+                              <div className="flex items-center gap-2 group/user cursor-pointer">
+                                {vote.user.image ? (
+                                  <Image
+                                    src={vote.user.image}
+                                    alt={vote.user.name || "User"}
+                                    width={24}
+                                    height={24}
+                                    className="h-6 w-6 rounded-full"
+                                  />
+                                ) : (
+                                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                                    <UserIcon className="h-4 w-4 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <span className="text-sm font-medium group-hover/user:text-primary transition-colors">
+                                  {vote.user.name || "Unknown"}
+                                </span>
+                              </div>
                             </Link>
-                          </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-muted-foreground italic">
+                              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                                <UserIcon className="h-4 w-4" />
+                              </div>
+                              <span className="text-sm">Unknown</span>
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">

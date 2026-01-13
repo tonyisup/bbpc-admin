@@ -12,6 +12,7 @@ import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import Link from "next/link";
+import { ConfirmModal } from "../../components/ui/confirm-modal";
 import { useRouter } from "next/router";
 import { toast } from "sonner";
 
@@ -57,8 +58,13 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
     onSuccess: () => {
       toast.success("Point removed successfully");
       router.back();
+    },
+    onError: (err) => {
+      toast.error("Failed to remove point: " + err.message);
     }
   });
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const [reason, setReason] = useState("");
   const [adjustment, setAdjustment] = useState(0);
@@ -82,9 +88,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
   };
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this point record? This will unlink it from any associated guesses or activity.")) {
-      removePoint.mutate({ id: pointId });
-    }
+    setIsConfirmOpen(true);
   };
 
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
@@ -190,7 +194,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                         <Info className="h-4 w-4 text-purple-500" />
                         <span className="text-sm font-medium">Tag Vote: {v.tag}</span>
                       </div>
-                      <Link href="/tag">
+                      <Link href={`/tag?name=${encodeURIComponent(v.tag)}`}>
                         <Button variant="link" size="sm">View Tags</Button>
                       </Link>
                     </div>
@@ -237,6 +241,16 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          removePoint.mutate({ id: pointId });
+          setIsConfirmOpen(false);
+        }}
+        title="Delete Point Record"
+        description="Are you sure you want to delete this point record? This will unlink it from any associated guesses or activity."
+      />
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure, adminProcedure } from "../trpc";
+import { router, adminProcedure } from "../trpc";
 
 export const pointRouter = router({
 	get: adminProcedure
@@ -61,9 +61,12 @@ export const pointRouter = router({
 		}))
 		.mutation(async ({ ctx, input }) => {
 			const { id, ...data } = input;
+			const cleanData = Object.fromEntries(
+				Object.entries(data).filter(([_, v]) => v !== undefined)
+			);
 			return await ctx.prisma.point.update({
 				where: { id },
-				data,
+				data: cleanData,
 			});
 		}),
 

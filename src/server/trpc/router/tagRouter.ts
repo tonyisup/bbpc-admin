@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure, createCallerFactory } from "../trpc";
+import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { getCurrentSeasonID } from "../utils/points";
 import { tmdb } from "@/server/tmdb/client";
-import { movieRouter } from "./movieRouter";
 
 export const tagRouter = router({
   // Tag model
@@ -118,11 +117,15 @@ export const tagRouter = router({
         if (!vote.tmdbId) {
           throw new Error("Voted movie has invalid TMDB ID");
         }
-        const tmdbMovie = await tmdb.getMovie(vote.tmdbId);
-        if (!tmdbMovie) {
-          throw new Error("Movie not found");
+        try {
+          const tmdbMovie = await tmdb.getMovie(vote.tmdbId);
+          if (!tmdbMovie) {
+            throw new Error(`Movie not found on TMDB for id ${vote.tmdbId}`);
+          }
+          movieTitle = tmdbMovie.title;
+        } catch (err: any) {
+          throw new Error(`Failed to fetch TMDB movie for id ${vote.tmdbId}: ${err.message}`);
         }
-        movieTitle = tmdbMovie.title;
       }
 
 

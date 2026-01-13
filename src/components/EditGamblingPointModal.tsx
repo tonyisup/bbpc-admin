@@ -76,7 +76,11 @@ export function EditGamblingPointModal({ gamble, isOpen, onClose, onSuccess }: E
 								type="number"
 								className="col-span-3"
 								value={points}
-								onChange={(e) => setPoints(parseInt(e.target.value))}
+								onChange={(e) => {
+									const v = e.target.value;
+									const n = v === "" ? 0 : parseInt(v, 10);
+									setPoints(n);
+								}}
 								required
 							/>
 						</div>

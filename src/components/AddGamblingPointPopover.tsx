@@ -36,8 +36,15 @@ export function AddGamblingPointPopover({ userId, seasonId, onSuccess }: AddGamb
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		const pointsValue = parseInt(points);
-		if (isNaN(pointsValue) || !gamblingTypeId) return;
+		const pointsValue = parseInt(points, 10);
+		if (isNaN(pointsValue) || pointsValue < 0) {
+			toast.error("Please enter a valid positive number for points");
+			return;
+		}
+		if (!gamblingTypeId) {
+			toast.error("Please select a gambling type");
+			return;
+		}
 
 		addGamble({
 			userId,

@@ -326,7 +326,8 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 
 	const [modalOpen, setModalOpen] = useState<boolean>(false)
 	const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-	const [editGamble, setEditGamble] = useState<any | null>(null);
+	const [editGamble, setEditGamble] = useState<GamblingPoint | null>(null);
+	const [voteToRemoveId, setVoteToRemoveId] = useState<string | null>(null);
 
 	const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
 		onSuccess: () => {
@@ -351,9 +352,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	const applyPoints = trpc.tag.applyTagVotePoints.useMutation({ onSuccess: () => refreshAllPoints() });
 
 	const handleRemoveVote = (id: string) => {
-		if (confirm("Are you sure?")) {
-			removeVote.mutate({ id });
-		}
+		setVoteToRemoveId(id);
 	};
 
 	const handleApplyPoints = (id: string) => {
@@ -996,6 +995,18 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 								</div>
 							</CardContent>
 						</Card>
+						<ConfirmModal
+							isOpen={!!voteToRemoveId}
+							onClose={() => setVoteToRemoveId(null)}
+							onConfirm={() => {
+								if (voteToRemoveId) {
+									removeVote.mutate({ id: voteToRemoveId });
+									setVoteToRemoveId(null);
+								}
+							}}
+							title="Remove Tag Vote"
+							description="Are you sure you want to remove this tag vote? This action cannot be undone and will potentially affect points."
+						/>
 					</TabsContent>
 
 					<TabsContent value="settings" className="space-y-6">
