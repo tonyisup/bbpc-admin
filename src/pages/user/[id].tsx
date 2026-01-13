@@ -4,7 +4,7 @@ import Link from "next/link";
 import router, { useRouter } from "next/router";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { X, Trash2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp, Lock, Unlock, RotateCcw, PlusCircle, MinusCircle } from "lucide-react";
+import { X, Trash2, Edit2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp, Lock, Unlock, RotateCcw, PlusCircle, MinusCircle, Tag, Vote, Coins, Check } from "lucide-react";
 import { ConfirmModal } from "../../components/ui/confirm-modal";
 import UserRoleModal from "../../components/UserRoleModal";
 import { trpc } from "../../utils/trpc";
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHead, TableCell, TableRow, TableHeader, TableBody } from "@/components/ui/table";
 import { AddPointPopover } from "@/components/AddPointPopover";
+import { AddGamblingPointPopover } from "@/components/AddGamblingPointPopover";
+import { EditGamblingPointModal } from "@/components/EditGamblingPointModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -246,6 +248,10 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 		seasonId: querySeasonId
 	}, { enabled: !!id });
 
+	const { data: tagVotes, refetch: refetchTagVotes } = trpc.tag.getTagVotesForUser.useQuery({
+		userId: id
+	}, { enabled: !!id });
+
 	const form = useForm<z.infer<typeof formSchema>>({
 		values: {
 			name: user?.name ?? '',
@@ -259,6 +265,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 		refetchPoints();
 		refetchGuesses();
 		refetchGamblingPoints();
+		refetchTagVotes();
 	}
 
 	const { mutate: confirmGamble, isLoading: isConfirming } = trpc.gambling.confirmGamble.useMutation({ onSuccess: refreshAllPoints });
@@ -319,6 +326,8 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 
 	const [modalOpen, setModalOpen] = useState<boolean>(false)
 	const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+	const [editGamble, setEditGamble] = useState<GamblingPoint | null>(null);
+	const [voteToRemoveId, setVoteToRemoveId] = useState<string | null>(null);
 
 	const { mutate: removeAssignment } = trpc.syllabus.removeEpisodeFromSyllabusItem.useMutation({
 		onSuccess: () => {
@@ -338,6 +347,17 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	const { mutate: reorderSyllabus } = trpc.user.reorderSyllabus.useMutation({
 		onSuccess: () => refetchSyllabus(),
 	});
+
+	const removeVote = trpc.tag.removeTagVote.useMutation({ onSuccess: () => refreshAllPoints() });
+	const applyPoints = trpc.tag.applyTagVotePoints.useMutation({ onSuccess: () => refreshAllPoints() });
+
+	const handleRemoveVote = (id: string) => {
+		setVoteToRemoveId(id);
+	};
+
+	const handleApplyPoints = (id: string) => {
+		applyPoints.mutate({ id });
+	};
 
 	const onSubmit = (data: z.infer<typeof formSchema>) => {
 		updateUser({ id, name: data.name, email: data.email });
@@ -499,9 +519,10 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 				</div>
 
 				<Tabs defaultValue="activity" className="w-full">
-					<TabsList className="grid w-full max-w-md grid-cols-3 mb-8">
+					<TabsList className="grid w-full max-w-xl grid-cols-4 mb-8">
 						<TabsTrigger value="activity" className="gap-2 text-xs sm:text-sm"><History className="h-4 w-4" /> Activity</TabsTrigger>
 						<TabsTrigger value="syllabus" className="gap-2 text-xs sm:text-sm"><BookOpen className="h-4 w-4" /> Syllabus</TabsTrigger>
+						<TabsTrigger value="votes" className="gap-2 text-xs sm:text-sm"><Tag className="h-4 w-4" /> Votes</TabsTrigger>
 						<TabsTrigger value="settings" className="gap-2 text-xs sm:text-sm"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
 					</TabsList>
 
@@ -594,9 +615,16 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 																				</div>
 																			</div>
 																			{!point.isGuess && (
-																				<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removePoint({ id: point.id })}>
-																					<Trash2 className="h-3.5 w-3.5" />
-																				</Button>
+																				<div className="flex gap-1">
+																					<Link href={`/point/${point.id}`}>
+																						<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+																							<Edit2 className="h-3.5 w-3.5" />
+																						</Button>
+																					</Link>
+																					<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removePoint({ id: point.id })}>
+																						<Trash2 className="h-3.5 w-3.5" />
+																					</Button>
+																				</div>
 																			)}
 																		</div>
 																	))}
@@ -646,6 +674,9 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 														</div>
 														<div className="flex items-center gap-3">
 															<span className="font-mono font-bold text-sm">{(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)}</span>
+															<Link href={`/point/${point.id}`} target="_blank" className="text-gray-500 hover:text-indigo-400 transition-colors">
+																<Edit2 className="w-4 h-4" />
+															</Link>
 															<Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removePoint({ id: point.id })}>
 																<Trash2 className="h-3.5 w-3.5" />
 															</Button>
@@ -661,8 +692,11 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 							{/* History Tables */}
 							<div className="space-y-6">
 								<Card className="shadow-none border bg-card">
-									<CardHeader>
+									<CardHeader className="flex flex-row items-center justify-between space-y-0 text-left">
 										<CardTitle className="text-base">Gambling History</CardTitle>
+										{targetSeasonId && (
+											<AddGamblingPointPopover userId={id} seasonId={targetSeasonId} onSuccess={refreshAllPoints} />
+										)}
 									</CardHeader>
 									<CardContent className="p-0">
 										<Table>
@@ -670,7 +704,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 												<TableRow className="hover:bg-transparent">
 													<TableHead className="text-[10px] uppercase font-bold px-4">Event</TableHead>
 													<TableHead className="text-[10px] uppercase font-bold text-right px-4">Pts</TableHead>
-													<TableHead className="text-[10px] uppercase font-bold text-right px-4 w-[100px]">Actions</TableHead>
+													<TableHead className="text-[10px] uppercase font-bold text-right px-4 w-[120px]">Actions</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -721,15 +755,39 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 																	</>
 																)}
 																{(gp.status === "won" || gp.status === "lost") && (
+																	<>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-gray-400"
+																			onClick={() => updateStatus({ id: gp.id, status: "pending" })}
+																			disabled={isProcessingGamble}
+																			title="Reset to Pending"
+																		>
+																			<RotateCcw className="h-3 w-3" />
+																		</Button>
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="h-6 w-6 text-blue-400"
+																			onClick={() => setEditGamble(gp)}
+																			disabled={isProcessingGamble}
+																			title="Edit Points"
+																		>
+																			<Edit2 className="h-3 w-3" />
+																		</Button>
+																	</>
+																)}
+																{gp.status === "pending" && (
 																	<Button
 																		variant="ghost"
 																		size="icon"
-																		className="h-6 w-6 text-gray-400"
-																		onClick={() => updateStatus({ id: gp.id, status: "pending" })}
+																		className="h-6 w-6 text-blue-400"
+																		onClick={() => setEditGamble(gp)}
 																		disabled={isProcessingGamble}
-																		title="Reset to Pending"
+																		title="Edit Points"
 																	>
-																		<RotateCcw className="h-3 w-3" />
+																		<Edit2 className="h-3 w-3" />
 																	</Button>
 																)}
 															</div>
@@ -857,6 +915,100 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 						/>
 					</TabsContent>
 
+					<TabsContent value="votes" className="space-y-6">
+						<Card className="shadow-none border bg-card text-left">
+							<CardHeader>
+								<CardTitle>Tag Votes</CardTitle>
+								<CardDescription>History of tag votes by {user?.name}</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<div className="rounded-md border bg-card shadow-sm overflow-hidden">
+									<Table>
+										<TableHeader>
+											<TableRow>
+												<TableHead>User Tag</TableHead>
+												<TableHead>TMDB ID</TableHead>
+												<TableHead>Type</TableHead>
+												<TableHead>Date</TableHead>
+												<TableHead className="text-right">Actions</TableHead>
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{!tagVotes || tagVotes.length === 0 ? (
+												<TableRow><TableCell colSpan={5} className="text-center h-24 italic text-muted-foreground">No tag votes found.</TableCell></TableRow>
+											) : (
+												tagVotes.map(vote => (
+													<TableRow key={vote.id} className="group">
+														<TableCell className="font-medium">
+															<div className="flex items-center gap-2 text-sm">
+																<Vote className="h-4 w-4 text-purple-500" />
+																{vote.tag}
+															</div>
+														</TableCell>
+														<TableCell className="text-sm text-muted-foreground">
+															<a href={`https://www.themoviedb.org/movie/${vote.tmdbId}`} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">
+																{vote.tmdbId}
+															</a>
+														</TableCell>
+														<TableCell>
+															{vote.isTag ? (
+																<span className="text-[10px] uppercase font-black bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200">Is Tag</span>
+															) : (
+																<span className="text-[10px] uppercase font-black bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">Not Tag</span>
+															)}
+														</TableCell>
+														<TableCell className="text-xs text-muted-foreground">
+															{new Date(vote.createdAt).toLocaleDateString()}
+														</TableCell>
+														<TableCell className="text-right">
+															<div className="flex justify-end gap-2 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+																{vote.pointId ? (
+																	<div className="flex items-center justify-center h-10 w-10 text-green-500" title="Points Applied">
+																		<Check className="h-4 w-4" />
+																	</div>
+																) : (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="text-green-600 hover:text-green-700 hover:bg-green-50"
+																		onClick={() => handleApplyPoints(vote.id)}
+																		title="Apply Points"
+																	>
+																		<Coins className="h-4 w-4" />
+																	</Button>
+																)}
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	className="text-destructive hover:text-destructive"
+																	onClick={() => handleRemoveVote(vote.id)}
+																>
+																	<Trash2 className="h-4 w-4" />
+																</Button>
+															</div>
+														</TableCell>
+													</TableRow>
+												))
+											)}
+										</TableBody>
+									</Table>
+								</div>
+							</CardContent>
+						</Card>
+						<ConfirmModal
+							isOpen={!!voteToRemoveId}
+							onClose={() => setVoteToRemoveId(null)}
+							onConfirm={() => {
+								if (voteToRemoveId) {
+									removeVote.mutate({ id: voteToRemoveId });
+									setVoteToRemoveId(null);
+								}
+							}}
+							title="Remove Tag Vote"
+							description="Are you sure you want to remove this tag vote? This action cannot be undone and will potentially affect points."
+						/>
+					</TabsContent>
+
 					<TabsContent value="settings" className="space-y-6">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
 							{/* Account Details */}
@@ -926,6 +1078,13 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 						</div>
 					</TabsContent>
 				</Tabs>
+
+				<EditGamblingPointModal
+					gamble={editGamble}
+					isOpen={!!editGamble}
+					onClose={() => setEditGamble(null)}
+					onSuccess={refreshAllPoints}
+				/>
 			</div>
 		</>
 	);

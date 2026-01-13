@@ -37,6 +37,7 @@ export const movieRouter = router({
       year: z.number(),
       poster: z.string(),
       url: z.string(),
+      tmdbId: z.number().optional(),
     }))
     .mutation(async (req) => {
       const exists = await req.ctx.prisma.movie.findFirst({
@@ -54,6 +55,7 @@ export const movieRouter = router({
             year: req.input.year,
             poster: req.input.poster,
             url: req.input.url,
+            tmdbId: req.input.tmdbId,
           }
         })
       }
@@ -63,6 +65,7 @@ export const movieRouter = router({
           year: req.input.year,
           poster: req.input.poster,
           url: req.input.url,
+          tmdbId: req.input.tmdbId,
         }
       })
     }),

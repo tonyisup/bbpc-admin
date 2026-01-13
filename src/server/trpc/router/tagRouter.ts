@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { getCurrentSeasonID } from "../utils/points";
+import { tmdb } from "@/server/tmdb/client";
 
 export const tagRouter = router({
   // Tag model
@@ -50,6 +52,9 @@ export const tagRouter = router({
         where,
         take: input.take,
         skip: input.skip,
+        include: {
+          user: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -61,6 +66,85 @@ export const tagRouter = router({
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.tagVote.delete({
         where: { id: input.id },
+      });
+    }),
+
+  getTagVotesForUser: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.prisma.tagVote.findMany({
+        where: { userId: input.userId },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+    }),
+
+  applyTagVotePoints: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const vote = await ctx.prisma.tagVote.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!vote || vote.pointId) {
+        throw new Error("Vote not found or already has points");
+      }
+
+      const gamePointType = await ctx.prisma.gamePointType.findFirst({
+        where: { lookupID: "tag-vote" },
+      });
+
+      const movie = await ctx.prisma.movie.findFirst({
+        where: { tmdbId: vote.tmdbId },
+      });
+      let movieTitle = movie?.title;
+
+      const seasonId = await getCurrentSeasonID(ctx.prisma);
+
+      if (!gamePointType) {
+        throw new Error("GamePointType not found");
+      }
+
+      if (!seasonId) {
+        throw new Error("Season not found");
+      }
+
+      if (!vote.userId) {
+        throw new Error("User ID not found");
+      }
+      if (!movieTitle) {
+        if (!vote.tmdbId) {
+          throw new Error("Voted movie has invalid TMDB ID");
+        }
+        try {
+          const tmdbMovie = await tmdb.getMovie(vote.tmdbId);
+          if (!tmdbMovie) {
+            throw new Error(`Movie not found on TMDB for id ${vote.tmdbId}`);
+          }
+          movieTitle = tmdbMovie.title;
+        } catch (err: any) {
+          throw new Error(`Failed to fetch TMDB movie for id ${vote.tmdbId}: ${err.message}`);
+        }
+      }
+
+
+      return await ctx.prisma.$transaction(async (tx) => {
+        const point = await tx.point.create({
+          data: {
+            userId: vote.userId!,
+            seasonId: seasonId,
+            gamePointTypeId: gamePointType.id,
+            adjustment: 0,
+            reason: `Voted on tag: ${vote.tag} for movie: ${movieTitle}`,
+            earnedOn: new Date(),
+          },
+        });
+
+        return await tx.tagVote.update({
+          where: { id: vote.id },
+          data: { pointId: point.id },
+        });
       });
     }),
 });

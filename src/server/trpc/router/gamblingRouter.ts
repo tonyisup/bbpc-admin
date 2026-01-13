@@ -112,7 +112,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  update: publicProcedure
+  update: adminProcedure
     .input(z.object({
       id: z.string(),
       points: z.number()
@@ -120,20 +120,26 @@ export const gamblingRouter = router({
     .mutation(async (req) => {
       const gamble = await req.ctx.prisma.gamblingPoints.findUnique({
         where: { id: req.input.id },
-        include: { assignment: { include: { episode: true } } }
+        include: { gamblingType: true }
       });
 
-      if ((gamble as any)?.status !== "pending") {
-        throw new Error("Cannot update a bet that is already locked or resolved");
-      }
+      if (!gamble) throw new Error("Gamble not found");
 
-      return await req.ctx.prisma.gamblingPoints.update({
-        where: {
-          id: req.input.id
-        },
-        data: {
-          points: req.input.points
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        const updatedGamble = await tx.gamblingPoints.update({
+          where: { id: req.input.id },
+          data: { points: req.input.points }
+        });
+
+        if (gamble.status === "won" && gamble.pointsId) {
+          const earnedPoints = Math.floor(req.input.points * gamble.gamblingType.multiplier);
+          await tx.point.update({
+            where: { id: gamble.pointsId },
+            data: { adjustment: earnedPoints }
+          });
         }
+
+        return updatedGamble;
       });
     }),
 
