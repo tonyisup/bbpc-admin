@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { type RouterOutputs } from "@/utils/trpc";
+import { type RouterOutputs, trpc } from "@/utils/trpc";
 import { format } from "date-fns";
 import {
   Card,
@@ -45,7 +45,8 @@ import {
   ChevronRight,
   ArrowUpRight,
   ArrowDownRight,
-  Edit
+  Edit,
+  Loader2
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import RatingIcon from "../Review/RatingIcon";
@@ -56,8 +57,70 @@ type SeasonDetailsProps = {
 
 export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { groupedPoints, otherPoints, userSummary, chartData, totalStats } = useMemo(() => {
-    if (!season) return { groupedPoints: [], otherPoints: [], userSummary: [], chartData: [], totalStats: { points: 0, guesses: 0, gambling: 0 } };
+  const [activeTab, setActiveTab] = useState("points");
+
+  // Fetch user summary for leaderboard
+  const { data: userSummary = [], isLoading: userSummaryLoading } = trpc.season.getUserSummary.useQuery(
+    { seasonId: season?.id ?? "" },
+    { enabled: !!season?.id }
+  );
+
+  // Fetch chart data
+  const { data: chartDataRaw = [], isLoading: chartLoading } = trpc.season.getChartData.useQuery(
+    { seasonId: season?.id ?? "" },
+    { enabled: !!season?.id }
+  );
+
+  // Paginated points query with infinite loading
+  const {
+    data: pointsData,
+    fetchNextPage: fetchNextPoints,
+    hasNextPage: hasNextPoints,
+    isFetchingNextPage: isFetchingNextPoints,
+    isLoading: pointsLoading,
+  } = trpc.season.getPoints.useInfiniteQuery(
+    { seasonId: season?.id ?? "", limit: 50 },
+    {
+      enabled: !!season?.id && activeTab === "points",
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
+  );
+
+  // Paginated guesses query with infinite loading
+  const {
+    data: guessesData,
+    fetchNextPage: fetchNextGuesses,
+    hasNextPage: hasNextGuesses,
+    isFetchingNextPage: isFetchingNextGuesses,
+    isLoading: guessesLoading,
+  } = trpc.season.getGuesses.useInfiniteQuery(
+    { seasonId: season?.id ?? "", limit: 50 },
+    {
+      enabled: !!season?.id && activeTab === "guesses",
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
+  );
+
+  // Paginated gambling query with infinite loading
+  const {
+    data: gamblingData,
+    fetchNextPage: fetchNextGambling,
+    hasNextPage: hasNextGambling,
+    isFetchingNextPage: isFetchingNextGambling,
+    isLoading: gamblingLoading,
+  } = trpc.season.getGambling.useInfiniteQuery(
+    { seasonId: season?.id ?? "", limit: 50 },
+    {
+      enabled: !!season?.id && activeTab === "gambling",
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
+  );
+
+  // Process points into grouped structure
+  const { groupedPoints, otherPoints } = useMemo(() => {
+    if (!pointsData?.pages) return { groupedPoints: [], otherPoints: [] };
+
+    const allPoints = pointsData.pages.flatMap(page => page.items);
 
     const episodesMap = new Map<
       string,
@@ -67,21 +130,13 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
       }
     >();
     const others: any[] = [];
-    const userPointsMap = new Map<string, { user: any; total: number }>();
 
-    season.points.forEach((point) => {
-      if (!userPointsMap.has(point.user.id)) {
-        userPointsMap.set(point.user.id, { user: point.user, total: 0 });
-      }
-      const gamePointPoints = point.gamePointType?.points ?? 0;
-      userPointsMap.get(point.user.id)!.total += (point.adjustment ?? 0) + gamePointPoints;
-
+    allPoints.forEach((point) => {
       let episode = null;
       let assignment = null;
 
       const guess = point.guesses?.[0];
       const assignmentPoint = point.assignmentPoints?.[0];
-      const gamblingPoint = point.gamblingPoints?.[0];
 
       if (guess) {
         assignment = guess.assignmentReview?.assignment;
@@ -119,22 +174,24 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         assignments: Array.from(ep.assignmentsMap.values()),
       }));
 
-    const userSummary = Array.from(userPointsMap.values())
-      .map(u => ({
-        ...u,
-        guessCount: season.guesses.filter(g => g.user.id === u.user.id).length,
-        gamblingCount: season.gamblingPoints.filter(gp => gp.user.id === u.user.id).length
-      }))
-      .sort((a, b) => b.total - a.total);
+    return {
+      groupedPoints: sortedEpisodes,
+      otherPoints: others,
+    };
+  }, [pointsData]);
 
-    // Chart Data Calculation
-    const pointsByDate = [...season.points].sort(
+  // Process chart data
+  const chartData = useMemo(() => {
+    if (!chartDataRaw || chartDataRaw.length === 0) return [];
+
+    const pointsByDate = [...chartDataRaw].sort(
       (a, b) => new Date(a.earnedOn).getTime() - new Date(b.earnedOn).getTime()
     );
 
     const chartDataPointMap = new Map<string, Record<string, any>>();
     const runningTotals: Record<string, number> = {};
 
+    // Initialize running totals for all users
     userSummary.forEach(u => {
       runningTotals[u.user.id] = 0;
     });
@@ -143,7 +200,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
       const dateKey = format(new Date(point.earnedOn), "MMM dd");
       const points = (point.adjustment ?? 0) + (point.gamePointType?.points ?? 0);
 
-      runningTotals[point.user.id] = (runningTotals[point.user.id] || 0) + points;
+      runningTotals[point.userId] = (runningTotals[point.userId] || 0) + points;
 
       chartDataPointMap.set(dateKey, {
         date: dateKey,
@@ -151,20 +208,24 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
       });
     });
 
-    const chartData = Array.from(chartDataPointMap.values());
+    return Array.from(chartDataPointMap.values());
+  }, [chartDataRaw, userSummary]);
 
-    return {
-      groupedPoints: sortedEpisodes,
-      otherPoints: others,
-      userSummary,
-      chartData,
-      totalStats: {
-        points: season.points.length,
-        guesses: season.guesses.length,
-        gambling: season.gamblingPoints.length
-      }
-    };
-  }, [season]);
+  // Get all guesses from paged data
+  const allGuesses = useMemo(() => {
+    return guessesData?.pages.flatMap(page => page.items) ?? [];
+  }, [guessesData]);
+
+  // Get all gambling points from paged data
+  const allGambling = useMemo(() => {
+    return gamblingData?.pages.flatMap(page => page.items) ?? [];
+  }, [gamblingData]);
+
+  const totalStats = {
+    points: season?._count?.points ?? 0,
+    guesses: season?._count?.guesses ?? 0,
+    gambling: season?._count?.gamblingPoints ?? 0,
+  };
 
   const COLORS = ['#3b82f6', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -292,7 +353,13 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
         {/* Left Column: Leaderboard & Charts */}
         <div className="lg:col-span-2 space-y-8">
           {/* Points accumulation Area Chart */}
-          {chartData.length > 0 && (
+          {chartLoading ? (
+            <Card className="border-none shadow-md overflow-hidden bg-card">
+              <CardContent className="flex items-center justify-center h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </CardContent>
+            </Card>
+          ) : chartData.length > 0 && (
             <Card className="border-none shadow-md overflow-hidden bg-card">
               <CardHeader className="pb-0">
                 <div className="flex items-center justify-between">
@@ -369,7 +436,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
           )}
 
           {/* Detailed Content Tabs */}
-          <Tabs defaultValue="points" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-3 w-full max-w-md h-12 bg-muted/50 p-1 mb-6">
               <TabsTrigger value="points" className="data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold gap-2">
                 <History className="h-4 w-4" />
@@ -386,57 +453,78 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
             </TabsList>
 
             <TabsContent value="points" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {groupedPoints.length > 0 ? (
-                groupedPoints.map((group) => (
-                  <div key={group.episode.id} className="relative pl-6 border-l-2 border-muted hover:border-primary/30 transition-colors py-4 group/episode">
-                    <div className="absolute left-[-9px] top-6 w-4 h-4 rounded-full bg-background border-2 border-muted group-hover/episode:border-primary/50 transition-colors" />
+              {pointsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : groupedPoints.length > 0 ? (
+                <>
+                  {groupedPoints.map((group) => (
+                    <div key={group.episode.id} className="relative pl-6 border-l-2 border-muted hover:border-primary/30 transition-colors py-4 group/episode">
+                      <div className="absolute left-[-9px] top-6 w-4 h-4 rounded-full bg-background border-2 border-muted group-hover/episode:border-primary/50 transition-colors" />
 
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">
-                        Ep {group.episode.number}
-                      </span>
-                      <h3 className="text-xl font-black text-foreground">{group.episode.title}</h3>
-                    </div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">
+                          Ep {group.episode.number}
+                        </span>
+                        <h3 className="text-xl font-black text-foreground">{group.episode.title}</h3>
+                      </div>
 
-                    <div className="grid gap-6">
-                      {group.assignments.map((assignGroup) => (
-                        <div key={assignGroup.assignment.id} className="bg-card rounded-xl border p-5 shadow-sm">
-                          <div className="flex items-center gap-2 mb-4">
-                            <Tv className="h-4 w-4 text-primary opacity-50" />
-                            <h4 className="font-bold text-foreground truncate">
-                              {assignGroup.assignment.movie?.title || assignGroup.assignment.episode?.title}
-                            </h4>
-                          </div>
+                      <div className="grid gap-6">
+                        {group.assignments.map((assignGroup) => (
+                          <div key={assignGroup.assignment.id} className="bg-card rounded-xl border p-5 shadow-sm">
+                            <div className="flex items-center gap-2 mb-4">
+                              <Tv className="h-4 w-4 text-primary opacity-50" />
+                              <h4 className="font-bold text-foreground truncate">
+                                {assignGroup.assignment.movie?.title || assignGroup.assignment.episode?.title}
+                              </h4>
+                            </div>
 
-                          <div className="space-y-3">
-                            {assignGroup.points.map((point) => (
-                              <div key={point.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-transparent hover:border-muted-foreground/10 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="h-8 w-8 border bg-background">
-                                    <AvatarImage src={point.user.image || ""} />
-                                    <AvatarFallback className="text-[10px] font-black">{getInitials(point.user.name)}</AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex flex-col">
-                                    <span className="text-xs font-bold">{point.user.name}</span>
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
-                                      {point.gamePointType?.title || point.reason}
-                                    </span>
+                            <div className="space-y-3">
+                              {assignGroup.points.map((point) => (
+                                <div key={point.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-transparent hover:border-muted-foreground/10 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8 border bg-background">
+                                      <AvatarImage src={point.user.image || ""} />
+                                      <AvatarFallback className="text-[10px] font-black">{getInitials(point.user.name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                      <span className="text-xs font-bold">{point.user.name}</span>
+                                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                                        {point.gamePointType?.title || point.reason}
+                                      </span>
+                                    </div>
                                   </div>
+                                  <Badge className={cn(
+                                    "font-mono font-black border-none",
+                                    (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                                  )}>
+                                    {(point.adjustment ?? 0) > 0 ? "+" : ""}{point.adjustment ?? 0}
+                                  </Badge>
                                 </div>
-                                <Badge className={cn(
-                                  "font-mono font-black border-none",
-                                  (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
-                                )}>
-                                  {(point.adjustment ?? 0) > 0 ? "+" : ""}{point.adjustment ?? 0}
-                                </Badge>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+
+                  {/* Load More Button for Points */}
+                  {hasNextPoints && (
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchNextPoints()}
+                        disabled={isFetchingNextPoints}
+                        className="gap-2"
+                      >
+                        {isFetchingNextPoints && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Load More
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
                   <History className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-3" />
@@ -446,89 +534,135 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
             </TabsContent>
 
             <TabsContent value="guesses" className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {season.guesses.length > 0 ? (
-                  season.guesses.map((guess) => (
-                    <Card key={guess.id} className="border-none shadow-sm bg-card hover:translate-y-[-2px] transition-transform">
-                      <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border shadow-sm">
-                            <AvatarImage src={guess.user.image || ""} />
-                            <AvatarFallback className="text-xs font-bold">{getInitials(guess.user.name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sm tracking-tight">{guess.user.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                              {format(new Date(guess.created), "MMM d, yyyy")}
-                            </span>
-                          </div>
-                        </div>
-                        <RatingIcon value={guess.rating.value} />
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-dashed text-xs font-semibold text-muted-foreground mt-2">
-                          <Tv className="h-3 w-3" />
-                          <span className="truncate">
-                            {guess.assignmentReview.assignment.movie?.title || guess.assignmentReview.assignment.episode?.title}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
-                    <Target className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-3" />
-                    <p className="text-muted-foreground font-medium">No guesses have been submitted yet.</p>
-                  </div>
-                )}
-              </div>
+              {guessesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allGuesses.length > 0 ? (
+                    <>
+                      {allGuesses.map((guess) => (
+                        <Card key={guess.id} className="border-none shadow-sm bg-card hover:translate-y-[-2px] transition-transform">
+                          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 border shadow-sm">
+                                <AvatarImage src={guess.user.image || ""} />
+                                <AvatarFallback className="text-xs font-bold">{getInitials(guess.user.name)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-sm tracking-tight">{guess.user.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                                  {format(new Date(guess.created), "MMM d, yyyy")}
+                                </span>
+                              </div>
+                            </div>
+                            <RatingIcon value={guess.rating.value} />
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-dashed text-xs font-semibold text-muted-foreground mt-2">
+                              <Tv className="h-3 w-3" />
+                              <span className="truncate">
+                                {guess.assignmentReview.assignment.movie?.title || guess.assignmentReview.assignment.episode?.title}
+                              </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
+                      <Target className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-3" />
+                      <p className="text-muted-foreground font-medium">No guesses have been submitted yet.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Load More Button for Guesses */}
+              {hasNextGuesses && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchNextGuesses()}
+                    disabled={isFetchingNextGuesses}
+                    className="gap-2"
+                  >
+                    {isFetchingNextGuesses && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Load More
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="gambling" className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(season.gamblingPoints as any[]).length > 0 ? (
-                  (season.gamblingPoints as any[]).map((gamble) => (
-                    <Card key={gamble.id} className="border-none shadow-sm bg-card overflow-hidden">
-                      <div className={cn(
-                        "h-1 w-full",
-                        gamble.status === "won" ? "bg-emerald-500" : (gamble.status === "lost" ? "bg-rose-500" : "bg-muted")
-                      )} />
-                      <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border shadow-sm">
-                            <AvatarImage src={gamble.user.image || ""} />
-                            <AvatarFallback className="text-xs font-bold">{getInitials(gamble.user.name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sm tracking-tight">{gamble.user.name}</span>
-                            <Badge className={cn(
-                              "w-fit px-1.5 py-0 text-[8px] font-black uppercase mt-1",
-                              gamble.status === "won" ? "bg-emerald-100 text-emerald-700" : (gamble.status === "lost" ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground")
-                            )}>
-                              {gamble.status === "won" ? "Successful" : (gamble.status === "lost" ? "Lost" : "Pending/Locked")}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <span className="block text-xl font-black text-foreground">{gamble.points}</span>
-                          <span className="text-[8px] font-black text-muted-foreground uppercase opacity-50 tracking-tighter">Points</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 text-xs font-semibold text-muted-foreground mt-2 group-hover:bg-muted/50 transition-colors">
-                          <Coins className="h-3 w-3 text-emerald-500 opacity-50" />
-                          <span className="truncate">Wager on: {gamble.gamblingType?.title}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
-                    <Coins className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-3" />
-                    <p className="text-muted-foreground font-medium">The gambling pits are currently quiet.</p>
-                  </div>
-                )}
-              </div>
+              {gamblingLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allGambling.length > 0 ? (
+                    <>
+                      {allGambling.map((gamble) => (
+                        <Card key={gamble.id} className="border-none shadow-sm bg-card overflow-hidden">
+                          <div className={cn(
+                            "h-1 w-full",
+                            gamble.status === "won" ? "bg-emerald-500" : (gamble.status === "lost" ? "bg-rose-500" : "bg-muted")
+                          )} />
+                          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 border shadow-sm">
+                                <AvatarImage src={gamble.user.image || ""} />
+                                <AvatarFallback className="text-xs font-bold">{getInitials(gamble.user.name)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-sm tracking-tight">{gamble.user.name}</span>
+                                <Badge className={cn(
+                                  "w-fit px-1.5 py-0 text-[8px] font-black uppercase mt-1",
+                                  gamble.status === "won" ? "bg-emerald-100 text-emerald-700" : (gamble.status === "lost" ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground")
+                                )}>
+                                  {gamble.status === "won" ? "Successful" : (gamble.status === "lost" ? "Lost" : "Pending/Locked")}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <span className="block text-xl font-black text-foreground">{gamble.points}</span>
+                              <span className="text-[8px] font-black text-muted-foreground uppercase opacity-50 tracking-tighter">Points</span>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 text-xs font-semibold text-muted-foreground mt-2 group-hover:bg-muted/50 transition-colors">
+                              <Coins className="h-3 w-3 text-emerald-500 opacity-50" />
+                              <span className="truncate">Wager on: {gamble.gamblingType?.title}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
+                      <Coins className="mx-auto h-8 w-8 text-muted-foreground opacity-20 mb-3" />
+                      <p className="text-muted-foreground font-medium">The gambling pits are currently quiet.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Load More Button for Gambling */}
+              {hasNextGambling && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchNextGambling()}
+                    disabled={isFetchingNextGambling}
+                    className="gap-2"
+                  >
+                    {isFetchingNextGambling && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Load More
+                  </Button>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -539,67 +673,74 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
             <Trophy className="h-6 w-6 text-primary" />
             Leaderboard
           </h2>
-          <div className="grid gap-3">
-            {userSummary.map(({ user, total, guessCount, gamblingCount }, index) => {
-              const rankColor = index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-600" : "text-muted-foreground";
 
-              return (
-                <Link
-                  href={`/user/${user.id}`}
-                  key={user.id}
-                  className="group relative block rounded-2xl border bg-card p-4 transition-all hover:shadow-xl hover:translate-y-[-2px] hover:border-primary/20 overflow-hidden"
-                >
-                  {index === 0 && (
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <Trophy className="h-20 w-20" />
-                    </div>
-                  )}
+          {userSummaryLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {userSummary.map(({ user, total, guessCount, gamblingCount }, index) => {
+                const rankColor = index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-300" : index === 2 ? "text-amber-600" : "text-muted-foreground";
 
-                  <div className="flex items-center gap-4 relative z-10">
-                    <div className={cn(
-                      "flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-black text-sm",
-                      index < 3 ? "bg-muted/50" : "bg-transparent"
-                    )}>
-                      <span className={rankColor}>#{index + 1}</span>
-                    </div>
+                return (
+                  <Link
+                    href={`/user/${user.id}`}
+                    key={user.id}
+                    className="group relative block rounded-2xl border bg-card p-4 transition-all hover:shadow-xl hover:translate-y-[-2px] hover:border-primary/20 overflow-hidden"
+                  >
+                    {index === 0 && (
+                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Trophy className="h-20 w-20" />
+                      </div>
+                    )}
 
-                    <Avatar className={cn(
-                      "h-12 w-12 border-2 shadow-md transition-transform group-hover:scale-110",
-                      index === 0 ? "border-yellow-500/50" : "border-border"
-                    )}>
-                      <AvatarImage src={user.image || ""} />
-                      <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className={cn(
+                        "flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-black text-sm",
+                        index < 3 ? "bg-muted/50" : "bg-transparent"
+                      )}>
+                        <span className={rankColor}>#{index + 1}</span>
+                      </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-black truncate text-foreground text-sm group-hover:text-primary transition-colors">
-                          {user.name}
-                        </span>
-                        <div className="flex flex-col items-end">
-                          <span className="text-lg font-black text-primary leading-none">{total}</span>
-                          <span className="text-[10px] font-black text-muted-foreground uppercase opacity-50">Points</span>
+                      <Avatar className={cn(
+                        "h-12 w-12 border-2 shadow-md transition-transform group-hover:scale-110",
+                        index === 0 ? "border-yellow-500/50" : "border-border"
+                      )}>
+                        <AvatarImage src={user.image || ""} />
+                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-black truncate text-foreground text-sm group-hover:text-primary transition-colors">
+                            {user.name}
+                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className="text-lg font-black text-primary leading-none">{total}</span>
+                            <span className="text-[10px] font-black text-muted-foreground uppercase opacity-50">Points</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                            <Target className="h-2.5 w-2.5" />
+                            {guessCount}
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                            <Coins className="h-2.5 w-2.5" />
+                            {gamblingCount}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
-                          <Target className="h-2.5 w-2.5" />
-                          {guessCount}
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
-                          <Coins className="h-2.5 w-2.5" />
-                          {gamblingCount}
-                        </div>
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
 
           {/* Other points (Miscellaneous) if any */}
           {otherPoints.length > 0 && (
