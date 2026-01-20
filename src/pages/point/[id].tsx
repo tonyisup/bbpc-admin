@@ -2,7 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from
 import Head from "next/head";
 import { trpc } from "../../utils/trpc";
 import { useState, useEffect } from "react";
-import { Trash2, Save, ArrowLeft, Trophy, Calendar, Info, User as UserIcon } from "lucide-react";
+import { Trash2, Save, ArrowLeft, Trophy, Calendar, Info, User as UserIcon, Plus, Search } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -15,6 +15,8 @@ import Link from "next/link";
 import { ConfirmModal } from "../../components/ui/confirm-modal";
 import { useRouter } from "next/router";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
+import debounce from "lodash.debounce";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -64,11 +66,53 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
     }
   });
 
+  const addAssignment = trpc.point.addAssignment.useMutation({
+    onSuccess: () => {
+      toast.success("Assignment linked successfully");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Failed to link assignment: " + err.message);
+    }
+  });
+
+  const removeAssignment = trpc.point.removeAssignment.useMutation({
+    onSuccess: () => {
+      toast.success("Assignment unlinked successfully");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Failed to unlink assignment: " + err.message);
+    }
+  });
+
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const [reason, setReason] = useState("");
   const [adjustment, setAdjustment] = useState(0);
   const [gamePointTypeId, setGamePointTypeId] = useState<string>("null");
+
+  // Assignment Search State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const { refetch: searchAssignments, isFetching: isSearching } = trpc.assignment.search.useQuery(
+    { query: searchQuery },
+    { enabled: false }
+  );
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length >= 2) {
+       const result = await searchAssignments();
+       if (result.data) setSearchResults(result.data);
+    } else {
+        setSearchResults([]);
+    }
+  };
+
+  // Debounce the search
+  const debouncedSearch = debounce(handleSearch, 300);
+
 
   useEffect(() => {
     if (point) {
@@ -166,6 +210,102 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                       <Save className="h-4 w-4" /> Save Changes
                     </Button>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Linked Assignments</CardTitle>
+                        <CardDescription>Assignments directly linked to this point.</CardDescription>
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button size="sm" variant="outline" className="gap-2">
+                                <Plus className="h-4 w-4" /> Link Assignment
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-4" align="end">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Search Assignments</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Find assignments to link to this point.
+                                    </p>
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search movie, episode..."
+                                        className="pl-8"
+                                        onChange={(e) => debouncedSearch(e.target.value)}
+                                    />
+                                </div>
+                                <div className="max-h-[200px] overflow-y-auto space-y-1">
+                                    {isSearching && <div className="text-xs text-center p-2 text-muted-foreground">Searching...</div>}
+                                    {!isSearching && searchResults.length === 0 && searchQuery.length >= 2 && (
+                                        <div className="text-xs text-center p-2 text-muted-foreground">No assignments found</div>
+                                    )}
+                                    {searchResults.map((assignment) => (
+                                        <Button
+                                            key={assignment.id}
+                                            variant="ghost"
+                                            className="w-full justify-start text-left h-auto py-2 px-2"
+                                            onClick={() => {
+                                                addAssignment.mutate({ pointId, assignmentId: assignment.id });
+                                                // Optional: Close popover or clear search
+                                            }}
+                                        >
+                                            <div className="flex flex-col gap-0.5 w-full">
+                                                <span className="font-medium text-xs line-clamp-1">{assignment.movie.title}</span>
+                                                <span className="text-[10px] text-muted-foreground flex justify-between w-full">
+                                                    <span>Ep {assignment.episode.number}</span>
+                                                    <span>{assignment.user.name}</span>
+                                                </span>
+                                            </div>
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                    {point.assignmentPoints.map((ap) => (
+                        <div key={ap.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                            <div className="flex flex-col">
+                                <span className="font-medium text-sm">{ap.assignment.movie.title}</span>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span>Episode {ap.assignment.episode.number}: {ap.assignment.episode.title}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Link href={`/assignment/${ap.assignment.id}`}>
+                                    <Button variant="ghost" size="icon" title="View Assignment">
+                                        <Info className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => removeAssignment.mutate({ pointId, assignmentId: ap.assignment.id })}
+                                    title="Unlink Assignment"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                    {point.assignmentPoints.length === 0 && (
+                        <div className="text-center py-4 text-muted-foreground italic text-sm">
+                            No linked assignments
+                        </div>
+                    )}
                 </div>
               </CardContent>
             </Card>

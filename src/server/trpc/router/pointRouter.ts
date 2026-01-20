@@ -70,6 +70,49 @@ export const pointRouter = router({
 			});
 		}),
 
+	addAssignment: adminProcedure
+		.input(z.object({
+			pointId: z.string(),
+			assignmentId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			const point = await ctx.prisma.point.findUnique({
+				where: { id: input.pointId }
+			});
+			if (!point) throw new Error("Point not found");
+
+			return await ctx.prisma.assignmentPoints.create({
+				data: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+					userId: point.userId,
+				}
+			});
+		}),
+
+	removeAssignment: adminProcedure
+		.input(z.object({
+			pointId: z.string(),
+			assignmentId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			// Find the assignmentPoint to delete
+			const assignmentPoint = await ctx.prisma.assignmentPoints.findFirst({
+				where: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+				}
+			});
+
+			if (!assignmentPoint) {
+				return { count: 0 };
+			}
+
+			return await ctx.prisma.assignmentPoints.delete({
+				where: { id: assignmentPoint.id },
+			});
+		}),
+
 	remove: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {

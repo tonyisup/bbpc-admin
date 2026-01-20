@@ -97,6 +97,32 @@ export const assignmentRouter = router({
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany();
     }),
+  search: publicProcedure
+    .input(z.object({ query: z.string() }))
+    .query(async ({ ctx, input }) => {
+      if (!input.query || input.query.length < 2) return [];
+
+      return await ctx.prisma.assignment.findMany({
+        where: {
+          OR: [
+            { movie: { title: { contains: input.query } } },
+            { episode: { title: { contains: input.query } } },
+            { user: { name: { contains: input.query } } },
+          ]
+        },
+        take: 20,
+        include: {
+          movie: true,
+          episode: true,
+          user: true,
+        },
+        orderBy: {
+            episode: {
+                date: 'desc'
+            }
+        }
+      });
+    }),
   getAudioMessages: protectedProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async (req) => {
