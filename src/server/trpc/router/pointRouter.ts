@@ -70,6 +70,64 @@ export const pointRouter = router({
 			});
 		}),
 
+	addAssignment: adminProcedure
+		.input(z.object({
+			pointId: z.string(),
+			assignmentId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			const point = await ctx.prisma.point.findUnique({
+				where: { id: input.pointId }
+			});
+			if (!point) throw new Error("Point not found");
+
+			const assignment = await ctx.prisma.assignment.findUnique({
+				where: { id: input.assignmentId }
+			});
+			if (!assignment) throw new Error("Assignment not found");
+
+			const existingLink = await ctx.prisma.assignmentPoints.findFirst({
+				where: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+				}
+			});
+			if (existingLink) throw new Error("Assignment is already linked to this point");
+
+			return await ctx.prisma.assignmentPoints.create({
+				data: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+					userId: point.userId,
+				}
+			});
+		}),
+
+	removeAssignment: adminProcedure
+		.input(z.object({
+			pointId: z.string(),
+			assignmentId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			// Find the assignmentPoint to delete
+			const assignmentPoint = await ctx.prisma.assignmentPoints.findFirst({
+				where: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+				}
+			});
+
+			if (!assignmentPoint) {
+				return { count: 0 };
+			}
+
+			const deleted = await ctx.prisma.assignmentPoints.delete({
+				where: { id: assignmentPoint.id },
+			});
+
+			return { count: 1, assignmentPoint: deleted };
+		}),
+
 	remove: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
