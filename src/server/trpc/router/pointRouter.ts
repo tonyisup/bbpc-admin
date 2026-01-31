@@ -81,6 +81,19 @@ export const pointRouter = router({
 			});
 			if (!point) throw new Error("Point not found");
 
+			const assignment = await ctx.prisma.assignment.findUnique({
+				where: { id: input.assignmentId }
+			});
+			if (!assignment) throw new Error("Assignment not found");
+
+			const existingLink = await ctx.prisma.assignmentPoints.findFirst({
+				where: {
+					pointsId: input.pointId,
+					assignmentId: input.assignmentId,
+				}
+			});
+			if (existingLink) throw new Error("Assignment is already linked to this point");
+
 			return await ctx.prisma.assignmentPoints.create({
 				data: {
 					pointsId: input.pointId,
@@ -108,9 +121,11 @@ export const pointRouter = router({
 				return { count: 0 };
 			}
 
-			return await ctx.prisma.assignmentPoints.delete({
+			const deleted = await ctx.prisma.assignmentPoints.delete({
 				where: { id: assignmentPoint.id },
 			});
+
+			return { count: 1, assignmentPoint: deleted };
 		}),
 
 	remove: adminProcedure

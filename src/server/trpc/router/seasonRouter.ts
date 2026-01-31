@@ -185,30 +185,21 @@ export const seasonRouter = router({
   getUserSummary: publicProcedure
     .input(z.object({ seasonId: z.string() }))
     .query(async ({ ctx, input }) => {
-      // Get all points grouped by user with their totals
-      const pointAggregates = await ctx.prisma.point.groupBy({
-        by: ['userId'],
-        where: { seasonId: input.seasonId },
-        _sum: { adjustment: true },
-      });
-
-      // Get point type sums per user
-      const pointsWithTypes = await ctx.prisma.point.findMany({
-        where: { seasonId: input.seasonId },
-        select: {
-          userId: true,
-          adjustment: true,
-          gamePointType: { select: { points: true } },
-        },
-      });
+      // Use raw query for aggregating total points per user to handle COALESCE logic efficiently
+      const userSums = await ctx.prisma.$queryRaw<{ userId: string; total: number }[]>`
+        SELECT p.userId, SUM(COALESCE(p.adjustment, 0) + COALESCE(gpt.points, 0)) as total
+        FROM Point p
+        LEFT JOIN GamePointType gpt ON p.gamePointTypeId = gpt.id
+        WHERE p.seasonId = ${input.seasonId}
+        GROUP BY p.userId
+      `;
 
       // Calculate totals including gamePointType.points
       const userTotals: Record<string, number> = {};
-      pointsWithTypes.forEach((p) => {
-        const gamePointPoints = p.gamePointType?.points ?? 0;
-        const adjustment = p.adjustment ?? 0;
-        userTotals[p.userId] = (userTotals[p.userId] || 0) + adjustment + gamePointPoints;
-      });
+
+      for (const row of userSums) {
+        userTotals[row.userId] = Number(row.total);
+      }
 
       // Get guess counts per user
       const guessCounts = await ctx.prisma.guess.groupBy({
@@ -254,10 +245,24 @@ export const seasonRouter = router({
 
   // Chart data query - returns aggregated points by date for performance tracking chart
   getChartData: publicProcedure
-    .input(z.object({ seasonId: z.string() }))
+    .input(z.object({
+      seasonId: z.string(),
+      startDate: z.date().optional(),
+      endDate: z.date().optional(),
+      limit: z.number().optional(),
+      offset: z.number().optional()
+    }))
     .query(async ({ ctx, input }) => {
       const points = await ctx.prisma.point.findMany({
-        where: { seasonId: input.seasonId },
+        where: {
+          seasonId: input.seasonId,
+          earnedOn: {
+            gte: input.startDate,
+            lte: input.endDate
+          }
+        },
+        take: input.limit,
+        skip: input.offset,
         orderBy: { earnedOn: 'asc' },
         select: {
           userId: true,

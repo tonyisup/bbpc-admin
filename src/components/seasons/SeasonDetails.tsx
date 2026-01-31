@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useMemo, useState, Fragment } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -569,6 +569,20 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                           </CardContent>
                         </Card>
                       ))}
+                      {/* Load More Button for Guesses */}
+                      {hasNextGuesses && (
+                        <div className="flex justify-center pt-4 col-span-1 md:col-span-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => fetchNextGuesses()}
+                            disabled={isFetchingNextGuesses}
+                            className="gap-2"
+                          >
+                            {isFetchingNextGuesses && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Load More
+                          </Button>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
@@ -576,21 +590,6 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       <p className="text-muted-foreground font-medium">No guesses have been submitted yet.</p>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Load More Button for Guesses */}
-              {hasNextGuesses && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchNextGuesses()}
-                    disabled={isFetchingNextGuesses}
-                    className="gap-2"
-                  >
-                    {isFetchingNextGuesses && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Load More
-                  </Button>
                 </div>
               )}
             </TabsContent>
@@ -753,7 +752,11 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {otherPoints.map((point) => (
-                  <div key={point.id} className="flex items-center justify-between p-2 rounded-lg bg-card/50 text-[11px] font-bold border border-transparent hover:border-muted-foreground/10 transition-colors">
+                  <Link
+                    key={point.id}
+                    href={`/point/${point.id}`}
+                    className="flex items-center justify-between p-2 rounded-lg bg-card/50 text-[11px] font-bold border border-transparent hover:border-muted-foreground/10 transition-colors"
+                  >
                     <span className="text-muted-foreground truncate max-w-[120px]">{point.user.name}</span>
                     <span className="mx-2 text-[9px] text-muted-foreground/50 truncate flex-1 font-medium">{point.gamePointType?.title || point.reason}</span>
                     <Badge variant="secondary" className={cn(
@@ -762,7 +765,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                     )}>
                       {(point.adjustment ?? 0) > 0 ? "+" : ""}{point.adjustment ?? 0}
                     </Badge>
-                  </div>
+                  </Link>
                 ))}
               </CardContent>
             </Card>

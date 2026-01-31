@@ -97,7 +97,7 @@ export const assignmentRouter = router({
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany();
     }),
-  search: publicProcedure
+  search: protectedProcedure
     .input(z.object({ query: z.string() }))
     .query(async ({ ctx, input }) => {
       if (!input.query || input.query.length < 2) return [];
@@ -117,9 +117,9 @@ export const assignmentRouter = router({
           user: true,
         },
         orderBy: {
-            episode: {
-                date: 'desc'
-            }
+          episode: {
+            date: 'desc'
+          }
         }
       });
     }),
