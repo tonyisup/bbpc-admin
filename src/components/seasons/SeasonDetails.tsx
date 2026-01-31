@@ -638,6 +638,20 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                           </CardContent>
                         </Card>
                       ))}
+                      {/* Load More Button for Gambling */}
+                      {hasNextGambling && (
+                        <div className="flex justify-center pt-4 col-span-1 md:col-span-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => fetchNextGambling()}
+                            disabled={isFetchingNextGambling}
+                            className="gap-2"
+                          >
+                            {isFetchingNextGambling && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Load More
+                          </Button>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="col-span-2 text-center py-12 bg-muted/30 rounded-2xl border-2 border-dashed border-muted-foreground/10">
@@ -645,21 +659,6 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                       <p className="text-muted-foreground font-medium">The gambling pits are currently quiet.</p>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Load More Button for Gambling */}
-              {hasNextGambling && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchNextGambling()}
-                    disabled={isFetchingNextGambling}
-                    className="gap-2"
-                  >
-                    {isFetchingNextGambling && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Load More
-                  </Button>
                 </div>
               )}
             </TabsContent>

@@ -93,7 +93,6 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
   const [gamePointTypeId, setGamePointTypeId] = useState<string>("null");
 
   // Assignment Search State
-  // Assignment Search State
   const utils = trpc.useContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<RouterOutputs['assignment']['search']>([]);
@@ -302,26 +301,34 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                   {point.assignmentPoints.map((ap) => (
                     <div key={ap.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
                       <div className="flex flex-col">
-                        <span className="font-medium text-sm">{ap.assignment.movie.title}</span>
+                        <span className="font-medium text-sm">{ap.assignment?.movie?.title || "Unknown movie"}</span>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>Episode {ap.assignment.episode.number}: {ap.assignment.episode.title}</span>
+                          <span>
+                            Episode {ap.assignment?.episode?.number ?? "?"}: {ap.assignment?.episode?.title || "Unknown episode"}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Link href={`/assignment/${ap.assignment.id}`}>
-                          <Button variant="ghost" size="icon" title="View Assignment">
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => removeAssignment.mutate({ pointId, assignmentId: ap.assignment.id })}
-                          title="Unlink Assignment"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {ap.assignment?.id ? (
+                          <>
+                            <Link href={`/assignment/${ap.assignment.id}`}>
+                              <Button variant="ghost" size="icon" title="View Assignment">
+                                <Info className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => removeAssignment.mutate({ pointId, assignmentId: ap.assignment!.id })}
+                              title="Unlink Assignment"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground italic">Missing assignment link</span>
+                        )}
                       </div>
                     </div>
                   ))}
