@@ -481,28 +481,31 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                             </div>
 
                             <div className="space-y-3">
-                              {assignGroup.points.map((point) => (
-                                <div key={point.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-transparent hover:border-muted-foreground/10 transition-colors">
-                                  <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8 border bg-background">
-                                      <AvatarImage src={point.user.image || ""} />
-                                      <AvatarFallback className="text-[10px] font-black">{getInitials(point.user.name)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-bold">{point.user.name}</span>
-                                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
-                                        {point.gamePointType?.title || point.reason}
-                                      </span>
+                              {assignGroup.points.map((point) => {
+                                const totalPoints = (point.adjustment ?? point.gamePointType?.points ?? 0);
+                                return (
+                                  <div key={point.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-transparent hover:border-muted-foreground/10 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                      <Avatar className="h-8 w-8 border bg-background">
+                                        <AvatarImage src={point.user.image || ""} />
+                                        <AvatarFallback className="text-[10px] font-black">{getInitials(point.user.name)}</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-bold">{point.user.name}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                                          {point.gamePointType?.title || point.reason}
+                                        </span>
+                                      </div>
                                     </div>
+                                    <Badge className={cn(
+                                      "font-mono font-black border-none",
+                                      (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                                    )}>
+                                      {totalPoints > 0 ? "+" : ""}{totalPoints}
+                                    </Badge>
                                   </div>
-                                  <Badge className={cn(
-                                    "font-mono font-black border-none",
-                                    (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
-                                  )}>
-                                    {(point.adjustment ?? 0) > 0 ? "+" : ""}{point.adjustment ?? 0}
-                                  </Badge>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         ))}
@@ -750,22 +753,25 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {otherPoints.map((point) => (
-                  <Link
-                    key={point.id}
-                    href={`/point/${point.id}`}
-                    className="flex items-center justify-between p-2 rounded-lg bg-card/50 text-[11px] font-bold border border-transparent hover:border-muted-foreground/10 transition-colors"
-                  >
-                    <span className="text-muted-foreground truncate max-w-[120px]">{point.user.name}</span>
-                    <span className="mx-2 text-[9px] text-muted-foreground/50 truncate flex-1 font-medium">{point.gamePointType?.title || point.reason}</span>
-                    <Badge variant="secondary" className={cn(
-                      "px-1.5 py-0 font-mono text-[9px]",
-                      (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
-                    )}>
-                      {(point.adjustment ?? 0) > 0 ? "+" : ""}{point.adjustment ?? 0}
-                    </Badge>
-                  </Link>
-                ))}
+                {otherPoints.map((point) => {
+                  const totalPoints = (point.adjustment ?? point.gamePointType?.points ?? 0);
+                  return (
+                    <Link
+                      key={point.id}
+                      href={`/point/${point.id}`}
+                      className="flex items-center justify-between p-2 rounded-lg bg-card/50 text-[11px] font-bold border border-transparent hover:border-muted-foreground/10 transition-colors"
+                    >
+                      <span className="text-muted-foreground truncate max-w-[120px]">{point.user.name}</span>
+                      <span className="mx-2 text-[9px] text-muted-foreground/50 truncate flex-1 font-medium">{point.gamePointType?.title || point.reason}</span>
+                      <Badge variant="secondary" className={cn(
+                        "px-1.5 py-0 font-mono text-[9px]",
+                        (point.adjustment ?? 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                      )}>
+                        {totalPoints > 0 ? "+" : ""}{totalPoints}
+                      </Badge>
+                    </Link>
+                  );
+                })}
               </CardContent>
             </Card>
           )}

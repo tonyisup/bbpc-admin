@@ -1,7 +1,7 @@
 import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import { type RouterOutputs, trpc } from "../../utils/trpc";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Trash2, Save, ArrowLeft, Trophy, Calendar, Info, User as UserIcon, Plus, Search } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
@@ -97,10 +97,10 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<RouterOutputs['assignment']['search']>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const latestQueryRef = useRef<string>("");
 
   // Manual search function to accept query argument directly
   const searchAssignments = useCallback(async (query: string) => {
-    setIsSearching(true);
     try {
       // Use utils.client or utils.assignment.search.fetch if available. 
       // T3/trpc v10 usually exposes fetch on the procedure accessor in useContext
@@ -109,18 +109,25 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
     } catch (error) {
       console.error(error);
       return { data: [] };
-    } finally {
-      setIsSearching(false);
     }
   }, [utils]);
 
   const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
+    latestQueryRef.current = query;
+
     if (query.length >= 2) {
+      setIsSearching(true);
       const result = await searchAssignments(query);
-      if (result.data) setSearchResults(result.data);
+
+      // Only apply results if this is still the most recent query
+      if (latestQueryRef.current === query) {
+        if (result.data) setSearchResults(result.data);
+        setIsSearching(false);
+      }
     } else {
       setSearchResults([]);
+      setIsSearching(false);
     }
   }, [searchAssignments]);
 
