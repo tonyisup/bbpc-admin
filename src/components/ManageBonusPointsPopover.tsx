@@ -37,14 +37,6 @@ export function ManageBonusPointsPopover({
 	const [adjustment, setAdjustment] = useState(0);
 	const [selectedTypeLookupId, setSelectedTypeLookupId] = useState<string>("bonus");
 
-	useEffect(() => {
-		if (open) {
-			const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
-			if (!isValid) {
-				setSelectedTypeLookupId("bonus");
-			}
-		}
-	}, [open, gameTypeId, pointTypes, selectedTypeLookupId]);
 
 	const { data: points, refetch: refetchPoints } = trpc.game.getUserAssignmentPoints.useQuery(
 		{ userId, assignmentId },
@@ -62,6 +54,15 @@ export function ManageBonusPointsPopover({
 	);
 
 	const pointTypes = (gameTypeId ? allPointTypes : fallbackPointTypes) || [];
+
+	useEffect(() => {
+		if (open) {
+			const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
+			if (!isValid) {
+				setSelectedTypeLookupId("bonus");
+			}
+		}
+	}, [open, gameTypeId, pointTypes, selectedTypeLookupId]);
 
 	const { data: gambles, refetch: refetchGambles } = trpc.gambling.getUserAssignmentGamblePoints.useQuery(
 		{ userId, assignmentId },
