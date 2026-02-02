@@ -43,6 +43,7 @@ import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
 
 // --- Types ---
 type Admin = User;
+type GamblingPoint = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number]['gamblingPoints'][number];
 type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number];
 
 interface ConnectedUser {
@@ -448,9 +449,9 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	);
 
 	// Gambling summary
-	const gamblingPoints = (assignment as any).gamblingPoints || [];
+	const gamblingPoints = assignment.gamblingPoints || [];
 	const totalBets = gamblingPoints.length;
-	const totalPot = gamblingPoints.reduce((sum: number, gp: any) => sum + gp.points, 0);
+	const totalPot = gamblingPoints.reduce((sum: number, gp: GamblingPoint) => sum + gp.points, 0);
 
 	return (
 		<div className="border border-gray-700 rounded p-4">
@@ -488,7 +489,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 					{/* Guesser Rows */}
 					{guessers.map(guesser => {
 						if (!guesser.name) return null;
-						const bonusPoints = bonusPointsData?.[`${guesser.id}-${assignment.id}`] || 0;
+						const bonusPoints = bonusPointsData?.[`${guesser.id}::${assignment.id}`] || 0;
 						return (
 							<GuesserRow
 								key={guesser.id}
@@ -1011,7 +1012,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											ratings={ratings || []}
 											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
 											seasonId={seasonData?.id || null}
-											gameTypeId={seasonData?.gameTypeId || null}
+											gameTypeId={seasonData?.gameTypeId ?? null}
 											onGuessRatingChange={handleGuessRatingChange}
 											onAdminRatingChange={handleAdminRatingChange}
 											onAddOrUpdateGuess={handleAddOrUpdateGuess}

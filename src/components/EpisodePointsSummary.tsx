@@ -65,7 +65,7 @@ export const EpisodePointsSummary = ({ episode, bonusPointsData }: EpisodePoints
     // 2. Process Bonus Points (Manual adjustments/AssignmentPoints)
     if (bonusPointsData) {
         Object.entries(bonusPointsData).forEach(([key, value]) => {
-            const [userId, assignmentId] = key.split("-");
+            const [userId, assignmentId] = key.split("::");
             if (!userId || !assignmentId || value === 0) return;
 
             // Find user info from either assignments or look it up if we had a full list

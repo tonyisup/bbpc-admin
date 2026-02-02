@@ -228,25 +228,26 @@ export const gamblingRouter = router({
       seasonId: z.string().optional(), // Fallback
     }))
     .mutation(async ({ ctx, input }) => {
-      const gamble = await ctx.prisma.gamblingPoints.findUnique({
-        where: { id: input.gambleId },
-        include: { gamblingType: true }
-      });
-
-      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
-      if (gamble.pointsId) throw new Error("Gamble already confirmed");
-
-      let seasonId = gamble.seasonId || input.seasonId;
-      if (!seasonId) {
-        seasonId = (await getCurrentSeasonID(ctx.prisma)) ?? undefined;
-      }
-
-      if (!seasonId) throw new Error("No season found for point creation");
-
-      const gamblingType = gamble.gamblingType;
-      const earnedPoints = Math.floor(gamble.points * gamblingType.multiplier);
-
       return await ctx.prisma.$transaction(async (tx) => {
+        const gamble = await tx.gamblingPoints.findUnique({
+          where: { id: input.gambleId },
+          include: { gamblingType: true }
+        });
+
+        if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
+        if (gamble.pointsId) throw new Error("Gamble already confirmed");
+        if (gamble.status === "won" || gamble.status === "rejected") throw new Error("Gamble already processed");
+
+        let seasonId = gamble.seasonId || input.seasonId;
+        if (!seasonId) {
+          seasonId = (await getCurrentSeasonID(tx)) ?? undefined;
+        }
+
+        if (!seasonId) throw new Error("No season found for point creation");
+
+        const gamblingType = gamble.gamblingType;
+        const earnedPoints = Math.floor(gamble.points * gamblingType.multiplier);
+
         const point = await tx.point.create({
           data: {
             userId: gamble.userId,
@@ -273,14 +274,15 @@ export const gamblingRouter = router({
       gambleId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const gamble = await ctx.prisma.gamblingPoints.findUnique({
-        where: { id: input.gambleId },
-        include: { gamblingType: true }
-      });
-
-      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
-
       return await ctx.prisma.$transaction(async (tx) => {
+        const gamble = await tx.gamblingPoints.findUnique({
+          where: { id: input.gambleId },
+          include: { gamblingType: true }
+        });
+
+        if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
+        if (gamble.status === "lost" || gamble.status === "rejected") throw new Error("Gamble already rejected");
+
         if (gamble.pointsId) {
           await tx.point.delete({ where: { id: gamble.pointsId } });
         }
@@ -320,14 +322,15 @@ export const gamblingRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { id, status } = input;
-      const gamble = await ctx.prisma.gamblingPoints.findUnique({
-        where: { id },
-        include: { gamblingType: true }
-      });
-
-      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
 
       return await ctx.prisma.$transaction(async (tx) => {
+        const gamble = await tx.gamblingPoints.findUnique({
+          where: { id },
+          include: { gamblingType: true }
+        });
+
+        if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
+
         // If we are moving away from a resolved status (won or lost), remove the old point record
         if (gamble.pointsId && status !== gamble.status) {
           await tx.point.delete({ where: { id: gamble.pointsId } });

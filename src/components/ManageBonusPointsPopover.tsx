@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,6 +36,15 @@ export function ManageBonusPointsPopover({
 	const [reason, setReason] = useState("");
 	const [adjustment, setAdjustment] = useState(0);
 	const [selectedTypeLookupId, setSelectedTypeLookupId] = useState<string>("bonus");
+
+	useEffect(() => {
+		if (open) {
+			const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
+			if (!isValid) {
+				setSelectedTypeLookupId("bonus");
+			}
+		}
+	}, [open, gameTypeId, pointTypes, selectedTypeLookupId]);
 
 	const { data: points, refetch: refetchPoints } = trpc.game.getUserAssignmentPoints.useQuery(
 		{ userId, assignmentId },
@@ -110,6 +119,13 @@ export function ManageBonusPointsPopover({
 	});
 
 	const handleAdd = () => {
+		// Extra safety check
+		const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
+		if (!isValid) {
+			toast.error("Invalid point type selected");
+			return;
+		}
+
 		addBonusPointEvent({
 			userId,
 			assignmentId,
