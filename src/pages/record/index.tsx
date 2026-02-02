@@ -225,7 +225,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 
 				return (
 					<td key={admin.id} className="p-2">
-						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none" : ""}`}>
+						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none grayscale" : ""}`}>
 							{isEditing && (
 								<Select
 									value={currentRatingId || undefined}
