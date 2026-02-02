@@ -387,6 +387,14 @@ export const episodeRouter = router({
                 include: {
                   user: true
                 }
+              },
+              gamblingPoints: {
+                include: {
+                  user: true,
+                  gamblingType: true,
+                  targetUser: true,
+                  point: true
+                }
               }
             }
           },
