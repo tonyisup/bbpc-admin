@@ -38,6 +38,8 @@ import AudioStream from "../../components/AudioStream";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
+import { SeasonLeaderboard } from "../../components/SeasonLeaderboard";
+import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
 
 // --- Types ---
 type Admin = User;
@@ -164,6 +166,7 @@ interface GuesserRowProps {
 	ratings: Rating[];
 	bonusPoints: number;
 	seasonId: string | null;
+	gameTypeId: number | null;
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
@@ -175,6 +178,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	ratings,
 	bonusPoints,
 	seasonId,
+	gameTypeId,
 	onRatingChange,
 	onAddPointForGuess
 }) => {
@@ -279,6 +283,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 					assignmentId={assignment.id}
 					bonusPoints={bonusPoints}
 					seasonId={seasonId}
+					gameTypeId={gameTypeId}
 					onUpdate={() => {
 						onAddPointForGuess({
 							userId: guesser.id,
@@ -400,6 +405,7 @@ interface AssignmentGridProps {
 	ratings: Rating[];
 	users: User[];
 	seasonId: string | null;
+	gameTypeId: number | null;
 	onGuessRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
@@ -414,6 +420,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	ratings,
 	users,
 	seasonId,
+	gameTypeId,
 	onGuessRatingChange,
 	onAdminRatingChange,
 	onAddOrUpdateGuess,
@@ -491,6 +498,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 								ratings={ratings}
 								bonusPoints={bonusPoints}
 								seasonId={seasonId}
+								gameTypeId={gameTypeId}
 								onRatingChange={onGuessRatingChange}
 								onAddPointForGuess={onAddPointForGuess}
 							/>
@@ -1003,6 +1011,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											ratings={ratings || []}
 											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
 											seasonId={seasonData?.id || null}
+											gameTypeId={seasonData?.gameTypeId || null}
 											onGuessRatingChange={handleGuessRatingChange}
 											onAdminRatingChange={handleAdminRatingChange}
 											onAddOrUpdateGuess={handleAddOrUpdateGuess}
@@ -1037,6 +1046,17 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							</Card>
 						)}
 					</>
+				)}
+
+				{recordingData && isAdmin && (
+					<EpisodePointsSummary
+						episode={recordingData}
+						bonusPointsData={bonusPointsData}
+					/>
+				)}
+
+				{seasonData?.id && isAdmin && (recordingData || pendingEpisode) && (
+					<SeasonLeaderboard seasonId={seasonData.id} />
 				)}
 
 				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
