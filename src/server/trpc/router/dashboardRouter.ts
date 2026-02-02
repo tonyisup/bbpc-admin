@@ -51,7 +51,9 @@ export const dashboardRouter = router({
       }),
       ctx.prisma.episode.findFirst({
         where: {
-          status: 'next'
+          status: {
+            in: ['next', 'recording']
+          }
         },
         orderBy: { date: 'desc' },
         include: {

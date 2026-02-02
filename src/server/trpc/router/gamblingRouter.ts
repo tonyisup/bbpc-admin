@@ -274,21 +274,40 @@ export const gamblingRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const gamble = await ctx.prisma.gamblingPoints.findUnique({
-        where: { id: input.gambleId }
+        where: { id: input.gambleId },
+        include: { gamblingType: true }
       });
 
-      if (!gamble) throw new Error("Gamble not found");
+      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
 
       return await ctx.prisma.$transaction(async (tx) => {
         if (gamble.pointsId) {
           await tx.point.delete({ where: { id: gamble.pointsId } });
         }
 
+        let seasonId = gamble.seasonId;
+        if (!seasonId) {
+          seasonId = await getCurrentSeasonID(tx);
+        }
+
+        if (!seasonId) throw new Error("No season found for point creation");
+
+        const point = await tx.point.create({
+          data: {
+            userId: gamble.userId,
+            seasonId: seasonId,
+            adjustment: -gamble.points,
+            reason: `Gamble loss: ${gamble.gamblingType.title}`,
+            earnedOn: new Date(),
+          }
+        });
+
         return await tx.gamblingPoints.update({
           where: { id: input.gambleId },
           data: {
             status: "lost",
-            pointsId: null
+            pointsId: point.id,
+            seasonId: seasonId
           } as any
         });
       });
@@ -303,22 +322,52 @@ export const gamblingRouter = router({
       const { id, status } = input;
       const gamble = await ctx.prisma.gamblingPoints.findUnique({
         where: { id },
-        include: { point: true }
+        include: { gamblingType: true }
       });
 
-      if (!gamble) throw new Error("Gamble not found");
+      if (!gamble || !gamble.gamblingType) throw new Error("Gamble not found");
 
       return await ctx.prisma.$transaction(async (tx) => {
-        // If we are moving away from "won" status, remove the point record
-        if ((gamble as any).status === "won" && gamble.pointsId && status !== "won") {
+        // If we are moving away from a resolved status (won or lost), remove the old point record
+        if (gamble.pointsId && status !== gamble.status) {
           await tx.point.delete({ where: { id: gamble.pointsId } });
+        }
+
+        let pointsId = null;
+        let seasonId = gamble.seasonId;
+
+        if (status === "won" || status === "lost") {
+          if (!seasonId) {
+            seasonId = await getCurrentSeasonID(tx);
+          }
+          if (!seasonId) throw new Error("No season found for point creation");
+
+          const adjustment = status === "won"
+            ? Math.floor(gamble.points * gamble.gamblingType.multiplier)
+            : -gamble.points;
+
+          const reason = status === "won"
+            ? `Gamble win: ${gamble.gamblingType.title}`
+            : `Gamble loss: ${gamble.gamblingType.title}`;
+
+          const point = await tx.point.create({
+            data: {
+              userId: gamble.userId,
+              seasonId: seasonId,
+              adjustment,
+              reason,
+              earnedOn: new Date(),
+            }
+          });
+          pointsId = point.id;
         }
 
         return await tx.gamblingPoints.update({
           where: { id },
           data: {
             status,
-            pointsId: status === "won" ? gamble.pointsId : null
+            pointsId,
+            seasonId
           } as any
         });
       });
