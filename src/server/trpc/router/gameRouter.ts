@@ -180,7 +180,7 @@ export const gameRouter = router({
 
 			const totals: Record<string, number> = {};
 			points.forEach(p => {
-				const key = `${p.userId}-${p.assignmentId}`;
+				const key = `${p.userId}::${p.assignmentId}`;
 				const pointValue = (p.point?.gamePointType?.points ?? 0) + (p.point?.adjustment ?? 0);
 				totals[key] = (totals[key] || 0) + pointValue;
 			});

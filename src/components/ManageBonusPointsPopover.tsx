@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -6,6 +6,13 @@ import { Trash2, Plus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 interface ManageBonusPointsPopoverProps {
 	userId: string;
@@ -13,6 +20,7 @@ interface ManageBonusPointsPopoverProps {
 	onUpdate?: () => void;
 	bonusPoints: number;
 	seasonId: string | null;
+	gameTypeId?: number | null;
 }
 
 export function ManageBonusPointsPopover({
@@ -20,17 +28,41 @@ export function ManageBonusPointsPopover({
 	assignmentId,
 	onUpdate,
 	bonusPoints,
-	seasonId
+	seasonId,
+	gameTypeId
 }: ManageBonusPointsPopoverProps) {
 	const [open, setOpen] = useState(false);
 	const [isAdding, setIsAdding] = useState(false);
 	const [reason, setReason] = useState("");
 	const [adjustment, setAdjustment] = useState(0);
+	const [selectedTypeLookupId, setSelectedTypeLookupId] = useState<string>("bonus");
+
 
 	const { data: points, refetch: refetchPoints } = trpc.game.getUserAssignmentPoints.useQuery(
 		{ userId, assignmentId },
 		{ enabled: open }
 	);
+
+	const { data: allPointTypes } = trpc.game.getGamePointsForGameType.useQuery(
+		{ gameTypeId: gameTypeId || 0 },
+		{ enabled: open && !!gameTypeId }
+	);
+
+	const { data: fallbackPointTypes } = trpc.game.getAllGamePointTypes.useQuery(
+		undefined,
+		{ enabled: open && !gameTypeId }
+	);
+
+	const pointTypes = (gameTypeId ? allPointTypes : fallbackPointTypes) || [];
+
+	useEffect(() => {
+		if (open) {
+			const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
+			if (!isValid) {
+				setSelectedTypeLookupId("bonus");
+			}
+		}
+	}, [open, gameTypeId, pointTypes, selectedTypeLookupId]);
 
 	const { data: gambles, refetch: refetchGambles } = trpc.gambling.getUserAssignmentGamblePoints.useQuery(
 		{ userId, assignmentId },
@@ -88,13 +120,31 @@ export function ManageBonusPointsPopover({
 	});
 
 	const handleAdd = () => {
+		// Extra safety check
+		const isValid = selectedTypeLookupId === "bonus" || pointTypes.some(t => t.lookupID === selectedTypeLookupId);
+		if (!isValid) {
+			toast.error("Invalid point type selected");
+			return;
+		}
+
 		addBonusPointEvent({
 			userId,
 			assignmentId,
-			gamePointLookupId: 'bonus',
+			gamePointLookupId: selectedTypeLookupId,
 			reason,
 			adjustment,
 		});
+	};
+
+	const handleTypeChange = (lookupId: string) => {
+		setSelectedTypeLookupId(lookupId);
+		const type = pointTypes.find(t => t.lookupID === lookupId);
+		if (type) {
+			setAdjustment(type.points);
+			if (!reason || pointTypes.some(t => t.title === reason)) {
+				setReason(type.title);
+			}
+		}
 	};
 
 	return (
@@ -121,6 +171,22 @@ export function ManageBonusPointsPopover({
 					{isAdding && (
 						<div className="space-y-3 p-3 bg-gray-800 rounded-md border border-gray-700">
 							<div className="space-y-1">
+								<Label className="text-xs">Type</Label>
+								<Select value={selectedTypeLookupId} onValueChange={handleTypeChange}>
+									<SelectTrigger className="h-8 bg-gray-900 border-gray-700">
+										<SelectValue placeholder="Select type" />
+									</SelectTrigger>
+									<SelectContent className="bg-gray-900 border-gray-700 text-gray-100">
+										<SelectItem value="bonus">Custom / Bonus</SelectItem>
+										{pointTypes.map((t) => (
+											<SelectItem key={t.id} value={t.lookupID}>
+												{t.title} ({t.points > 0 ? `+${t.points}` : t.points})
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+							<div className="space-y-1">
 								<Label htmlFor="reason" className="text-xs">Reason</Label>
 								<Input
 									id="reason"
@@ -144,7 +210,7 @@ export function ManageBonusPointsPopover({
 								size="sm"
 								className="w-full"
 								onClick={handleAdd}
-								disabled={isAddingLoading || !reason}
+								disabled={isAddingLoading}
 							>
 								{isAddingLoading ? "Adding..." : "Add Bonus"}
 							</Button>

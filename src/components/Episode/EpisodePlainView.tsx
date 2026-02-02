@@ -15,6 +15,7 @@ const EpisodePlainView: React.FC<EpisodePlainViewProps> = ({ episodeId, episodeN
   const { data: episode, refetch } = trpc.episode.full.useQuery({ id: episodeId });
   const { data: next } = trpc.episode.fullByNumber.useQuery({ number: 1 + episodeNumber })
   const [notes, setNotes] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (episode?.notes) {
@@ -35,6 +36,8 @@ const EpisodePlainView: React.FC<EpisodePlainViewProps> = ({ episodeId, episodeN
   const handleCopyToClipboard = () => {
     const text = document.getElementById('episode-data')?.innerText ?? '';
     navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   }
 
   const handleSaveNotes = () => {
@@ -47,8 +50,8 @@ const EpisodePlainView: React.FC<EpisodePlainViewProps> = ({ episodeId, episodeN
     <section className="flex flex-col gap-2 w-full max-w-4xl p-4 border rounded-md">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Plain Text View</h2>
-        <Button variant="ghost" size="icon" title="Copy to Clipboard" onClick={handleCopyToClipboard}>
-          <HiOutlineClipboardCopy className="h-4 w-4" />
+        <Button variant="ghost" size={copied ? "default" : "icon"} title="Copy to Clipboard" onClick={handleCopyToClipboard} className={copied ? "text-xs px-2" : ""}>
+          {copied ? "Copied!" : <HiOutlineClipboardCopy className="h-4 w-4" />}
         </Button>
       </div>
 

@@ -1,4 +1,11 @@
-import 'dotenv/config'
+import { config } from 'dotenv'
+import fs from 'fs'
+
+if (fs.existsSync('.env.local')) {
+	config({ path: '.env.local' })
+} else {
+	config()
+}
 import { defineConfig, env } from 'prisma/config'
 
 export default defineConfig({

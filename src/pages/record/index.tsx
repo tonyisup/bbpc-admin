@@ -22,9 +22,10 @@ import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
 import { User, Rating, Guess } from "@prisma/client";
-import { Mic2Icon, PencilIcon, SaveIcon, XIcon, MicIcon, MicOffIcon, HeadphonesIcon, RadioIcon } from "lucide-react";
+import { Mic2Icon, PencilIcon, SaveIcon, XIcon, MicIcon, MicOffIcon, HeadphonesIcon, RadioIcon, Coins } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
+import AssignmentBets from "../../components/Assignment/AssignmentBets";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@/components/ui/item";
 import PointEventButton, { PendingPointEvent } from "@/components/PointEventButton";
@@ -37,9 +38,12 @@ import AudioStream from "../../components/AudioStream";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
+import { SeasonLeaderboard } from "../../components/SeasonLeaderboard";
+import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
 
 // --- Types ---
 type Admin = User;
+type GamblingPoint = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number]['gamblingPoints'][number];
 type AssignmentWithRelations = NonNullable<RouterOutputs['episode']['getRecordingData']>['assignments'][number];
 
 interface ConnectedUser {
@@ -163,6 +167,7 @@ interface GuesserRowProps {
 	ratings: Rating[];
 	bonusPoints: number;
 	seasonId: string | null;
+	gameTypeId: number | null;
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
@@ -174,6 +179,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	ratings,
 	bonusPoints,
 	seasonId,
+	gameTypeId,
 	onRatingChange,
 	onAddPointForGuess
 }) => {
@@ -224,7 +230,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 
 				return (
 					<td key={admin.id} className="p-2">
-						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none" : ""}`}>
+						<div className={`transition-all duration-300 ${isBlurred ? "blur-sm select-none grayscale" : ""}`}>
 							{isEditing && (
 								<Select
 									value={currentRatingId || undefined}
@@ -278,6 +284,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 					assignmentId={assignment.id}
 					bonusPoints={bonusPoints}
 					seasonId={seasonId}
+					gameTypeId={gameTypeId}
 					onUpdate={() => {
 						onAddPointForGuess({
 							userId: guesser.id,
@@ -399,11 +406,13 @@ interface AssignmentGridProps {
 	ratings: Rating[];
 	users: User[];
 	seasonId: string | null;
+	gameTypeId: number | null;
 	onGuessRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 	bonusPointsData?: Record<string, number>;
+	onRefresh: () => void;
 }
 
 const AssignmentGrid: React.FC<AssignmentGridProps> = ({
@@ -412,11 +421,13 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	ratings,
 	users,
 	seasonId,
+	gameTypeId,
 	onGuessRatingChange,
 	onAdminRatingChange,
 	onAddOrUpdateGuess,
 	onAddPointForGuess,
-	bonusPointsData
+	bonusPointsData,
+	onRefresh
 }) => {
 	// Get all unique users who made guesses
 	const guesserIds = new Set<string>();
@@ -431,6 +442,16 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 		}
 		return { id, name: "Unknown" };
 	});
+
+	// Check if all admins have rated
+	const allHostsRated = admins.every(admin =>
+		assignment.assignmentReviews?.some((ar: any) => ar.review.userId === admin.id && ar.review.ratingId)
+	);
+
+	// Gambling summary
+	const gamblingPoints = assignment.gamblingPoints || [];
+	const totalBets = gamblingPoints.length;
+	const totalPot = gamblingPoints.reduce((sum: number, gp: GamblingPoint) => sum + gp.points, 0);
 
 	return (
 		<div className="border border-gray-700 rounded p-4">
@@ -468,7 +489,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 					{/* Guesser Rows */}
 					{guessers.map(guesser => {
 						if (!guesser.name) return null;
-						const bonusPoints = bonusPointsData?.[`${guesser.id}-${assignment.id}`] || 0;
+						const bonusPoints = bonusPointsData?.[`${guesser.id}::${assignment.id}`] || 0;
 						return (
 							<GuesserRow
 								key={guesser.id}
@@ -478,6 +499,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 								ratings={ratings}
 								bonusPoints={bonusPoints}
 								seasonId={seasonId}
+								gameTypeId={gameTypeId}
 								onRatingChange={onGuessRatingChange}
 								onAddPointForGuess={onAddPointForGuess}
 							/>
@@ -511,6 +533,32 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 					</div>
 				)
 			}
+
+			{/* Gambling Section */}
+			<div className="mt-4">
+				{!allHostsRated ? (
+					<div className="flex items-center gap-4 p-4 border border-gray-700/50 rounded bg-gray-900/50">
+						<div className="p-2 bg-amber-500/10 rounded-full">
+							<Coins className="w-5 h-5 text-amber-500" />
+						</div>
+						<div>
+							<div className="font-medium text-amber-500">Gambling Summary</div>
+							<div className="text-sm text-gray-400">
+								{totalBets} bets placed • Total Pot: {totalPot}pts
+							</div>
+						</div>
+						<div className="ml-auto text-xs text-gray-500 italic">
+							Details reveal after all hosts rate
+						</div>
+					</div>
+				) : (
+					<AssignmentBets
+						assignment={assignment}
+						gamblingPoints={gamblingPoints}
+						onRefresh={onRefresh}
+					/>
+				)}
+			</div>
 		</div >
 	);
 };
@@ -964,6 +1012,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											ratings={ratings || []}
 											users={users?.filter(u => !admins?.some(a => a.id === u.id)) || []}
 											seasonId={seasonData?.id || null}
+											gameTypeId={seasonData?.gameTypeId ?? null}
 											onGuessRatingChange={handleGuessRatingChange}
 											onAdminRatingChange={handleAdminRatingChange}
 											onAddOrUpdateGuess={handleAddOrUpdateGuess}
@@ -972,6 +1021,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 												refetchBonusPoints();
 											}}
 											bonusPointsData={bonusPointsData}
+											onRefresh={refetchRecordingData}
 										/>
 									))}
 								</div>
@@ -997,6 +1047,17 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							</Card>
 						)}
 					</>
+				)}
+
+				{recordingData && isAdmin && (
+					<EpisodePointsSummary
+						episode={recordingData}
+						bonusPointsData={bonusPointsData}
+					/>
+				)}
+
+				{seasonData?.id && isAdmin && (recordingData || pendingEpisode) && (
+					<SeasonLeaderboard seasonId={seasonData.id} />
 				)}
 
 				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}

@@ -378,16 +378,32 @@ export const episodeRouter = router({
                     include: {
                       user: true,
                       rating: true,
-                      point: true
-                    }
-                  }
-                }
+                      point: {
+                        include: {
+                          gamePointType: true,
+                        },
+                      },
+                    },
+                  },
+                },
               },
               audioMessages: {
                 include: {
-                  user: true
-                }
-              }
+                  user: true,
+                },
+              },
+              gamblingPoints: {
+                include: {
+                  user: true,
+                  gamblingType: true,
+                  targetUser: true,
+                  point: {
+                    include: {
+                      gamePointType: true,
+                    },
+                  },
+                },
+              },
             }
           },
           audioEpisodeMessages: {
