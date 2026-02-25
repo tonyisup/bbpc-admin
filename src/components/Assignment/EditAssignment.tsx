@@ -6,6 +6,7 @@ import { Trash2, Plus, MessageSquare, Mic, Coins, User as UserIcon, X, PlusCircl
 import Link from "next/link";
 import RatingIcon from "../Review/RatingIcon";
 import HomeworkFlag from "./HomeworkFlag";
+import AudioPlayer from "../AudioPlayer";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -164,9 +165,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refresh }) => {
 					</Link>
 					<span>{new Date(audioMessage.createdAt).toLocaleString()}</span>
 				</div>
-				<audio controls className="w-full h-8">
-					<source src={audioMessage.url} type="audio/mpeg" />
-				</audio>
+				<AudioPlayer url={audioMessage.url} />
 			</div>
 			<Button
 				variant="ghost"

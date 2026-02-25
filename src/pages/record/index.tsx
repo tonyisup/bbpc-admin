@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useRouter } from "next/router";
 import { useAudioSession } from "../../hooks/useAudioSession";
 import AudioStream from "../../components/AudioStream";
+import AudioPlayer from "../../components/AudioPlayer";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
@@ -525,9 +526,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 						{assignment.audioMessages.map((audio: any) => (
 							<div key={audio.id} className="mb-2">
 								<p className="text-xs text-gray-400 mb-1">{audio.user.name}</p>
-								<audio controls className="w-full max-w-md h-8">
-									<source src={audio.url} type="audio/mpeg" />
-								</audio>
+								<AudioPlayer url={audio.url} className="max-w-md" />
 							</div>
 						))}
 					</div>
@@ -1038,9 +1037,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 									{recordingData.audioEpisodeMessages.map((audio) => (
 										<div key={audio.id} className="border border-gray-700 rounded p-4">
 											<p className="text-sm text-gray-400 mb-2">{audio.user.name}</p>
-											<audio controls className="w-full">
-												<source src={audio.url} type="audio/mpeg" />
-											</audio>
+											<AudioPlayer url={audio.url} />
 										</div>
 									))}
 								</div>

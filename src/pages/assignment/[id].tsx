@@ -4,6 +4,7 @@ import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { trpc } from "../../utils/trpc";
 import EditAssignment from "../../components/Assignment/EditAssignment";
+import AudioPlayer from "../../components/AudioPlayer";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
@@ -40,9 +41,7 @@ const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
 					<div />
 				</div>
 				{(assignment as any)?.episode?.recording && (
-					<audio controls className="w-full max-w-md h-8">
-						<source src={(assignment as any).episode.recording} type="audio/mpeg" />
-					</audio>
+					<AudioPlayer url={(assignment as any).episode.recording} className="w-full max-w-md" />
 				)}
 			</div>
 			{assignment && <EditAssignment assignment={assignment} />}

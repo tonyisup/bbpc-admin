@@ -1,8 +1,9 @@
 import { type Dispatch, type FC } from "react";
 import { type AudioEpisodeMessage, type User, type Episode } from "@prisma/client";
 import { trpc } from "../../utils/trpc";
-import { X, User as UserIcon, Calendar, Play } from "lucide-react";
+import { X, User as UserIcon, Calendar } from "lucide-react";
 import Link from "next/link";
+import AudioPlayer from "../AudioPlayer";
 
 interface EpisodeAudioMessagesProps {
 	episode: Episode
@@ -55,21 +56,11 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				</span>
 			</div>
 			<div className="flex items-center gap-3">
-				<div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-					<Play className="h-4 w-4 text-primary-foreground fill-current" />
-				</div>
-				<audio controls className="w-full max-w-md h-8 filter grayscale invert opacity-80 hover:opacity-100 transition-opacity">
-					<source src={audioMessage.url} type="audio/mpeg" />
-					{(audioMessage as any).captionsUrl && (
-						<track
-							kind="captions"
-							src={(audioMessage as any).captionsUrl}
-							srcLang="en"
-							label="English"
-							default
-						/>
-					)}
-				</audio>
+				<AudioPlayer
+					url={audioMessage.url}
+					captionsUrl={(audioMessage as any).captionsUrl}
+					className="w-full max-w-md"
+				/>
 			</div>
 			{audioMessage.notes && (
 				<div
