@@ -12,6 +12,7 @@ import MovieCard from "../components/MovieCard";
 
 import GuessesGraph from "../components/Dashboard/GuessesGraph";
 import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -158,7 +159,7 @@ const Home: NextPage = () => {
                   ))}
                 </div>
                 <div className="mt-2">
-                  <Link href={`/episode/${stats.latestEpisode.id}`}>
+                  <Link href={getAdminEpisodePath(stats.latestEpisode.slug ?? stats.latestEpisode.id)}>
                     <Button variant="outline" size="sm">
                       View Details
                     </Button>
@@ -205,7 +206,7 @@ const Home: NextPage = () => {
                   ))}
                 </div>
                 <div className="mt-2">
-                  <Link href={`/episode/${stats.upcomingEpisode.id}`}>
+                  <Link href={getAdminEpisodePath(stats.upcomingEpisode.slug ?? stats.upcomingEpisode.id)}>
                     <Button variant="outline" size="sm">
                       View Details
                     </Button>

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { utapi } from "../../uploadthing";
+import { createUniqueEpisodeSlug } from "../../slugs";
 import { parsePlainDate } from "@/lib/dates";
 
 export const episodeRouter = router({
@@ -51,13 +52,25 @@ export const episodeRouter = router({
   add: protectedProcedure
     .input(z.object({ number: z.number(), title: z.string() }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.episode.create({
-        data: {
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        const episode = await tx.episode.create({
+          data: {
+            number: req.input.number,
+            title: req.input.title,
+            status: "pending"
+          }
+        });
+
+        const slug = await createUniqueEpisodeSlug(tx, {
           number: req.input.number,
           title: req.input.title,
-          status: "pending"
-        }
-      })
+        }, episode.id);
+
+        return tx.episode.update({
+          where: { id: episode.id },
+          data: { slug },
+        });
+      });
     }),
   remove: protectedProcedure
     .input(z.object({ id: z.string() }))

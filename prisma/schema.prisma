@@ -18,6 +18,7 @@ model Episode {
   seoDescription       String?
   seoKeywords          String?
   seoTitle             String?
+  slug                 String?               @unique
   assignments          Assignment[]
   audioEpisodeMessages AudioEpisodeMessage[]
   bangers              Banger[]
@@ -124,6 +125,7 @@ model Assignment {
   movieId           String             @db.UniqueIdentifier
   type              String             @default("HOMEWORK")
   playable          Boolean            @default(true)
+  slug              String?            @unique
   episode           Episode            @relation(fields: [episodeId], references: [id])
   movie             Movie              @relation(fields: [movieId], references: [id])
   user              User               @relation(fields: [userId], references: [id], onUpdate: NoAction)
@@ -289,7 +291,6 @@ model Point {
   assignmentPoints AssignmentPoints[]
   gamblingPoints   GamblingPoints[]
   guesses          Guess[]
-  tagVotes         TagVote[]
   gamePointType    GamePointType?     @relation(fields: [gamePointTypeId], references: [id], onDelete: Cascade)
   season           Season             @relation(fields: [seasonId], references: [id], onUpdate: NoAction)
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -420,11 +421,9 @@ model TagVote {
   userId    String?
   pointId   String?  @db.UniqueIdentifier
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  point     Point?   @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([userId])
   @@index([tag, userId])
-  @@index([pointId])
 }
 
 model Tag {

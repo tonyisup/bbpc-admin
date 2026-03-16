@@ -4,8 +4,8 @@ import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { trpc } from "../../utils/trpc";
 import EditAssignment from "../../components/Assignment/EditAssignment";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import { getAdminAssignmentPath, getAdminEpisodePath } from "@/lib/routes";
 
 export async function getServerSideProps(context: any) {
 	const session = await getServerSession(context.req, context.res, authOptions);
@@ -21,21 +21,40 @@ export async function getServerSideProps(context: any) {
 		}
 	}
 
+	const slugParam = context.params?.slug;
+	const routeParam = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+	if (!routeParam) {
+		return { notFound: true };
+	}
+
+	const { assignment, shouldRedirect } = await ssr.resolveAssignmentRouteParam(routeParam);
+	if (!assignment) {
+		return { notFound: true };
+	}
+
+	if (shouldRedirect && assignment.slug) {
+		return {
+			redirect: {
+				destination: getAdminAssignmentPath(assignment.slug),
+				permanent: true,
+			}
+		};
+	}
+
 	return {
 		props: {
 			session,
+			assignmentId: assignment.id,
 		}
 	}
 }
-const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-	const { query } = useRouter();
-	const id = query.id as string;
-	const { data: assignment } = trpc.assignment.get.useQuery({ id })
+const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ assignmentId }) => {
+	const { data: assignment } = trpc.assignment.get.useQuery({ id: assignmentId })
 	return (
 		<div>
 			<div className="flex flex-col items-center gap-4 mt-4">
 				<div className="flex justify-around items-center w-full">
-					<Link href={"/episode/" + assignment?.episodeId}>Back</Link>
+					<Link href={assignment ? getAdminEpisodePath(assignment.episode?.slug ?? assignment.episodeId) : "/episode"}>Back</Link>
 					<span className="text-2xl font-semibold">{assignment?.type === 'HOMEWORK' ? 'Homework' : assignment?.type === 'EXTRA_CREDIT' ? 'Extra Credit' : 'Bonus'} Assignment</span>
 					<div />
 				</div>
@@ -51,4 +70,3 @@ const Assignment: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
 }
 
 export default Assignment
-

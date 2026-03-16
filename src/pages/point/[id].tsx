@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import debounce from "lodash.debounce";
 import { formatInstantLocal } from "@/lib/dates";
+import { getAdminAssignmentPath } from "@/lib/routes";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -319,7 +320,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                       <div className="flex items-center gap-2">
                         {ap.assignment?.id ? (
                           <>
-                            <Link href={`/assignment/${ap.assignment.id}`}>
+                            <Link href={getAdminAssignmentPath(ap.assignment.slug ?? ap.assignment.id)}>
                               <Button variant="ghost" size="icon" title="View Assignment">
                                 <Info className="h-4 w-4" />
                               </Button>
@@ -362,7 +363,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                         <Info className="h-4 w-4 text-orange-500" />
                         <span className="text-sm font-medium">Guess: {g.assignmentReview.assignment.movie.title}</span>
                       </div>
-                      <Link href={`/assignment/${g.assignmentReview.assignment.id}`}>
+                      <Link href={getAdminAssignmentPath(g.assignmentReview.assignment.slug ?? g.assignmentReview.assignment.id)}>
                         <Button variant="link" size="sm">View Assignment</Button>
                       </Link>
                     </div>

@@ -9,6 +9,7 @@ import Image from "next/image";
 import RatingIcon from "../Review/RatingIcon";
 import { FC } from "react";
 import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 
 interface MediaDetailPageProps {
   media: {
@@ -132,7 +133,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                     linkedEpisodes.map((episode: any) => (
                       <Link
                         key={episode.id}
-                        href={`/episode/${episode.id}`}
+                        href={getAdminEpisodePath(episode.slug ?? episode.id)}
                         className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent transition-all group"
                       >
                         <div className="flex flex-col">
@@ -205,7 +206,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                               <TableCell>
                                 {rec ? (
                                   <Link
-                                    href={`/episode/${rec.id}`}
+                                    href={getAdminEpisodePath(rec.slug ?? rec.id)}
                                     className="text-primary hover:underline text-sm font-medium whitespace-nowrap"
                                   >
                                     Ep. {rec.number}

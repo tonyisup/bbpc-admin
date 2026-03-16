@@ -11,6 +11,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import AssignmentReviews from "./AssignmentReviews"
 import AssignmentBets from "./AssignmentBets"
 import { Separator } from "../ui/separator"
+import { getAdminAssignmentPath } from "@/lib/routes"
 
 interface AssignmentAdminCardProps {
 	assignment: Assignment & {
@@ -75,7 +76,7 @@ const AssignmentAdminCard: FC<AssignmentAdminCardProps> = ({ assignment, refresh
 						}
 					}}
 				/>
-				<Link href={`/assignment/${encodeURIComponent(assignment.id)}`}>
+				<Link href={getAdminAssignmentPath(assignment.slug ?? assignment.id)}>
 					<HiPencil className="h-5 w-5" />
 				</Link>
 			</div>

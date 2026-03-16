@@ -1,7 +1,6 @@
-import { GetServerSidePropsContext, NextPage } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { ChevronLeft, Calendar, Mic2, Link2, FileText, Settings2, PlayCircle, RefreshCcw, Film } from "lucide-react";
 import EpisodeAssignments from "../../components/Assignment/EpisodeAssignments";
@@ -21,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { UploadDropzone } from "../../utils/uploadthing";
 import { toast } from "sonner";
 import { formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -36,29 +36,47 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }
   }
 
+  const slugParam = context.params?.slug;
+  const routeParam = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+  if (!routeParam) {
+    return { notFound: true };
+  }
+
+  const { episode, shouldRedirect } = await ssr.resolveEpisodeRouteParam(routeParam);
+  if (!episode) {
+    return { notFound: true };
+  }
+
+  if (shouldRedirect && episode.slug) {
+    return {
+      redirect: {
+        destination: getAdminEpisodePath(episode.slug),
+        permanent: true,
+      },
+    };
+  }
+
   return {
     props: {
-      session
+      session,
+      episodeId: episode.id,
     }
   }
 }
 
-const EpisodePage: NextPage<{ session: any }> = ({ session }) => {
-  const router = useRouter();
-  const { id: queryId } = router.query;
-  const id = Array.isArray(queryId) ? queryId[0] : queryId;
+const EpisodePage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = ({ episodeId }) => {
   const [activeTab, setActiveTab] = useState("general");
 
   const { data: episode, refetch, isFetching } = trpc.episode.get.useQuery({
-    id: id!
+    id: episodeId
   }, {
-    enabled: !!id
+    enabled: !!episodeId
   });
 
   const utils = trpc.useContext();
   const addAudioMessage = trpc.episode.addAudioMessage.useMutation({
     onSuccess: () => {
-      utils.episode.getAudioMessages.invalidate({ episodeId: id });
+      utils.episode.getAudioMessages.invalidate({ episodeId });
       toast.success("Audio message added successfully");
     },
     onError: (err) => {
@@ -186,9 +204,9 @@ const EpisodePage: NextPage<{ session: any }> = ({ session }) => {
                     <UploadDropzone
                       endpoint="audioUploader"
                       onClientUploadComplete={(res) => {
-                        if (res?.[0] && id) {
+                        if (res?.[0]) {
                           addAudioMessage.mutate({
-                            episodeId: id,
+                            episodeId,
                             url: res[0].url,
                             fileKey: res[0].key
                           });

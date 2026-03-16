@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { prisma } from "./client";
+import { isUuid } from "../slugs";
 
 export const ssr = {
 	isAdmin: async function (userId: string) {
@@ -23,5 +23,39 @@ export const ssr = {
 				id: episodeId
 			}
 		})
+	},
+	resolveEpisodeRouteParam: async function (slugOrId: string) {
+		const episode =
+			await prisma.episode.findUnique({
+				where: { slug: slugOrId },
+			}) ??
+			(isUuid(slugOrId)
+				? await prisma.episode.findUnique({
+					where: { id: slugOrId },
+				})
+				: null);
+
+		return {
+			episode,
+			shouldRedirect: !!episode?.slug && isUuid(slugOrId) && episode.id === slugOrId,
+		};
+	},
+	resolveAssignmentRouteParam: async function (slugOrId: string) {
+		const assignment =
+			await prisma.assignment.findUnique({
+				where: { slug: slugOrId },
+				include: { episode: true },
+			}) ??
+			(isUuid(slugOrId)
+				? await prisma.assignment.findUnique({
+					where: { id: slugOrId },
+					include: { episode: true },
+				})
+				: null);
+
+		return {
+			assignment,
+			shouldRedirect: !!assignment?.slug && isUuid(slugOrId) && assignment.id === slugOrId,
+		};
 	}
 };

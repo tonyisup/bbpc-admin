@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
 import { formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 import { SeasonLeaderboard } from "../../components/SeasonLeaderboard";
 import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
 
@@ -1063,7 +1064,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
 				{pendingEpisode && isAdmin && <EpisodeAssignments episode={pendingEpisode} />}
-				{pendingEpisode && isAdmin && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
+				{pendingEpisode && isAdmin && <Link href={getAdminEpisodePath(pendingEpisode.slug ?? pendingEpisode.id)}>Edit Episode</Link>}
 			</main>
 		</>
 	);
