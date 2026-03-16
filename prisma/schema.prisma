@@ -259,8 +259,8 @@ model Season {
   title          String
   description    String?
   gameTypeId     Int              @db.TinyInt
-  endedOn        DateTime?        @db.DateTime
-  startedOn      DateTime?        @db.DateTime
+  endedOn        DateTime?        @db.Date
+  startedOn      DateTime?        @db.Date
   gamblingPoints GamblingPoints[]
   guesses        Guess[]
   points         Point[]

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import Image from "next/image";
 import RatingIcon from "../Review/RatingIcon";
 import { FC } from "react";
+import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
 
 interface MediaDetailPageProps {
   media: {
@@ -139,7 +140,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                             Ep. {episode.number}: {episode.title}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {episode.date ? new Date(episode.date).toLocaleDateString() : 'No date'}
+                            {episode.date ? formatPlainDate(episode.date) : 'No date'}
                           </span>
                         </div>
                         <ChevronLeft className="h-4 w-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all transform translate-x-1" />
@@ -214,7 +215,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                                 )}
                               </TableCell>
                               <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                                {review.ReviewdOn ? new Date(review.ReviewdOn).toLocaleDateString() : '-'}
+                                {review.ReviewdOn ? formatInstantLocal(review.ReviewdOn) : '-'}
                               </TableCell>
                             </TableRow>
                           );

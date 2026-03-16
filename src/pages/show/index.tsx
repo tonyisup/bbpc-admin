@@ -13,6 +13,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
+import { getPlainDateYear } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -67,7 +68,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
 
   const handleAdd = (result: any) => {
     const rawReleaseDate = result.release_date || result.first_air_date;
-    const releaseYear = rawReleaseDate ? new Date(rawReleaseDate).getFullYear() : 0;
+    const releaseYear = getPlainDateYear(rawReleaseDate) ?? 0;
     addMutation.mutate({
       title: result.title,
       year: Number.isNaN(releaseYear) ? 0 : releaseYear,
@@ -136,7 +137,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   <div className="flex flex-col text-center">
                     <span className="text-sm font-bold line-clamp-1">{result.title}</span>
                     <span className="text-xs text-muted-foreground">
-                      {result.release_date ? new Date(result.release_date).getFullYear() : "N/A"}
+                      {getPlainDateYear(result.release_date || result.first_air_date) ?? "N/A"}
                     </span>
                   </div>
                   <Button

@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "../ui/select";
+import { toPlainDateString } from "@/lib/dates";
 
 interface Episode {
 	id: string;
@@ -35,7 +36,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const [number, setNumber] = useState<number>(episode.number);
 	const [title, setTitle] = useState<string>(episode.title);
 	const [description, setDescription] = useState<string>(episode.description ?? "");
-	const [date, setDate] = useState<Date | null>(episode.date);
+	const [date, setDate] = useState<string>(toPlainDateString(episode.date) ?? "");
 	const [recording, setRecording] = useState<string>(episode.recording ?? "");
 	const [status, setStatus] = useState<string | null>(episode.status);
 	const [seoTitle, setSeoTitle] = useState<string>(episode.seoTitle ?? "");
@@ -48,7 +49,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		setNumber(episode.number);
 		setTitle(episode.title);
 		setDescription(episode.description ?? "");
-		setDate(episode.date);
+		setDate(toPlainDateString(episode.date) ?? "");
 		setRecording(episode.recording ?? "");
 		setStatus(episode.status);
 		setSeoTitle(episode.seoTitle ?? "");
@@ -72,7 +73,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		setDescription(e.target.value);
 	};
 	const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setDate(e.target.valueAsDate ?? new Date());
+		setDate(e.target.value);
 	};
 	const handleRecordingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setRecording(e.target.value);
@@ -97,7 +98,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			number,
 			title,
 			description,
-			date: date || new Date(),
+			date: date || undefined,
 			recording,
 			status: status ?? undefined,
 			seoTitle,
@@ -144,7 +145,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 					<Input
 						id="date"
 						type="date"
-						value={date?.toISOString().slice(0, 10) ?? ""}
+						value={date}
 						onChange={handleDateChange}
 					/>
 				</div>

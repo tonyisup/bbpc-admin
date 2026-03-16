@@ -16,6 +16,7 @@ import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModa
 import EditableRating from "../Review/EditableRating";
 import AssignmentReviews from "./AssignmentReviews";
 import AssignmentBets from "./AssignmentBets";
+import { formatInstantLocal } from "@/lib/dates";
 
 interface EditAssignmentProps {
 	assignment: Assignment;
@@ -162,7 +163,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refresh }) => {
 					<Link href={"/user/" + audioMessage.user?.id} className="hover:text-primary transition-colors">
 						{audioMessage.user?.name ?? audioMessage.user?.email}
 					</Link>
-					<span>{new Date(audioMessage.createdAt).toLocaleString()}</span>
+					<span>{formatInstantLocal(audioMessage.createdAt, { dateStyle: "medium", timeStyle: "short" })}</span>
 				</div>
 				<audio controls className="w-full h-8">
 					<source src={audioMessage.url} type="audio/mpeg" />

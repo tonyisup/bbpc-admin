@@ -11,6 +11,7 @@ import ExtraCard from "../components/Extra/ExtraCard";
 import MovieCard from "../components/MovieCard";
 
 import GuessesGraph from "../components/Dashboard/GuessesGraph";
+import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -139,7 +140,7 @@ const Home: NextPage = () => {
                   {stats.latestEpisode.date && (
                     <span className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {new Date(stats.latestEpisode.date).toLocaleDateString()}
+                      {formatPlainDate(stats.latestEpisode.date)}
                     </span>
                   )}
                 </div>
@@ -186,7 +187,7 @@ const Home: NextPage = () => {
                   {stats.upcomingEpisode.date && (
                     <span className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {new Date(stats.upcomingEpisode.date).toLocaleDateString()}
+                      {formatPlainDate(stats.upcomingEpisode.date)}
                     </span>
                   )}
                 </div>
@@ -230,7 +231,7 @@ const Home: NextPage = () => {
               {stats?.latestSyllabus.map((item) => (
                 <div key={item.id} className="flex-1 flex flex-col items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {new Date(item.createdAt).toLocaleDateString()}
+                    {formatInstantLocal(item.createdAt)}
                   </span>
                   <MovieCard movie={item.movie} showTitle={false} />
                   <span className="text-xs text-muted-foreground">{item.user.name || "Unknown User"}</span>

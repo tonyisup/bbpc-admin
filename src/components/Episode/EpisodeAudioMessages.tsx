@@ -3,6 +3,7 @@ import { type AudioEpisodeMessage, type User, type Episode } from "@prisma/clien
 import { trpc } from "../../utils/trpc";
 import { X, User as UserIcon, Calendar, Play } from "lucide-react";
 import Link from "next/link";
+import { formatInstantLocal } from "@/lib/dates";
 
 interface EpisodeAudioMessagesProps {
 	episode: Episode
@@ -51,7 +52,7 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 				</Link>
 				<span className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium bg-muted px-2 py-0.5 rounded-full">
 					<Calendar className="h-3 w-3" />
-					{audioMessage.createdAt.toLocaleString()}
+					{formatInstantLocal(audioMessage.createdAt, { dateStyle: "medium", timeStyle: "short" })}
 				</span>
 			</div>
 			<div className="flex items-center gap-3">
@@ -96,4 +97,3 @@ const Audio: FC<AudioProps> = ({ audioMessage, refreshAudioMessages }) => {
 	</div>
 }
 export default EpisodeAudioMessages
-

@@ -8,6 +8,7 @@ import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import Image from "next/image";
+import { formatInstantLocal } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -135,7 +136,7 @@ const SyllabusPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                     )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {new Date(item.createdAt).toLocaleDateString()}
+                    {formatInstantLocal(item.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button

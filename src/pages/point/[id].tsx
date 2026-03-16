@@ -17,6 +17,7 @@ import { useRouter } from "next/router";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import debounce from "lodash.debounce";
+import { formatInstantLocal } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -411,7 +412,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
                   <Label className="text-[10px] uppercase text-muted-foreground">Earned On</Label>
                   <div className="flex items-center gap-2 p-2 rounded bg-muted/50 font-medium text-sm">
                     <Calendar className="h-4 w-4" />
-                    {new Date(point.earnedOn).toLocaleString()}
+                    {formatInstantLocal(point.earnedOn, { dateStyle: "medium", timeStyle: "short" })}
                   </div>
                 </div>
               </CardContent>

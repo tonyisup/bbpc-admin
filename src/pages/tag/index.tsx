@@ -14,6 +14,7 @@ import { Tag } from "@prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 import { User as UserIcon } from "lucide-react";
+import { formatInstantLocal } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -131,7 +132,7 @@ const TagManagementPage: NextPage<InferGetServerSidePropsType<typeof getServerSi
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{tag.description || "-"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {new Date(tag.createdAt).toLocaleDateString()}
+                          {formatInstantLocal(tag.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -223,7 +224,7 @@ const TagManagementPage: NextPage<InferGetServerSidePropsType<typeof getServerSi
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {new Date(vote.createdAt).toLocaleDateString()}
+                          {formatInstantLocal(vote.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">

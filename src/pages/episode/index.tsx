@@ -10,6 +10,7 @@ import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
+import { formatPlainDate } from "@/lib/dates";
 
 export async function getServerSideProps(context: any) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -93,7 +94,7 @@ const EpisodesPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePro
                       {episode.title}
                     </Link>
                   </TableCell>
-                  <TableCell>{episode.date ? new Date(episode.date).toLocaleDateString() : "-"}</TableCell>
+                  <TableCell>{episode.date ? formatPlainDate(episode.date) : "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/episode/plain/${encodeURIComponent(episode.id)}`}>

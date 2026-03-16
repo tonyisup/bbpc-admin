@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UploadDropzone } from "../../utils/uploadthing";
 import { toast } from "sonner";
+import { formatPlainDate } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -121,7 +122,7 @@ const EpisodePage: NextPage<{ session: any }> = ({ session }) => {
             <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-muted-foreground font-medium">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary/60" />
-                {episode?.date ? new Date(episode.date).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'No date set'}
+                {episode?.date ? formatPlainDate(episode.date, { dateStyle: "long" }) : 'No date set'}
               </div>
               {episode?.recording && (
                 <div className="flex items-center gap-2">

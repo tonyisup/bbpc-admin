@@ -5,6 +5,7 @@ import { trpc } from "../utils/trpc";
 import ShowCard from "./ShowCard";
 import TitleCard from "./TitleCard";
 import ShowSearch from "./ShowSearch";
+import { getPlainDateYear } from "@/lib/dates";
 
 interface ShowFindProps {
   selectShow: Dispatch<SetStateAction<Show | null>>;
@@ -16,7 +17,7 @@ const ShowFind: FC<ShowFindProps> = ({
   const [selectedShow, setSelectedShow] = useState<Show | null>(null)
   const [title, setTitle] = useState<Title | null>(null)
 
-  const { data: temp_title } = trpc.show.getTitle.useQuery({
+  trpc.show.getTitle.useQuery({
     id: title?.id ?? 0
   }, {
     onSuccess: (result) => {
@@ -24,7 +25,7 @@ const ShowFind: FC<ShowFindProps> = ({
       if (!result) return;
       if (!title.poster_path) return;
 
-      const year = (new Date(result.release_date)).getFullYear()
+      const year = getPlainDateYear(result.release_date) ?? 0
 
       addShow({
         title: result.title,

@@ -3,6 +3,7 @@ import { GamePointLookup } from "../../../utils/enums";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { getCurrentSeasonID } from "../utils/points";
+import { getPacificTodayPlainDate, parsePlainDate } from "@/lib/dates";
 
 export const guessRouter = router({
 	addOrUpdateGuessesForUser: protectedProcedure
@@ -273,15 +274,15 @@ export const guessRouter = router({
 
 	currentSeason: publicProcedure
 		.query(async ({ ctx }) => {
-			const now = new Date();
+			const today = parsePlainDate(getPacificTodayPlainDate());
 			return await ctx.prisma.season.findFirst({
 				orderBy: {
 					startedOn: 'desc',
 				},
 				where: {
-					startedOn: { lte: now },
+					startedOn: { lte: today },
 					OR: [
-						{ endedOn: { gte: now } },
+						{ endedOn: { gte: today } },
 						{ endedOn: null },
 					],
 				},
@@ -300,9 +301,10 @@ export const guessRouter = router({
 			newSeasonGameTypeId: z.number()
 		}))
 		.mutation(async (req) => {
+			const today = parsePlainDate(getPacificTodayPlainDate());
 			await req.ctx.prisma.season.update({
 				where: { id: req.input.endedSeasonId },
-				data: { endedOn: new Date() }
+				data: { endedOn: today }
 			})
 
 			/* create new season */
@@ -311,7 +313,7 @@ export const guessRouter = router({
 					title: req.input.newSeasonTitle,
 					description: req.input.newSeasonDescription,
 					gameTypeId: req.input.newSeasonGameTypeId,
-					startedOn: new Date()
+					startedOn: today
 				}
 			})
 		}),

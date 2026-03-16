@@ -1,6 +1,7 @@
 import { type FC } from "react";
 import type { Title } from "../server/tmdb/client";
 import Image from "next/image";
+import { getPlainDateYear } from "@/lib/dates";
 interface TitleCardProps {
   title: Title
 }
@@ -13,7 +14,7 @@ const TitleCard: FC<TitleCardProps> = ({ title }) => {
           {title.poster_path && <Image unoptimized width={100} height={150} src={title.poster_path} alt={title.title} />} 
           <figcaption className="text-center">
             {title?.title} 
-            <span className="text-xs"> ({(new Date(title?.release_date)).getFullYear()})</span>
+            <span className="text-xs"> ({getPlainDateYear(title?.release_date) ?? ""})</span>
           </figcaption>
         </figure>
       </div>
