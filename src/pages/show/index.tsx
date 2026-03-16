@@ -71,7 +71,7 @@ const ShowsPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
     const releaseYear = getPlainDateYear(rawReleaseDate) ?? 0;
     addMutation.mutate({
       title: result.title,
-      year: Number.isNaN(releaseYear) ? 0 : releaseYear,
+      year: releaseYear,
       poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : "",
       url: `https://www.themoviedb.org/tv/${result.id}`,
     });

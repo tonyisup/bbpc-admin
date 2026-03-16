@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Prisma, TagVote } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { router, adminProcedure } from "../trpc";
 
 const pointGetInclude = {
@@ -41,37 +41,21 @@ const pointGetInclude = {
 			}
 		}
 	},
+	tagVotes: true,
 } as const;
 
-type PointWithDetailsBase = Prisma.PointGetPayload<{
+export type PointWithDetails = Prisma.PointGetPayload<{
 	include: typeof pointGetInclude;
 }>;
-
-export type PointWithDetails = PointWithDetailsBase & {
-	tagVotes: TagVote[];
-};
 
 export const pointRouter = router({
 	get: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.query(async ({ ctx, input }): Promise<PointWithDetails | null> => {
-			const point = await ctx.prisma.point.findUnique({
+			return await ctx.prisma.point.findUnique({
 				where: { id: input.id },
 				include: pointGetInclude,
 			});
-
-			if (!point) {
-				return null;
-			}
-
-			const tagVotes = await ctx.prisma.tagVote.findMany({
-				where: { pointId: input.id },
-			});
-
-			return {
-				...point,
-				tagVotes,
-			};
 		}),
 
 	update: adminProcedure

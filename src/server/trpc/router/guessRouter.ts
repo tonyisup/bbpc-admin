@@ -302,20 +302,22 @@ export const guessRouter = router({
 		}))
 		.mutation(async (req) => {
 			const today = parsePlainDate(getPacificTodayPlainDate());
-			await req.ctx.prisma.season.update({
-				where: { id: req.input.endedSeasonId },
-				data: { endedOn: today }
-			})
+			const [, newSeason] = await req.ctx.prisma.$transaction([
+				req.ctx.prisma.season.update({
+					where: { id: req.input.endedSeasonId },
+					data: { endedOn: today }
+				}),
+				req.ctx.prisma.season.create({
+					data: {
+						title: req.input.newSeasonTitle,
+						description: req.input.newSeasonDescription,
+						gameTypeId: req.input.newSeasonGameTypeId,
+						startedOn: today
+					}
+				})
+			]);
 
-			/* create new season */
-			return await req.ctx.prisma.season.create({
-				data: {
-					title: req.input.newSeasonTitle,
-					description: req.input.newSeasonDescription,
-					gameTypeId: req.input.newSeasonGameTypeId,
-					startedOn: today
-				}
-			})
+			return newSeason;
 		}),
 
 	addPointForGuess: publicProcedure

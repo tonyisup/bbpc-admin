@@ -33,6 +33,10 @@ interface CustomTooltipProps {
 	label?: string;
 }
 
+interface BarClickData {
+	payload?: GuessesData;
+}
+
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 	if (active && payload && payload.length) {
 		const data = payload[0]?.payload as GuessesData;
@@ -81,7 +85,11 @@ const GuessesGraph: React.FC<GuessesGraphProps> = ({ data, className }) => {
 								radius={[4, 4, 0, 0]}
 								className="fill-primary cursor-pointer"
 								onClick={(data) => {
-									const point = data as unknown as GuessesData;
+									const point = (data as BarClickData | undefined)?.payload;
+									if (!point) {
+										return;
+									}
+
 									router.push(getAdminEpisodePath(point.slug ?? point.id));
 								}}
 							/>

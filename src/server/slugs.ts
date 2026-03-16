@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const MAX_SLUG_LENGTH = 255;
 const SUFFIX_RESERVE = 16;
@@ -50,33 +51,37 @@ export function buildAssignmentSlugBase(input: {
   );
 }
 
-async function slugExists(
+async function getExistingSlugs(
   prisma: SlugDbClient,
   entity: SlugEntity,
-  slug: string,
+  safeBase: string,
   excludeId?: string,
 ) {
   if (entity === "episode") {
-    const existing = await prisma.episode.findFirst({
+    const existing = await prisma.episode.findMany({
       where: {
-        slug,
+        slug: {
+          startsWith: safeBase,
+        },
         ...(excludeId ? { id: { not: excludeId } } : {}),
       },
-      select: { id: true },
+      select: { slug: true },
     });
 
-    return !!existing;
+    return new Set(existing.flatMap((item: { slug: string | null }) => (item.slug ? [item.slug] : [])));
   }
 
-  const existing = await prisma.assignment.findFirst({
+  const existing = await prisma.assignment.findMany({
     where: {
-      slug,
+      slug: {
+        startsWith: safeBase,
+      },
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
-    select: { id: true },
+    select: { slug: true },
   });
 
-  return !!existing;
+  return new Set(existing.flatMap((item: { slug: string | null }) => (item.slug ? [item.slug] : [])));
 }
 
 async function ensureUniqueSlug(
@@ -85,15 +90,16 @@ async function ensureUniqueSlug(
   baseSlug: string,
   excludeId?: string,
 ) {
-  const safeBase = baseSlug || entity;
+  const safeBase = (baseSlug || entity).slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, "") || entity;
+  const existingSlugs = await getExistingSlugs(prisma, entity, safeBase, excludeId);
 
-  if (!(await slugExists(prisma, entity, safeBase, excludeId))) {
+  if (!existingSlugs.has(safeBase)) {
     return safeBase;
   }
 
   for (let suffix = 2; suffix < 10000; suffix += 1) {
     const candidate = `${safeBase.slice(0, MAX_SLUG_LENGTH - `-${suffix}`.length)}-${suffix}`;
-    if (!(await slugExists(prisma, entity, candidate, excludeId))) {
+    if (!existingSlugs.has(candidate)) {
       return candidate;
     }
   }

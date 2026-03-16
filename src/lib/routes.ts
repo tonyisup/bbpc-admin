@@ -1,7 +1,7 @@
 export function getAdminEpisodePath(slug: string) {
-  return `/episode/${slug}`;
+  return `/episode/${encodeURIComponent(slug)}`;
 }
 
 export function getAdminAssignmentPath(slug: string) {
-  return `/assignment/${slug}`;
+  return `/assignment/${encodeURIComponent(slug)}`;
 }

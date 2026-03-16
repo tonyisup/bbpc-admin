@@ -37,7 +37,25 @@ export const parsePlainDate = (value: string): Date => {
     throw new Error(`Invalid plain date: ${value}`);
   }
 
-  return new Date(`${value}T00:00:00.000Z`);
+  const [yearValue, monthValue, dayValue] = value.split("-");
+  if (!yearValue || !monthValue || !dayValue) {
+    throw new Error(`Invalid plain date: ${value}`);
+  }
+
+  const year = Number.parseInt(yearValue, 10);
+  const month = Number.parseInt(monthValue, 10);
+  const day = Number.parseInt(dayValue, 10);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new Error(`Invalid plain date: ${value}`);
+  }
+
+  return date;
 };
 
 export const formatPlainDate = (

@@ -1,4 +1,4 @@
-import type { NextPage, InferGetServerSidePropsType } from "next";
+import type { GetServerSidePropsContext, NextPage, InferGetServerSidePropsType } from "next";
 import { getServerSession } from "next-auth";
 import { ssr } from "../../server/db/ssr";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -7,7 +7,7 @@ import EditAssignment from "../../components/Assignment/EditAssignment";
 import Link from "next/link";
 import { getAdminAssignmentPath, getAdminEpisodePath } from "@/lib/routes";
 
-export async function getServerSideProps(context: any) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await getServerSession(context.req, context.res, authOptions);
 
 	const isAdmin = await ssr.isAdmin(session?.user?.id || "");

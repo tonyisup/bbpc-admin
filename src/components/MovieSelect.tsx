@@ -33,11 +33,12 @@ const MovieSelect: FC<MovieSelectProps> = ({
     if (!title) return;
     if (!temp_title) return;
 
-    const year = getPlainDateYear(title.release_date) ?? 0
+    const year = getPlainDateYear(title.release_date)
+    if (year == null) return;
 
     addMovie({
       title: title.title,
-      year: year,
+      year,
       poster: title.poster_path,
       url: temp_title.imdb_path,
       tmdbId: title.id
