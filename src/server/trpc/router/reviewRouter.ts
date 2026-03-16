@@ -206,7 +206,7 @@ export const reviewRouter = router({
 					},
 				},
 				orderBy: {
-					ReviewdOn: "desc",
+					reviewdOn: "desc",
 				},
 			});
 

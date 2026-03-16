@@ -216,7 +216,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                                 )}
                               </TableCell>
                               <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                                {review.ReviewdOn ? formatInstantLocal(review.ReviewdOn) : '-'}
+                                {review.reviewdOn ? formatInstantLocal(review.reviewdOn) : '-'}
                               </TableCell>
                             </TableRow>
                           );
