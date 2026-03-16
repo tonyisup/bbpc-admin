@@ -21,6 +21,9 @@ interface Episode {
 	date: Date | null;
 	recording: string | null;
 	status: string | null;
+	seoTitle?: string | null;
+	seoDescription?: string | null;
+	seoKeywords?: string | null;
 }
 
 interface EpisodeEditorProps {
@@ -35,6 +38,11 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const [date, setDate] = useState<Date | null>(episode.date);
 	const [recording, setRecording] = useState<string>(episode.recording ?? "");
 	const [status, setStatus] = useState<string | null>(episode.status);
+	const [seoTitle, setSeoTitle] = useState<string>(episode.seoTitle ?? "");
+	const [seoDescription, setSeoDescription] = useState<string>(
+		episode.seoDescription ?? ""
+	);
+	const [seoKeywords, setSeoKeywords] = useState<string>(episode.seoKeywords ?? "");
 
 	useEffect(() => {
 		setNumber(episode.number);
@@ -43,6 +51,9 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		setDate(episode.date);
 		setRecording(episode.recording ?? "");
 		setStatus(episode.status);
+		setSeoTitle(episode.seoTitle ?? "");
+		setSeoDescription(episode.seoDescription ?? "");
+		setSeoKeywords(episode.seoKeywords ?? "");
 	}, [episode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
@@ -69,6 +80,15 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const handleStatusChange = (value: string) => {
 		setStatus(value);
 	};
+	const handleSeoTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSeoTitle(e.target.value);
+	};
+	const handleSeoDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setSeoDescription(e.target.value);
+	};
+	const handleSeoKeywordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSeoKeywords(e.target.value);
+	};
 	const handleSave = () => {
 		if (!episode.id) return;
 
@@ -80,6 +100,9 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			date: date || new Date(),
 			recording,
 			status: status ?? undefined,
+			seoTitle,
+			seoDescription,
+			seoKeywords,
 		});
 	};
 
@@ -146,6 +169,33 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 							<SelectItem value="published">Published</SelectItem>
 						</SelectContent>
 					</Select>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="seo-title">SEO Title</Label>
+					<Input
+						id="seo-title"
+						type="text"
+						value={seoTitle}
+						onChange={handleSeoTitleChange}
+					/>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="seo-description">SEO Description</Label>
+					<Textarea
+						id="seo-description"
+						value={seoDescription}
+						onChange={handleSeoDescriptionChange}
+						className="min-h-[100px]"
+					/>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="seo-keywords">SEO Keywords</Label>
+					<Input
+						id="seo-keywords"
+						type="text"
+						value={seoKeywords}
+						onChange={handleSeoKeywordsChange}
+					/>
 				</div>
 			</CardContent>
 			<CardFooter>

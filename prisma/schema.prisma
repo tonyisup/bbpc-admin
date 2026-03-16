@@ -15,6 +15,9 @@ model Episode {
   description          String?
   status               String?               @default("published")
   notes                String?
+  seoDescription       String?
+  seoKeywords          String?
+  seoTitle             String?
   assignments          Assignment[]
   audioEpisodeMessages AudioEpisodeMessage[]
   bangers              Banger[]
