@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import Image from "next/image";
 import RatingIcon from "../Review/RatingIcon";
 import { FC } from "react";
+import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 
 interface MediaDetailPageProps {
   media: {
@@ -131,7 +133,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                     linkedEpisodes.map((episode: any) => (
                       <Link
                         key={episode.id}
-                        href={`/episode/${episode.id}`}
+                        href={getAdminEpisodePath(episode.slug ?? episode.id)}
                         className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent transition-all group"
                       >
                         <div className="flex flex-col">
@@ -139,7 +141,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                             Ep. {episode.number}: {episode.title}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {episode.date ? new Date(episode.date).toLocaleDateString() : 'No date'}
+                            {episode.date ? formatPlainDate(episode.date) : 'No date'}
                           </span>
                         </div>
                         <ChevronLeft className="h-4 w-4 rotate-180 opacity-0 group-hover:opacity-100 transition-all transform translate-x-1" />
@@ -204,7 +206,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                               <TableCell>
                                 {rec ? (
                                   <Link
-                                    href={`/episode/${rec.id}`}
+                                    href={getAdminEpisodePath(rec.slug ?? rec.id)}
                                     className="text-primary hover:underline text-sm font-medium whitespace-nowrap"
                                   >
                                     Ep. {rec.number}
@@ -214,7 +216,7 @@ const MediaDetailPage: FC<MediaDetailPageProps> = ({ media, type }) => {
                                 )}
                               </TableCell>
                               <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                                {review.ReviewdOn ? new Date(review.ReviewdOn).toLocaleDateString() : '-'}
+                                {review.reviewdOn ? formatInstantLocal(review.reviewdOn) : '-'}
                               </TableCell>
                             </TableRow>
                           );

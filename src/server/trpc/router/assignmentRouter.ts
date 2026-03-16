@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
+import { createUniqueAssignmentSlug } from "../../slugs";
 
 export const assignmentRouter = router({
   setType: protectedProcedure
@@ -26,14 +27,48 @@ export const assignmentRouter = router({
       type: z.enum(["HOMEWORK", "EXTRA_CREDIT", "BONUS"])
     }))
     .mutation(async (req) => {
-      return await req.ctx.prisma.assignment.create({
-        data: {
-          userId: req.input.userId,
-          movieId: req.input.movieId,
-          episodeId: req.input.episodeId,
-          type: req.input.type
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        const [episode, movie, user] = await Promise.all([
+          tx.episode.findUnique({
+            where: { id: req.input.episodeId },
+            select: { number: true },
+          }),
+          tx.movie.findUnique({
+            where: { id: req.input.movieId },
+            select: { title: true },
+          }),
+          tx.user.findUnique({
+            where: { id: req.input.userId },
+            select: { name: true },
+          }),
+        ]);
+
+        if (!episode || !movie || !user) {
+          throw new Error("Unable to resolve assignment slug source data");
         }
-      })
+
+        const assignment = await tx.assignment.create({
+          data: {
+            userId: req.input.userId,
+            movieId: req.input.movieId,
+            episodeId: req.input.episodeId,
+            type: req.input.type
+          }
+        });
+
+        const slug = await createUniqueAssignmentSlug(tx, {
+          episodeNumber: episode.number,
+          userId: req.input.userId,
+          userName: user.name,
+          movieTitle: movie.title,
+          type: req.input.type,
+        }, assignment.id);
+
+        return tx.assignment.update({
+          where: { id: assignment.id },
+          data: { slug },
+        });
+      });
     }),
   remove: protectedProcedure
     .input(z.object({ id: z.string() }))

@@ -33,6 +33,7 @@ import {
 } from "../../components/ui/select";
 import { toast } from "sonner";
 import { cn } from "../../lib/utils";
+import { getPlainDateYear } from "@/lib/dates";
 
 // Helper component for searching items
 const ItemSearch = ({ targetType, onSelect }: { targetType: string; onSelect: (item: any) => void }) => {
@@ -114,7 +115,7 @@ const ItemSearch = ({ targetType, onSelect }: { targetType: string; onSelect: (i
 										<div className="min-w-0">
 											<div className="font-bold text-sm truncate">{item.title || item.name}</div>
 											<div className="text-xs text-muted-foreground">
-												{item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || (item.date ? new Date(item.date).getFullYear() : "Unknown Year")}
+												{item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4) || (getPlainDateYear(item.date) ?? "Unknown Year")}
 											</div>
 										</div>
 									</button>
@@ -426,7 +427,7 @@ const ListEditor = () => {
 															</h3>
 															<div className="flex items-center gap-2 mt-1">
 																<span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-																	{item.movie?.year || item.show?.year || (item.episode?.date ? new Date(item.episode!.date!).getFullYear() : 'Unknown Year')}
+																	{item.movie?.year || item.show?.year || (getPlainDateYear(item.episode?.date) ?? 'Unknown Year')}
 																</span>
 																{canEdit && (
 																	<div className="flex items-center gap-1">

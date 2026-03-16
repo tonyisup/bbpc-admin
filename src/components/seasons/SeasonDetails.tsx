@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import RatingIcon from "../Review/RatingIcon";
+import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
 
 type SeasonDetailsProps = {
   season: RouterOutputs["season"]["getById"];
@@ -280,7 +281,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Start Date</span>
             <span className="text-sm font-bold flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-primary" />
-              {season.startedOn ? format(new Date(season.startedOn), "MMM d, yyyy") : "TBD"}
+              {season.startedOn ? formatPlainDate(season.startedOn) : "TBD"}
             </span>
           </div>
           {season.endedOn && (
@@ -290,7 +291,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ended On</span>
                 <span className="text-sm font-bold flex items-center gap-1.5 opacity-80">
                   <History className="h-4 w-4 text-orange-500" />
-                  {format(new Date(season.endedOn), "MMM d, yyyy")}
+                  {formatPlainDate(season.endedOn)}
                 </span>
               </div>
             </>
@@ -556,7 +557,7 @@ export const SeasonDetails = ({ season }: SeasonDetailsProps) => {
                               <div className="flex flex-col">
                                 <span className="font-bold text-sm tracking-tight">{guess.user.name}</span>
                                 <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                                  {format(new Date(guess.created), "MMM d, yyyy")}
+                                  {formatInstantLocal(guess.created)}
                                 </span>
                               </div>
                             </div>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Loader2, FileIcon, Database, ChevronRight, ChevronLeft, RefreshCw, Download, Play } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatInstantLocal } from '@/lib/dates';
 
 export default function AzureBlobsPage() {
 	const [selectedContainer, setSelectedContainer] = useState<string | null>(null);
@@ -242,7 +242,7 @@ export default function AzureBlobsPage() {
 													{formatBytes(blob.contentLength ?? 0)}
 												</TableCell>
 												<TableCell className="text-gray-400 text-right text-xs">
-													{blob.lastModified ? format(new Date(blob.lastModified), 'MMM d, yyyy HH:mm') : '—'}
+													{blob.lastModified ? formatInstantLocal(blob.lastModified, { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
 												</TableCell>
 											</TableRow>
 										))

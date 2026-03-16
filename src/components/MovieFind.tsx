@@ -5,6 +5,7 @@ import { trpc } from "../utils/trpc";
 import MovieCard from "./MovieCard";
 import TitleCard from "./TitleCard";
 import TitleSearch from "./TitleSearch";
+import { getPlainDateYear } from "@/lib/dates";
 
 interface MovieFindProps {
   selectMovie: Dispatch<SetStateAction<Movie | null>>;
@@ -15,7 +16,7 @@ const MovieFind: FC<MovieFindProps> = ({
 }) => {
   const [ selectedMovie, setSelectedMovie ] = useState<Movie | null>(null)
   const [ title, setTitle ] = useState<Title | null>(null)
-  const { data: temp_title } = trpc.movie.getTitle.useQuery({ 
+  trpc.movie.getTitle.useQuery({ 
     id: title?.id ?? 0 
   }, {
     onSuccess: (result) => {
@@ -24,7 +25,7 @@ const MovieFind: FC<MovieFindProps> = ({
 			if (!title.poster_path) return;
 			if (!result.imdb_path) return;
 
-      const year = (new Date(result.release_date)).getFullYear()
+      const year = getPlainDateYear(result.release_date) ?? 0
 
       addMovie({
         title: result.title,

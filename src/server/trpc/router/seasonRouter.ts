@@ -1,6 +1,7 @@
 
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { parsePlainDate } from "@/lib/dates";
 
 export const seasonRouter = router({
   getAll: publicProcedure.query(({ ctx }) => {
@@ -281,8 +282,8 @@ export const seasonRouter = router({
         title: z.string(),
         description: z.string(),
         gameTypeId: z.number(),
-        startedOn: z.date(),
-        endedOn: z.date().nullable().optional(),
+        startedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        endedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -291,8 +292,8 @@ export const seasonRouter = router({
           title: input.title,
           description: input.description,
           gameTypeId: input.gameTypeId,
-          startedOn: input.startedOn,
-          endedOn: input.endedOn,
+          startedOn: parsePlainDate(input.startedOn),
+          endedOn: input.endedOn ? parsePlainDate(input.endedOn) : null,
         },
       });
     }),
@@ -303,8 +304,8 @@ export const seasonRouter = router({
         title: z.string(),
         description: z.string(),
         gameTypeId: z.number(),
-        startedOn: z.date(),
-        endedOn: z.date().nullable(),
+        startedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        endedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -314,8 +315,8 @@ export const seasonRouter = router({
           title: input.title,
           description: input.description,
           gameTypeId: input.gameTypeId,
-          startedOn: input.startedOn,
-          endedOn: input.endedOn,
+          startedOn: parsePlainDate(input.startedOn),
+          endedOn: input.endedOn ? parsePlainDate(input.endedOn) : null,
         },
       });
     }),

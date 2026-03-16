@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatInstantLocal } from "@/lib/dates";
 
 const formSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -620,7 +621,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 																							return point.reason;
 																						})()}
 																					</span>
-																					<span className="text-[10px] text-muted-foreground/70">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
+																					<span className="text-[10px] text-muted-foreground/70">{point.gamePointType?.title} • {point.earnedOn ? formatInstantLocal(point.earnedOn) : 'N/A'}</span>
 																				</div>
 																			</div>
 																			{!point.isGuess && (
@@ -679,7 +680,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 																	return point.reason;
 																})()}
 															</span>
-															<span className="text-[10px] text-muted-foreground">{point.gamePointType?.title} • {point.earnedOn ? new Date(point.earnedOn).toLocaleDateString() : 'N/A'}</span>
+															<span className="text-[10px] text-muted-foreground">{point.gamePointType?.title} • {point.earnedOn ? formatInstantLocal(point.earnedOn) : 'N/A'}</span>
 														</div>
 														<div className="flex items-center gap-3">
 															<span className="font-mono font-bold text-sm">{(point.gamePointType?.points ?? 0) + (point.adjustment ?? 0)}</span>
@@ -966,7 +967,7 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 															)}
 														</TableCell>
 														<TableCell className="text-xs text-muted-foreground">
-															{new Date(vote.createdAt).toLocaleDateString()}
+															{formatInstantLocal(vote.createdAt)}
 														</TableCell>
 														<TableCell className="text-right">
 															<div className="flex justify-end gap-2 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">

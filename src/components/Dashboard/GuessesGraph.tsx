@@ -10,9 +10,11 @@ import {
 	ResponsiveContainer
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { getAdminEpisodePath } from '@/lib/routes';
 
 interface GuessesData {
 	id: string;
+	slug?: string | null;
 	name: string;
 	fullTitle: string;
 	guesses: number;
@@ -29,6 +31,10 @@ interface CustomTooltipProps {
 		payload: GuessesData;
 	}[];
 	label?: string;
+}
+
+interface BarClickData {
+	payload?: GuessesData;
 }
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
@@ -79,7 +85,12 @@ const GuessesGraph: React.FC<GuessesGraphProps> = ({ data, className }) => {
 								radius={[4, 4, 0, 0]}
 								className="fill-primary cursor-pointer"
 								onClick={(data) => {
-									router.push(`/episode/${data.id}`);
+									const point = (data as BarClickData | undefined)?.payload;
+									if (!point) {
+										return;
+									}
+
+									router.push(getAdminEpisodePath(point.slug ?? point.id));
 								}}
 							/>
 						</BarChart>

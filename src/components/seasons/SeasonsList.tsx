@@ -10,6 +10,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Calendar, ChevronRight, Gamepad2, Users, Receipt, Flag, Clock } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { formatPlainDate, getPacificTodayPlainDate, parsePlainDate, toPlainDateString } from "@/lib/dates";
 
 import { type RouterOutputs } from "@/utils/trpc";
 
@@ -23,21 +24,18 @@ type SeasonsListProps = {
 export const SeasonsList = ({ seasons }: SeasonsListProps) => {
   const formatDate = (date: Date | null) => {
     if (!date) return "Ongoing";
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return formatPlainDate(date);
   };
+
+  const today = parsePlainDate(getPacificTodayPlainDate());
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {seasons?.map((season) => {
-        const now = new Date();
-        const startDate = season.startedOn ? new Date(season.startedOn) : null;
-        const isFuture = !!startDate && !isNaN(startDate.getTime()) && startDate > now;
-        const isEnded = !!season.endedOn && new Date(season.endedOn) < now;
-        const isActive = !isFuture && (!season.endedOn || new Date(season.endedOn) >= now);
+        const startDate = season.startedOn ? parsePlainDate(toPlainDateString(season.startedOn) ?? "") : null;
+        const endDate = season.endedOn ? parsePlainDate(toPlainDateString(season.endedOn) ?? "") : null;
+        const isFuture = !!startDate && !isNaN(startDate.getTime()) && startDate > today;
+        const isActive = !isFuture && (!endDate || endDate >= today);
 
         return (
           <Link key={season.id} href={`/season/${season.id}`} className="group block focus:outline-none">

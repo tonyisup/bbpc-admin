@@ -13,6 +13,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
+import { getPlainDateYear } from "@/lib/dates";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -116,7 +117,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
   const handleAdd = (result: any) => {
     addMutation.mutate({
       title: result.title,
-      year: result.release_date ? new Date(result.release_date).getFullYear() : 0,
+      year: getPlainDateYear(result.release_date) ?? 0,
       poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : "",
       url: `https://www.themoviedb.org/movie/${result.id}`,
     });
@@ -182,7 +183,7 @@ const MoviesPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps
                   <div className="flex flex-col text-center">
                     <span className="text-sm font-bold line-clamp-1">{result.title}</span>
                     <span className="text-xs text-muted-foreground">
-                      {result.release_date ? new Date(result.release_date).getFullYear() : "N/A"}
+                      {getPlainDateYear(result.release_date) ?? "N/A"}
                     </span>
                   </div>
                   <Button

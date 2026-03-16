@@ -14,6 +14,7 @@ import {
   SelectValue
 } from "../ui/select";
 import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
+import { getPacificTodayPlainDate } from "@/lib/dates";
 
 const NewSeasonFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -39,7 +40,7 @@ export const NewSeasonForm = ({ onSuccess, onCancel }: NewSeasonFormProps) => {
   } = useForm<NewSeasonFormInputs>({
     resolver: zodResolver(NewSeasonFormSchema),
     defaultValues: {
-      startedOn: new Date().toISOString().split('T')[0],
+      startedOn: getPacificTodayPlainDate(),
     }
   });
 
@@ -54,8 +55,8 @@ export const NewSeasonForm = ({ onSuccess, onCancel }: NewSeasonFormProps) => {
     createSeason.mutate({
       ...data,
       gameTypeId: parseInt(data.gameTypeId),
-      startedOn: new Date(data.startedOn),
-      endedOn: data.endedOn ? new Date(data.endedOn) : null,
+      startedOn: data.startedOn,
+      endedOn: data.endedOn || null,
     });
   };
 

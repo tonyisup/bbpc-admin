@@ -18,6 +18,7 @@ model Episode {
   seoDescription       String?
   seoKeywords          String?
   seoTitle             String?
+  slug                 String?               @unique
   assignments          Assignment[]
   audioEpisodeMessages AudioEpisodeMessage[]
   bangers              Banger[]
@@ -79,7 +80,7 @@ model Review {
   userId            String?
   movieId           String?            @db.UniqueIdentifier
   ratingId          String?            @db.UniqueIdentifier
-  ReviewdOn         DateTime?          @default(now(), map: "DF__Review__ReviewdO__0C1BC9F9") @db.DateTime
+  reviewdOn         DateTime?          @default(now(), map: "DF__Review__ReviewdO__0C1BC9F9") @map("ReviewdOn") @db.DateTime
   showId            String?            @db.UniqueIdentifier
   assignmentReviews AssignmentReview[]
   extraReviews      ExtraReview[]
@@ -124,6 +125,7 @@ model Assignment {
   movieId           String             @db.UniqueIdentifier
   type              String             @default("HOMEWORK")
   playable          Boolean            @default(true)
+  slug              String?            @unique
   episode           Episode            @relation(fields: [episodeId], references: [id])
   movie             Movie              @relation(fields: [movieId], references: [id])
   user              User               @relation(fields: [userId], references: [id], onUpdate: NoAction)
@@ -259,8 +261,8 @@ model Season {
   title          String
   description    String?
   gameTypeId     Int              @db.TinyInt
-  endedOn        DateTime?        @db.DateTime
-  startedOn      DateTime?        @db.DateTime
+  endedOn        DateTime?        @db.Date
+  startedOn      DateTime?        @db.Date
   gamblingPoints GamblingPoints[]
   guesses        Guess[]
   points         Point[]
@@ -374,8 +376,8 @@ model Syllabus {
   createdAt    DateTime    @default(now()) @db.DateTime
   assignmentId String?     @db.UniqueIdentifier
   notes        String?
-  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  movie        Movie       @relation(fields: [movieId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  movie        Movie       @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -419,12 +421,12 @@ model TagVote {
   sessionId String?
   userId    String?
   pointId   String?  @db.UniqueIdentifier
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   point     Point?   @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([pointId])
   @@index([userId])
   @@index([tag, userId])
-  @@index([pointId])
 }
 
 model Tag {

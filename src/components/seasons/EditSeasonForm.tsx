@@ -15,6 +15,7 @@ import {
 } from "../ui/select";
 import { CalendarIcon, Loader2, Sparkles, Save } from "lucide-react";
 import { toast } from "sonner";
+import { toPlainDateString } from "@/lib/dates";
 
 const EditSeasonFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -44,8 +45,8 @@ export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormPr
       title: season?.title || "",
       description: season?.description || "",
       gameTypeId: season?.gameTypeId.toString() || "",
-      startedOn: season?.startedOn ? new Date(season.startedOn).toISOString().split('T')[0] : "",
-      endedOn: season?.endedOn ? new Date(season.endedOn).toISOString().split('T')[0] : null,
+      startedOn: toPlainDateString(season?.startedOn) || "",
+      endedOn: toPlainDateString(season?.endedOn),
     }
   });
 
@@ -78,8 +79,8 @@ export const EditSeasonForm = ({ season, onSuccess, onCancel }: EditSeasonFormPr
       title: data.title,
       description: data.description,
       gameTypeId: parseInt(data.gameTypeId),
-      startedOn: new Date(data.startedOn),
-      endedOn: data.endedOn ? new Date(data.endedOn) : null,
+      startedOn: data.startedOn,
+      endedOn: data.endedOn || null,
     });
   };
 

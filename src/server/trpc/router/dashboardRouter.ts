@@ -102,6 +102,7 @@ export const dashboardRouter = router({
       },
       select: {
         id: true,
+        slug: true,
         number: true,
         title: true,
         assignments: {
@@ -129,6 +130,7 @@ export const dashboardRouter = router({
       });
       return {
         id: ep.id,
+        slug: ep.slug,
         name: `Ep ${ep.number}`,
         fullTitle: `Episode ${ep.number}: ${ep.title}`,
         guesses: guessCount,

@@ -38,6 +38,8 @@ import AudioStream from "../../components/AudioStream";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import EpisodeAssignments from "@/components/Assignment/EpisodeAssignments";
+import { formatPlainDate } from "@/lib/dates";
+import { getAdminEpisodePath } from "@/lib/routes";
 import { SeasonLeaderboard } from "../../components/SeasonLeaderboard";
 import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
 
@@ -976,7 +978,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 						<Item variant="outline">
 							<ItemHeader>Season {seasonData?.title} - {seasonData?.gameType?.title}</ItemHeader>
 							<ItemContent>
-								<ItemTitle>{seasonData?.startedOn?.toLocaleDateString()} - {seasonData?.endedOn?.toLocaleDateString() ?? "Present"}</ItemTitle>
+								<ItemTitle>{seasonData?.startedOn ? formatPlainDate(seasonData.startedOn) : "TBD"} - {seasonData?.endedOn ? formatPlainDate(seasonData.endedOn) : "Present"}</ItemTitle>
 								<ItemDescription>
 									{seasonData?.description} - {seasonData?.gameType?.description}
 								</ItemDescription>
@@ -1062,7 +1064,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 				{pendingEpisode && isAdmin && <EpisodeEditor episode={pendingEpisode} />}
 				{pendingEpisode && isAdmin && <EpisodeAssignments episode={pendingEpisode} />}
-				{pendingEpisode && isAdmin && <Link href={`/episode/${pendingEpisode?.id}`}>Edit Episode</Link>}
+				{pendingEpisode && isAdmin && <Link href={getAdminEpisodePath(pendingEpisode.slug ?? pendingEpisode.id)}>Edit Episode</Link>}
 			</main>
 		</>
 	);

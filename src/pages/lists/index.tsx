@@ -21,6 +21,7 @@ import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { RankedListTypeModal } from "../../components/Link/RankedListTypeModal";
 import { toast } from "sonner";
+import { formatInstantLocal } from "@/lib/dates";
 
 const ListsDashboard = () => {
 	const { data: session } = useSession();
@@ -212,7 +213,7 @@ const ListsDashboard = () => {
 													</div>
 													<div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
 														<Calendar className="w-3 h-3" />
-														{list.updatedAt.toLocaleDateString()}
+														{formatInstantLocal(list.updatedAt)}
 													</div>
 													<Button
 														variant="outline"
@@ -282,7 +283,7 @@ const ListsDashboard = () => {
 													</div>
 													<div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
 														<Calendar className="w-3 h-3" />
-														{list.updatedAt.toLocaleDateString()}
+														{formatInstantLocal(list.updatedAt)}
 													</div>
 												</div>
 											</CardContent>
