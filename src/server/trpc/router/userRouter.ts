@@ -306,7 +306,7 @@ export const userRouter = router({
 					}
 				},
 				orderBy: {
-					order: 'desc'
+					order: 'asc'
 				}
 			});
 		}),
