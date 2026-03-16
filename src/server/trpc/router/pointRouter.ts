@@ -1,53 +1,60 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { router, adminProcedure } from "../trpc";
+
+const pointGetInclude = {
+	user: true,
+	season: true,
+	gamePointType: true,
+	assignmentPoints: {
+		include: {
+			assignment: {
+				include: {
+					episode: true,
+					movie: true,
+				}
+			}
+		}
+	},
+	gamblingPoints: {
+		include: {
+			assignment: {
+				include: {
+					episode: true,
+					movie: true,
+				}
+			},
+			gamblingType: true,
+		}
+	},
+	guesses: {
+		include: {
+			assignmentReview: {
+				include: {
+					assignment: {
+						include: {
+							episode: true,
+							movie: true,
+						}
+					}
+				}
+			}
+		}
+	},
+	tagVotes: true,
+} as const;
+
+export type PointWithDetails = Prisma.PointGetPayload<{
+	include: typeof pointGetInclude;
+}>;
 
 export const pointRouter = router({
 	get: adminProcedure
 		.input(z.object({ id: z.string() }))
-		.query(async ({ ctx, input }) => {
+		.query(async ({ ctx, input }): Promise<PointWithDetails | null> => {
 			return await ctx.prisma.point.findUnique({
 				where: { id: input.id },
-				include: {
-					user: true,
-					season: true,
-					gamePointType: true,
-					assignmentPoints: {
-						include: {
-							assignment: {
-								include: {
-									episode: true,
-									movie: true,
-								}
-							}
-						}
-					},
-					gamblingPoints: {
-						include: {
-							assignment: {
-								include: {
-									episode: true,
-									movie: true,
-								}
-							},
-							gamblingType: true,
-						}
-					},
-					guesses: {
-						include: {
-							assignmentReview: {
-								include: {
-									assignment: {
-										include: {
-											episode: true,
-											movie: true,
-										}
-									}
-								}
-							}
-						}
-					},
-					tagVotes: true,
-				},
+				include: pointGetInclude,
 			});
 		}),
 

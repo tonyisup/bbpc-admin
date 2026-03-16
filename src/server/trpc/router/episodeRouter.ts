@@ -77,6 +77,9 @@ export const episodeRouter = router({
       recording: z.string().optional(),
       status: z.string().optional(),
       notes: z.string().optional(),
+      seoTitle: z.string().optional(),
+      seoDescription: z.string().optional(),
+      seoKeywords: z.string().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.$transaction(async (tx) => {
@@ -91,7 +94,10 @@ export const episodeRouter = router({
             date: req.input.date,
             recording: req.input.recording,
             status: req.input.status,
-            notes: req.input.notes
+            notes: req.input.notes,
+            seoTitle: req.input.seoTitle,
+            seoDescription: req.input.seoDescription,
+            seoKeywords: req.input.seoKeywords
           }
         });
 

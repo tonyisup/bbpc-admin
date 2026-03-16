@@ -1,8 +1,8 @@
-import { GetServerSidePropsContext, InferGetServerSidePropsType, type NextPage } from "next";
+import type { GetServerSidePropsContext, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import router, { useRouter } from "next/router";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { X, Trash2, Edit2, ArrowUp, ArrowDown, User as UserIcon, Mail, Shield, Trophy, History, BookOpen, Settings, Save, Plus, ChevronDown, ChevronUp, Lock, Unlock, RotateCcw, PlusCircle, MinusCircle, Tag, Vote, Coins, Check } from "lucide-react";
 import { ConfirmModal } from "../../components/ui/confirm-modal";
@@ -150,13 +150,22 @@ interface GroupedPoints {
 }
 
 interface SyllabusAssignmentFormProps {
-	itemId: string;
 	onAssign: (epNum: number, type: string) => void;
 }
 
-const SyllabusAssignmentForm: React.FC<SyllabusAssignmentFormProps> = ({ itemId, onAssign }) => {
+const SyllabusAssignmentForm: React.FC<SyllabusAssignmentFormProps> = ({ onAssign }) => {
 	const [epNum, setEpNum] = useState("");
 	const [type, setType] = useState("HOMEWORK");
+	const [hasInitializedEpNum, setHasInitializedEpNum] = useState(false);
+	const { data: latestEpisodes } = trpc.episode.getAll.useQuery({ limit: 1 });
+	const latestEpisodeNumber = latestEpisodes?.items[0]?.number;
+
+	useEffect(() => {
+		if (hasInitializedEpNum || latestEpisodeNumber === undefined) return;
+
+		setEpNum(String(latestEpisodeNumber));
+		setHasInitializedEpNum(true);
+	}, [hasInitializedEpNum, latestEpisodeNumber]);
 
 	return (
 		<div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -881,7 +890,6 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 													</div>) : (
 													<div className="flex items-center gap-2">
 														<SyllabusAssignmentForm
-															itemId={item.id}
 															onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
 														/>
 														<Button

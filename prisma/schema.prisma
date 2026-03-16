@@ -15,6 +15,9 @@ model Episode {
   description          String?
   status               String?               @default("published")
   notes                String?
+  seoDescription       String?
+  seoKeywords          String?
+  seoTitle             String?
   assignments          Assignment[]
   audioEpisodeMessages AudioEpisodeMessage[]
   bangers              Banger[]
@@ -43,9 +46,9 @@ model Movie {
   url         String
   tmdbId      Int?
   assignments Assignment[]
+  rankedItems RankedItem[]
   reviews     Review[]
   syllabus    Syllabus[]
-  rankedItems RankedItem[]
 }
 
 model Show {
@@ -54,8 +57,8 @@ model Show {
   year        Int          @db.SmallInt
   poster      String?
   url         String
-  reviews     Review[]
   rankedItems RankedItem[]
+  reviews     Review[]
 }
 
 model Rating {
@@ -127,8 +130,8 @@ model Assignment {
   assignmentPoints  AssignmentPoints[]
   assignmentReviews AssignmentReview[]
   audioMessages     AudioMessage[]
-  syllabus          Syllabus[]
   gamblingPoints    GamblingPoints[]
+  syllabus          Syllabus[]
 
   @@index([userId])
   @@index([episodeId])
@@ -218,16 +221,16 @@ model User {
   audioEpisodeMessages AudioEpisodeMessage[]
   audioMessages        AudioMessage[]
   bangers              Banger[]
+  gambledOn            GamblingPoints[]      @relation("TargetUser")
   gamblingPoints       GamblingPoints[]
   guesses              Guess[]
   points               Point[]
+  rankedLists          RankedList[]
   reviews              Review[]
   sessions             Session[]
   syllabus             Syllabus[]
   tagVotes             TagVote[]
   roles                UserRole[]
-  gambledOn            GamblingPoints[]      @relation("TargetUser")
-  rankedLists          RankedList[]
 }
 
 model Guess {
@@ -325,31 +328,24 @@ model AudioEpisodeMessage {
   @@index([episodeId])
 }
 
-// enum GamblingPointsStatus {
-//   pending
-//   locked
-//   won
-//   lost
-// }
-
 model GamblingPoints {
   id             String       @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId         String
-  gamblingTypeId String       @db.UniqueIdentifier
   assignmentId   String?      @db.UniqueIdentifier
-  targetUserId   String?
   points         Int
-  notes          String?
   createdAt      DateTime     @default(now()) @db.DateTime
-  status         String       @default("pending") @db.VarChar(20)
-  seasonId       String?      @db.UniqueIdentifier
   pointsId       String?      @db.UniqueIdentifier
+  seasonId       String?      @db.UniqueIdentifier
+  notes          String?
+  gamblingTypeId String       @db.UniqueIdentifier
+  targetUserId   String?
+  status         String       @default("pending") @db.VarChar(20)
   assignment     Assignment?  @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   gamblingType   GamblingType @relation(fields: [gamblingTypeId], references: [id], onUpdate: NoAction)
   point          Point?       @relation(fields: [pointsId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   season         Season?      @relation(fields: [seasonId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   targetUser     User?        @relation("TargetUser", fields: [targetUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId])
   @@index([gamblingTypeId])
@@ -422,13 +418,13 @@ model TagVote {
   createdAt DateTime @default(now())
   sessionId String?
   userId    String?
-  pointId   String?  @unique @db.UniqueIdentifier
-  point     Point?   @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pointId   String?  @db.UniqueIdentifier
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  point     Point?   @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([userId])
-  @@index([pointId])
   @@index([tag, userId])
+  @@index([pointId])
 }
 
 model Tag {
@@ -443,7 +439,7 @@ model RankedListType {
   name        String
   description String?
   maxItems    Int
-  targetType  String // "MOVIE", "SHOW", "EPISODE"
+  targetType  String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   lists       RankedList[]
@@ -453,13 +449,13 @@ model RankedList {
   id               String         @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
   userId           String
   rankedListTypeId String         @db.UniqueIdentifier
-  status           String         @default("DRAFT") // "DRAFT", "PUBLISHED"
+  status           String         @default("DRAFT")
   title            String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type             RankedListType @relation(fields: [rankedListTypeId], references: [id], onDelete: Cascade)
   items            RankedItem[]
+  type             RankedListType @relation(fields: [rankedListTypeId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([rankedListTypeId])
@@ -475,10 +471,10 @@ model RankedItem {
   comment      String?    @db.Text
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  rankedList   RankedList @relation(fields: [rankedListId], references: [id], onDelete: Cascade)
-  movie        Movie?     @relation(fields: [movieId], references: [id])
-  show         Show?      @relation(fields: [showId], references: [id])
   episode      Episode?   @relation(fields: [episodeId], references: [id])
+  movie        Movie?     @relation(fields: [movieId], references: [id])
+  rankedList   RankedList @relation(fields: [rankedListId], references: [id], onDelete: Cascade)
+  show         Show?      @relation(fields: [showId], references: [id])
 
   @@index([rankedListId])
   @@index([movieId])
