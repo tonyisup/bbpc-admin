@@ -101,6 +101,9 @@ export const episodeRouter = router({
         let slug = req.input.slug;
         if (slug) {
           slug = slugify(slug);
+          if (!slug) {
+            throw new Error("Invalid slug provided.");
+          }
           const existing = await tx.episode.findFirst({
             where: {
               slug,
