@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import { utapi } from "../../uploadthing";
-import { createUniqueEpisodeSlug } from "../../slugs";
+import { createUniqueEpisodeSlug, slugify } from "../../slugs";
 import { parsePlainDate } from "@/lib/dates";
 
 export const episodeRouter = router({
@@ -94,9 +94,36 @@ export const episodeRouter = router({
       seoTitle: z.string().optional(),
       seoDescription: z.string().optional(),
       seoKeywords: z.string().optional(),
+      slug: z.string().optional(),
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.$transaction(async (tx) => {
+        let slug = req.input.slug;
+        if (slug) {
+          slug = slugify(slug);
+          const existing = await tx.episode.findFirst({
+            where: {
+              slug,
+              id: { not: req.input.id }
+            }
+          });
+          if (existing) {
+            throw new Error(`Slug '${slug}' is already in use.`);
+          }
+        } else if (slug === "") {
+          const currentEpisode = await tx.episode.findUnique({
+            where: { id: req.input.id },
+            select: { number: true, title: true }
+          });
+          if (!currentEpisode) {
+            throw new Error("Episode not found.");
+          }
+          slug = await createUniqueEpisodeSlug(tx, {
+            number: req.input.number !== undefined ? req.input.number : currentEpisode.number,
+            title: req.input.title !== undefined ? req.input.title : currentEpisode.title,
+          }, req.input.id);
+        }
+
         const episode = await tx.episode.update({
           where: {
             id: req.input.id
@@ -111,7 +138,8 @@ export const episodeRouter = router({
             notes: req.input.notes,
             seoTitle: req.input.seoTitle,
             seoDescription: req.input.seoDescription,
-            seoKeywords: req.input.seoKeywords
+            seoKeywords: req.input.seoKeywords,
+            slug: slug !== undefined ? slug : undefined,
           }
         });
 
