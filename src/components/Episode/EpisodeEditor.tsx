@@ -46,6 +46,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	);
 	const [seoKeywords, setSeoKeywords] = useState<string>(episode.seoKeywords ?? "");
 	const [slug, setSlug] = useState<string>(episode.slug ?? "");
+	const [slugTouched, setSlugTouched] = useState<boolean>(false);
 
 	useEffect(() => {
 		setNumber(episode.number);
@@ -58,6 +59,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		setSeoDescription(episode.seoDescription ?? "");
 		setSeoKeywords(episode.seoKeywords ?? "");
 		setSlug(episode.slug ?? "");
+		setSlugTouched(false);
 	}, [episode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
@@ -95,6 +97,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	};
 	const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setSlug(e.target.value);
+		setSlugTouched(true);
 	};
 	const handleSave = () => {
 		if (!episode.id) return;
@@ -110,7 +113,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			seoTitle,
 			seoDescription,
 			seoKeywords,
-			slug: slug !== episode.slug ? slug : undefined,
+			slug: slugTouched ? slug : undefined,
 		});
 	};
 
