@@ -25,6 +25,7 @@ interface Episode {
 	seoTitle?: string | null;
 	seoDescription?: string | null;
 	seoKeywords?: string | null;
+	slug?: string | null;
 }
 
 interface EpisodeEditorProps {
@@ -44,6 +45,8 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		episode.seoDescription ?? ""
 	);
 	const [seoKeywords, setSeoKeywords] = useState<string>(episode.seoKeywords ?? "");
+	const [slug, setSlug] = useState<string>(episode.slug ?? "");
+	const [slugTouched, setSlugTouched] = useState<boolean>(false);
 
 	useEffect(() => {
 		setNumber(episode.number);
@@ -55,6 +58,8 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		setSeoTitle(episode.seoTitle ?? "");
 		setSeoDescription(episode.seoDescription ?? "");
 		setSeoKeywords(episode.seoKeywords ?? "");
+		setSlug(episode.slug ?? "");
+		setSlugTouched(false);
 	}, [episode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
@@ -90,6 +95,10 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const handleSeoKeywordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setSeoKeywords(e.target.value);
 	};
+	const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSlug(e.target.value);
+		setSlugTouched(true);
+	};
 	const handleSave = () => {
 		if (!episode.id) return;
 
@@ -104,6 +113,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			seoTitle,
 			seoDescription,
 			seoKeywords,
+			slug: slugTouched ? slug : episode.slug === null ? "" : undefined,
 		});
 	};
 
@@ -196,6 +206,15 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 						type="text"
 						value={seoKeywords}
 						onChange={handleSeoKeywordsChange}
+					/>
+				</div>
+				<div className="space-y-2">
+					<Label htmlFor="slug">Slug (Leave blank to regenerate automatically)</Label>
+					<Input
+						id="slug"
+						type="text"
+						value={slug}
+						onChange={handleSlugChange}
 					/>
 				</div>
 			</CardContent>
