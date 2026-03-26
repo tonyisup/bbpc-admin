@@ -114,16 +114,9 @@ export const episodeRouter = router({
             throw new Error(`Slug '${slug}' is already in use.`);
           }
         } else if (slug === "") {
-          const currentEpisode = await tx.episode.findUnique({
-            where: { id: req.input.id },
-            select: { number: true, title: true }
-          });
-          if (!currentEpisode) {
-            throw new Error("Episode not found.");
-          }
           slug = await createUniqueEpisodeSlug(tx, {
-            number: req.input.number !== undefined ? req.input.number : currentEpisode.number,
-            title: req.input.title !== undefined ? req.input.title : currentEpisode.title,
+            number: req.input.number,
+            title: req.input.title,
           }, req.input.id);
         }
 
@@ -142,7 +135,7 @@ export const episodeRouter = router({
             seoTitle: req.input.seoTitle,
             seoDescription: req.input.seoDescription,
             seoKeywords: req.input.seoKeywords,
-            slug: slug !== undefined ? slug : undefined,
+            slug,
           }
         });
 
