@@ -113,7 +113,7 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 			seoTitle,
 			seoDescription,
 			seoKeywords,
-			slug: slugTouched ? slug : undefined,
+			slug: slugTouched ? slug : episode.slug === null ? "" : undefined,
 		});
 	};
 
