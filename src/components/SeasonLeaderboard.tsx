@@ -14,16 +14,18 @@ import {
     Target,
     Coins,
     ChevronRight,
-    Loader2
+    Loader2,
+    RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
 
 interface SeasonLeaderboardProps {
     seasonId: string;
 }
 
 export const SeasonLeaderboard = ({ seasonId }: SeasonLeaderboardProps) => {
-    const { data: userSummary = [], isLoading: userSummaryLoading } = trpc.season.getUserSummary.useQuery(
+    const { data: userSummary = [], isLoading: userSummaryLoading, refetch, isRefetching } = trpc.season.getUserSummary.useQuery(
         { seasonId },
         { enabled: !!seasonId }
     );
@@ -57,6 +59,9 @@ export const SeasonLeaderboard = ({ seasonId }: SeasonLeaderboardProps) => {
                             Real-time standings for the current season
                         </CardDescription>
                     </div>
+                    <Button variant="ghost" size="icon" onClick={() => refetch()} disabled={isRefetching}>
+                        <RefreshCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
+                    </Button>
                 </div>
             </CardHeader>
             <CardContent>
