@@ -32,11 +32,15 @@ export function buildEpisodeSlugBase(input: { number: number; title: string }) {
 export function buildAssignmentSlugBase(input: {
   episodeId: string;
   movieTitle: string | null | undefined;
+  userId?: string;
+  assignmentType?: string | null;
 }) {
   const movieLabel = input.movieTitle?.trim() || "assignment";
+  const userLabel = input.userId?.trim() || "user";
+  const typeLabel = input.assignmentType?.trim() || "assignment";
 
   return slugify(
-    `${input.episodeId}-${movieLabel}`,
+    `${input.episodeId}-${userLabel}-${typeLabel}-${movieLabel}`,
   );
 }
 
@@ -109,6 +113,8 @@ export async function createUniqueAssignmentSlug(
   input: {
     episodeId: string;
     movieTitle: string | null | undefined;
+    userId?: string;
+    assignmentType?: string | null;
   },
   excludeId?: string,
 ) {

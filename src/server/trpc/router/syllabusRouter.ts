@@ -1,6 +1,13 @@
 import { z } from "zod";
+import { Prisma, type Assignment } from "@prisma/client";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { createUniqueAssignmentSlug } from "../../slugs";
+
+const ASSIGNMENT_SLUG_RETRY_LIMIT = 3;
+
+function isSlugUniqueConstraintError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
 
 export const syllabusRouter = router({
   remove: protectedProcedure
@@ -61,19 +68,32 @@ export const syllabusRouter = router({
 
       if (existingAssignment) {
         if (!existingAssignment.slug) {
-          const repairedSlug = await createUniqueAssignmentSlug(req.ctx.prisma, {
-            episodeId: episode.id,
-            movieTitle: syllabus.movie?.title,
-          }, existingAssignment.id);
-
-          await req.ctx.prisma.assignment.update({
-            where: {
-              id: existingAssignment.id,
-            },
-            data: {
-              slug: repairedSlug,
-            },
-          });
+          let repaired = false;
+          let attempts = 0;
+          while (!repaired && attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
+            attempts += 1;
+            const repairedSlug = await createUniqueAssignmentSlug(req.ctx.prisma, {
+              episodeId: episode.id,
+              movieTitle: syllabus.movie?.title,
+              userId: syllabus.userId,
+              assignmentType: req.input.assignmentType,
+            }, existingAssignment.id);
+            try {
+              await req.ctx.prisma.assignment.update({
+                where: {
+                  id: existingAssignment.id,
+                },
+                data: {
+                  slug: repairedSlug,
+                },
+              });
+              repaired = true;
+            } catch (error) {
+              if (!isSlugUniqueConstraintError(error) || attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+                throw error;
+              }
+            }
+          }
         }
 
         return await req.ctx.prisma.syllabus.update({
@@ -86,21 +106,35 @@ export const syllabusRouter = router({
         });
       }
 
-      const slug = await createUniqueAssignmentSlug(req.ctx.prisma, {
-        episodeId: episode.id,
-        movieTitle: syllabus.movie?.title,
-      });
-
-      // Create the assignment
-      const assignment = await req.ctx.prisma.assignment.create({
-        data: {
-          userId: syllabus.userId,
-          movieId: syllabus.movieId,
+      let assignment: Assignment | null = null;
+      let attempts = 0;
+      while (!assignment && attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
+        attempts += 1;
+        const slug = await createUniqueAssignmentSlug(req.ctx.prisma, {
           episodeId: episode.id,
-          type: req.input.assignmentType,
-          slug,
+          movieTitle: syllabus.movie?.title,
+          userId: syllabus.userId,
+          assignmentType: req.input.assignmentType,
+        });
+        try {
+          assignment = await req.ctx.prisma.assignment.create({
+            data: {
+              userId: syllabus.userId,
+              movieId: syllabus.movieId,
+              episodeId: episode.id,
+              type: req.input.assignmentType,
+              slug,
+            }
+          });
+        } catch (error) {
+          if (!isSlugUniqueConstraintError(error) || attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+            throw error;
+          }
         }
-      });
+      }
+      if (!assignment) {
+        throw new Error("Unable to create assignment with a unique slug.");
+      }
 
       // Update the syllabus with the assignment ID
       return await req.ctx.prisma.syllabus.update({
