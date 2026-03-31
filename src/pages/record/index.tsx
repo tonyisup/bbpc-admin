@@ -22,7 +22,7 @@ import ShowCard from "../../components/ShowCard";
 import HomeworkFlag from "../../components/Assignment/HomeworkFlag";
 import Link from "next/link";
 import { User, Rating, Guess } from "@prisma/client";
-import { Mic2Icon, PencilIcon, SaveIcon, XIcon, MicIcon, MicOffIcon, HeadphonesIcon, RadioIcon, Coins } from "lucide-react";
+import { Mic2Icon, PencilIcon, SaveIcon, XIcon, MicIcon, MicOffIcon, HeadphonesIcon, RadioIcon, Coins, Trash2Icon } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import RatingIcon from "@/components/Review/RatingIcon";
 import AssignmentBets from "../../components/Assignment/AssignmentBets";
@@ -171,6 +171,7 @@ interface GuesserRowProps {
 	seasonId: string | null;
 	gameTypeId: number | null;
 	onRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
+	onRemoveGuesses: (assignmentId: string, userId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 }
 
@@ -183,6 +184,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 	seasonId,
 	gameTypeId,
 	onRatingChange,
+	onRemoveGuesses,
 	onAddPointForGuess
 }) => {
 
@@ -217,6 +219,13 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 			}
 		});
 		setIsEditing(false);
+	};
+	const handleRemove = () => {
+		if (!confirm(`Remove all guesses for ${guesser.name ?? "this user"} on ${assignment.movie.title}?`)) {
+			return;
+		}
+
+		onRemoveGuesses(assignment.id, guesser.id);
 	};
 	return (
 		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
@@ -312,6 +321,9 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 					<ButtonGroup>
 						<Button size="icon" variant="ghost" onClick={handleEdit}>
 							<PencilIcon />
+						</Button>
+						<Button size="icon" variant="ghost" onClick={handleRemove}>
+							<Trash2Icon />
 						</Button>
 					</ButtonGroup>
 				)}
@@ -412,6 +424,7 @@ interface AssignmentGridProps {
 	onGuessRatingChange: (assignmentId: string, userId: string, adminId: string, ratingId: string) => void;
 	onAdminRatingChange: (reviewId: string | null, assignmentId: string, userId: string, ratingId: string) => void;
 	onAddOrUpdateGuess: (assignmentId: string, userId: string, guesses: { adminId: string, ratingId: string }[]) => void;
+	onRemoveGuesses: (assignmentId: string, userId: string) => void;
 	onAddPointForGuess: (data: { userId: string; seasonId: string; id: string; adjustment: number; reason: string }) => void;
 	bonusPointsData?: Record<string, number>;
 	onRefresh: () => void;
@@ -427,6 +440,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 	onGuessRatingChange,
 	onAdminRatingChange,
 	onAddOrUpdateGuess,
+	onRemoveGuesses,
 	onAddPointForGuess,
 	bonusPointsData,
 	onRefresh
@@ -503,6 +517,7 @@ const AssignmentGrid: React.FC<AssignmentGridProps> = ({
 								seasonId={seasonId}
 								gameTypeId={gameTypeId}
 								onRatingChange={onGuessRatingChange}
+								onRemoveGuesses={onRemoveGuesses}
 								onAddPointForGuess={onAddPointForGuess}
 							/>
 						);
@@ -767,6 +782,16 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 			refetchBonusPoints();
 		}
 	});
+	const { mutate: removeGuessesForAssignmentUser } = trpc.guess.removeForAssignmentUser.useMutation({
+		onSuccess: () => {
+			toast.success("Assignment guesses removed");
+			refetchRecordingData();
+			refetchBonusPoints();
+		},
+		onError: (error) => {
+			toast.error(`Failed to remove assignment guesses: ${error.message}`);
+		},
+	});
 
 	const { mutate: updateNotes, isLoading: isSavingNotes } = trpc.episode.updateNotes.useMutation({
 		onSuccess: () => {
@@ -809,6 +834,10 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 	const handleGuessRatingChange = (assignmentId: string, userId: string, adminId: string, ratingId: string) => {
 		addOrUpdateGuessesForUser({ assignmentId, userId, guesses: [{ adminId, ratingId }] });
+	};
+
+	const handleRemoveGuesses = (assignmentId: string, userId: string) => {
+		removeGuessesForAssignmentUser({ assignmentId, userId });
 	};
 
 	// --- Audio Session Logic ---
@@ -1024,6 +1053,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 											onGuessRatingChange={handleGuessRatingChange}
 											onAdminRatingChange={handleAdminRatingChange}
 											onAddOrUpdateGuess={handleAddOrUpdateGuess}
+											onRemoveGuesses={handleRemoveGuesses}
 											onAddPointForGuess={(data) => {
 												addPointForGuess(data);
 												refetchBonusPoints();

@@ -103,6 +103,95 @@ export const guessRouter = router({
 				return results;
 			});
 		}),
+	removeForAssignmentUser: protectedProcedure
+		.input(z.object({
+			assignmentId: z.string(),
+			userId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			const userRoles = await ctx.prisma.userRole.findMany({
+				where: { userId: ctx.session.user.id },
+				include: { role: true },
+			});
+			const isAdmin = userRoles.some((userRole) => userRole.role.admin);
+			if (!isAdmin) {
+				throw new TRPCError({ code: "UNAUTHORIZED" });
+			}
+
+			return await ctx.prisma.$transaction(async (prisma) => {
+				const guesses = await prisma.guess.findMany({
+					where: {
+						userId: input.userId,
+						assignmentReview: {
+							is: {
+								assignmentId: input.assignmentId,
+							},
+						},
+					},
+					select: {
+						id: true,
+						pointsId: true,
+					},
+				});
+
+				if (guesses.length === 0) {
+					return { deletedGuesses: 0, deletedPoints: 0 };
+				}
+
+				const guessIds = guesses.map((guess) => guess.id);
+				const pointIds = Array.from(
+					new Set(
+						guesses
+							.map((guess) => guess.pointsId)
+							.filter((pointId): pointId is string => Boolean(pointId))
+					)
+				);
+				const remainingPointReferences = pointIds.length === 0
+					? []
+					: await prisma.guess.findMany({
+						where: {
+							pointsId: {
+								in: pointIds,
+							},
+							id: {
+								notIn: guessIds,
+							},
+						},
+						select: {
+							pointsId: true,
+						},
+					});
+				const lockedPointIds = new Set(
+					remainingPointReferences
+						.map((guess) => guess.pointsId)
+						.filter((pointId): pointId is string => Boolean(pointId))
+				);
+				const deletablePointIds = pointIds.filter((pointId) => !lockedPointIds.has(pointId));
+
+				const deletedGuesses = await prisma.guess.deleteMany({
+					where: {
+						id: {
+							in: guessIds,
+						},
+					},
+				});
+
+				const deletedPoints = deletablePointIds.length === 0
+					? { count: 0 }
+					: await prisma.point.deleteMany({
+						where: {
+							id: {
+								in: deletablePointIds,
+							},
+						},
+					});
+
+				return {
+					deletedGuesses: deletedGuesses.count,
+					deletedPoints: deletedPoints.count,
+				};
+			});
+		}),
 	add: publicProcedure
 		.input(z.object({
 			userId: z.string(),
