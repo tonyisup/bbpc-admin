@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { GamePointLookup } from "../../../utils/enums";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { getCurrentSeasonID } from "../utils/points";
 import { getPacificTodayPlainDate, parsePlainDate } from "@/lib/dates";
 
 export const guessRouter = router({
-	addOrUpdateGuessesForUser: protectedProcedure
+	addOrUpdateGuessesForUser: adminProcedure
 		.input(z.object({
 			assignmentId: z.string(),
 			userId: z.string(),
@@ -17,16 +17,6 @@ export const guessRouter = router({
 		}))
 		.mutation(async ({ ctx, input }) => {
 			const { assignmentId, userId, guesses } = input;
-
-			// Check if user is an admin
-			const userRoles = await ctx.prisma.userRole.findMany({
-				where: { userId: ctx.session.user.id },
-				include: { role: true },
-			});
-			const isAdmin = userRoles.some(userRole => userRole.role.admin);
-			if (!isAdmin) {
-				throw new TRPCError({ code: 'UNAUTHORIZED' });
-			}
 
 			// 1. Get current season
 			const latestSeasonId = await getCurrentSeasonID(ctx.prisma);
@@ -103,21 +93,12 @@ export const guessRouter = router({
 				return results;
 			});
 		}),
-	removeForAssignmentUser: protectedProcedure
+	removeForAssignmentUser: adminProcedure
 		.input(z.object({
 			assignmentId: z.string(),
 			userId: z.string(),
 		}))
 		.mutation(async ({ ctx, input }) => {
-			const userRoles = await ctx.prisma.userRole.findMany({
-				where: { userId: ctx.session.user.id },
-				include: { role: true },
-			});
-			const isAdmin = userRoles.some((userRole) => userRole.role.admin);
-			if (!isAdmin) {
-				throw new TRPCError({ code: "UNAUTHORIZED" });
-			}
-
 			return await ctx.prisma.$transaction(async (prisma) => {
 				const guesses = await prisma.guess.findMany({
 					where: {

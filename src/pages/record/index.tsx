@@ -32,6 +32,7 @@ import PointEventButton, { PendingPointEvent } from "@/components/PointEventButt
 import BonusPointEventButton from "@/components/BonusPointEventButton";
 import { ManageBonusPointsPopover } from "@/components/ManageBonusPointsPopover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useRouter } from "next/router";
 import { useAudioSession } from "../../hooks/useAudioSession";
 import AudioStream from "../../components/AudioStream";
@@ -190,6 +191,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedRatings, setEditedRatings] = useState<Record<string, string>>({});
+	const [showConfirm, setShowConfirm] = useState(false);
 	const { mutateAsync: setPointForGuess } = trpc.guess.setPointForGuess.useMutation();
 	const handleCancel = () => {
 		setIsEditing(false);
@@ -221,17 +223,24 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 		setIsEditing(false);
 	};
 	const handleRemove = () => {
-		if (!confirm(`Remove all guesses for ${guesser.name ?? "this user"} on ${assignment.movie.title}?`)) {
-			return;
-		}
-
-		onRemoveGuesses(assignment.id, guesser.id);
+		setShowConfirm(true);
 	};
 	return (
-		<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
-			<td className="p-2">
-				<Link href={`/user/${guesser.id}`}>{guesser.name}</Link>
-			</td>
+		<>
+			<ConfirmModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => {
+					onRemoveGuesses(assignment.id, guesser.id);
+					setShowConfirm(false);
+				}}
+				title="Remove Guesses"
+				description={`Remove all guesses for ${guesser.name ?? "this user"} on ${assignment.movie.title}?`}
+			/>
+			<tr className="border-b border-gray-700/50 hover:bg-gray-800/30">
+				<td className="p-2">
+					<Link href={`/user/${guesser.id}`}>{guesser.name}</Link>
+				</td>
 			{admins.map(admin => {
 				const review = assignment.assignmentReviews?.find((ar: any) => ar.review.userId === admin.id);
 				const guess = review?.guesses?.find((g: any) => g.userId === guesser.id);
@@ -329,6 +338,7 @@ const GuesserRow: React.FC<GuesserRowProps> = ({
 				)}
 			</td>
 		</tr >
+		</>
 	);
 };
 

@@ -270,16 +270,18 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 		resolver: zodResolver(formSchema),
 	});
 
+	const { reset } = form;
+
 	useEffect(() => {
 		if (!user?.id) {
 			return;
 		}
 
-		form.reset({
+		reset({
 			name: user.name ?? '',
 			email: user.email ?? ''
 		});
-	}, [form, user?.id]);
+	}, [reset, user?.id]);
 
 	const refreshAllPoints = () => {
 		refetchTotalPoints();
