@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatInstantLocal } from "@/lib/dates";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -391,9 +392,9 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	}
 
 	const handleMoveUp = (index: number) => {
-		if (!syllabus || index === 0) return;
-		const itemToMove = syllabus[index];
-		const itemAbove = syllabus[index - 1];
+		if (index === 0) return;
+		const itemToMove = pendingSyllabus[index];
+		const itemAbove = pendingSyllabus[index - 1];
 		if (!itemToMove || !itemAbove) return;
 		reorderSyllabus([
 			{ id: itemToMove.id, order: itemAbove.order },
@@ -402,15 +403,25 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	};
 
 	const handleMoveDown = (index: number) => {
-		if (!syllabus || index === syllabus.length - 1) return;
-		const itemToMove = syllabus[index];
-		const itemBelow = syllabus[index + 1];
+		if (index === pendingSyllabus.length - 1) return;
+		const itemToMove = pendingSyllabus[index];
+		const itemBelow = pendingSyllabus[index + 1];
 		if (!itemToMove || !itemBelow) return;
 		reorderSyllabus([
 			{ id: itemToMove.id, order: itemBelow.order },
 			{ id: itemBelow.id, order: itemToMove.order }
 		]);
 	};
+
+	const pendingSyllabus = useMemo(
+		() => (syllabus ?? []).filter((item) => item.assignmentId === null),
+		[syllabus],
+	);
+	const assignedSyllabus = useMemo(
+		() => (syllabus ?? []).filter((item) => item.assignmentId !== null),
+		[syllabus],
+	);
+	const nextPendingSyllabusId = pendingSyllabus[0]?.id;
 
 	const groupedPoints = useMemo(() => {
 		const acc: GroupedPoints = { general: { assignments: {}, otherPoints: [] } };
@@ -872,55 +883,96 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 										Syllabus is empty.
 									</div>
 								)}
-								<div className="space-y-3">
-									{syllabus?.map((item, index) => (
-										<div key={item.id} className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl border border-muted-foreground/10 group">
-											<div className="flex flex-col gap-1">
-												<Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 group-hover:opacity-100" onClick={() => handleMoveUp(index)} disabled={index === 0}>
-													<ArrowUp className="h-3 w-3" />
-												</Button>
-												<Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 group-hover:opacity-100" onClick={() => handleMoveDown(index)} disabled={index === (syllabus?.length || 0) - 1}>
-													<ArrowDown className="h-3 w-3" />
-												</Button>
+								{pendingSyllabus.length > 0 && (
+									<div className="space-y-3">
+										<div className="flex items-center justify-between px-1">
+											<div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+												Pending Queue
 											</div>
-
-											<div className="flex-1 min-w-0">
-												<div className="flex items-center gap-2">
-													<span className="text-xs font-black text-muted-foreground/50 border rounded px-1.5 py-0.5 bg-background">#{item.order}</span>
-													<h3 className="font-bold truncate">{item.movie.title}</h3>
-													<span className="text-xs text-muted-foreground font-medium">({item.movie.year})</span>
+											<div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+												Highest order is next
+											</div>
+										</div>
+										{pendingSyllabus.map((item, index) => (
+											<div
+												key={item.id}
+												className={cn(
+													"group flex items-center gap-4 rounded-xl border p-4",
+													item.id === nextPendingSyllabusId
+														? "border-primary/50 bg-primary/5 shadow-sm"
+														: "border-muted-foreground/10 bg-muted/20",
+												)}
+											>
+												<div className="flex flex-col gap-1">
+													<Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 group-hover:opacity-100" onClick={() => handleMoveUp(index)} disabled={index === 0}>
+														<ArrowUp className="h-3 w-3" />
+													</Button>
+													<Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 group-hover:opacity-100" onClick={() => handleMoveDown(index)} disabled={index === pendingSyllabus.length - 1}>
+														<ArrowDown className="h-3 w-3" />
+													</Button>
 												</div>
-												{item.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic text-left">&quot;{item.notes}&quot;</p>}
-											</div>
 
-											<div className="flex items-center gap-2">
-												{item.assignment ? (
+												<div className="flex-1 min-w-0">
+													<div className="flex items-center gap-2">
+														<span className="text-xs font-black text-muted-foreground/50 border rounded px-1.5 py-0.5 bg-background">#{item.order}</span>
+														{item.id === nextPendingSyllabusId && (
+															<span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+																Next
+															</span>
+														)}
+														<h3 className="font-bold truncate">{item.movie.title}</h3>
+														<span className="text-xs text-muted-foreground font-medium">({item.movie.year})</span>
+													</div>
+													{item.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic text-left">&quot;{item.notes}&quot;</p>}
+												</div>
+
+												<div className="flex items-center gap-2">
+													<SyllabusAssignmentForm
+														onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
+													/>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+														onClick={() => setConfirmDeleteId(item.id)}
+													>
+														<Trash2 className="h-4 w-4" />
+													</Button>
+												</div>
+											</div>
+										))}
+									</div>
+								)}
+								{assignedSyllabus.length > 0 && (
+									<div className="space-y-3">
+										<div className="px-1 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+											Assigned
+										</div>
+										{assignedSyllabus.map((item) => (
+											<div key={item.id} className="flex items-center gap-4 rounded-xl border border-muted-foreground/10 bg-muted/20 p-4">
+												<div className="w-6 shrink-0" />
+												<div className="flex-1 min-w-0">
+													<div className="flex items-center gap-2">
+														<span className="text-xs font-black text-muted-foreground/50 border rounded px-1.5 py-0.5 bg-background">#{item.order}</span>
+														<h3 className="font-bold truncate">{item.movie.title}</h3>
+														<span className="text-xs text-muted-foreground font-medium">({item.movie.year})</span>
+													</div>
+													{item.notes && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic text-left">&quot;{item.notes}&quot;</p>}
+												</div>
+
+												{item.assignment && (
 													<div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
 														<span className="text-[10px] font-black text-primary uppercase">Ep {item.assignment.episode?.number}</span>
 														<Separator orientation="vertical" className="h-3 bg-primary/20" />
 														<button type="button" className="text-muted-foreground hover:text-destructive transition-colors" onClick={() => handleRemoveAssignment(item.id)}>
 															<X className="h-3 w-3" />
 														</button>
-													</div>) : (
-													<div className="flex items-center gap-2">
-														<SyllabusAssignmentForm
-															onAssign={(epNum, type) => handleAssignEpisode(item.id, epNum, type)}
-														/>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-															onClick={() => setConfirmDeleteId(item.id)}
-														>
-															<Trash2 className="h-4 w-4" />
-														</Button>
 													</div>
 												)}
 											</div>
-
-										</div>
-									))}
-								</div>
+										))}
+									</div>
+								)}
 							</CardContent>
 						</Card>
 
