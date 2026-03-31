@@ -30,17 +30,19 @@ export function buildEpisodeSlugBase(input: { number: number; title: string }) {
 }
 
 export function buildAssignmentSlugBase(input: {
-  episodeId: string;
+  episodeNumber: number;
   movieTitle: string | null | undefined;
   userId?: string;
+  userName?: string | null;
   assignmentType?: string | null;
 }) {
+  const episodeLabel = `episode-${input.episodeNumber}`;
   const movieLabel = input.movieTitle?.trim() || "assignment";
-  const userLabel = input.userId?.trim() || "user";
+  const userLabel = input.userName?.trim() || input.userId?.trim().slice(0, 8) || "user";
   const typeLabel = input.assignmentType?.trim() || "assignment";
 
   return slugify(
-    `${input.episodeId}-${userLabel}-${typeLabel}-${movieLabel}`,
+    `${episodeLabel}-${userLabel}-${typeLabel}-${movieLabel}`,
   );
 }
 
@@ -111,9 +113,10 @@ export async function createUniqueEpisodeSlug(
 export async function createUniqueAssignmentSlug(
   prisma: SlugDbClient,
   input: {
-    episodeId: string;
+    episodeNumber: number;
     movieTitle: string | null | undefined;
     userId?: string;
+    userName?: string | null;
     assignmentType?: string | null;
   },
   excludeId?: string,

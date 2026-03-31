@@ -1,13 +1,11 @@
 import { z } from "zod";
-import { Prisma, type Assignment } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
+import { type Assignment } from "@prisma/client";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { createUniqueAssignmentSlug } from "../../slugs";
+import { isSlugUniqueConstraintError } from "../utils/prisma";
 
 const ASSIGNMENT_SLUG_RETRY_LIMIT = 3;
-
-function isSlugUniqueConstraintError(error: unknown) {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
-}
 
 export const syllabusRouter = router({
   remove: protectedProcedure
@@ -15,6 +13,19 @@ export const syllabusRouter = router({
       id: z.string()
     }))
     .mutation(async (req) => {
+      const syllabus = await req.ctx.prisma.syllabus.findUnique({
+        where: { id: req.input.id },
+        select: { userId: true },
+      });
+
+      if (!syllabus) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Syllabus item not found." });
+      }
+
+      if (syllabus.userId !== req.ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to delete this syllabus item." });
+      }
+
       await req.ctx.prisma.syllabus.delete({
         where: {
           id: req.input.id
@@ -45,12 +56,19 @@ export const syllabusRouter = router({
           id: req.input.syllabusId
         },
         include: {
-          movie: true
+          movie: true,
+          user: {
+            select: { name: true },
+          },
         }
       });
 
       if (!syllabus) {
         throw new Error("Syllabus item not found");
+      }
+
+      if (syllabus.userId !== req.ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to modify this syllabus item." });
       }
 
       // Check if the assignment already exists
@@ -73,9 +91,10 @@ export const syllabusRouter = router({
           while (!repaired && attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
             attempts += 1;
             const repairedSlug = await createUniqueAssignmentSlug(req.ctx.prisma, {
-              episodeId: episode.id,
+              episodeNumber: episode.number,
               movieTitle: syllabus.movie?.title,
-              userId: syllabus.userId,
+              userId: syllabus.userId ?? undefined,
+              userName: syllabus.user?.name,
               assignmentType: req.input.assignmentType,
             }, existingAssignment.id);
             try {
@@ -89,8 +108,14 @@ export const syllabusRouter = router({
               });
               repaired = true;
             } catch (error) {
-              if (!isSlugUniqueConstraintError(error) || attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+              if (!isSlugUniqueConstraintError(error)) {
                 throw error;
+              }
+              if (attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+                throw new TRPCError({
+                  code: "CONFLICT",
+                  message: "Could not generate a unique slug after multiple attempts, please try again",
+                });
               }
             }
           }
@@ -111,9 +136,10 @@ export const syllabusRouter = router({
       while (!assignment && attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
         attempts += 1;
         const slug = await createUniqueAssignmentSlug(req.ctx.prisma, {
-          episodeId: episode.id,
+          episodeNumber: episode.number,
           movieTitle: syllabus.movie?.title,
-          userId: syllabus.userId,
+          userId: syllabus.userId ?? undefined,
+          userName: syllabus.user?.name,
           assignmentType: req.input.assignmentType,
         });
         try {
@@ -127,8 +153,14 @@ export const syllabusRouter = router({
             }
           });
         } catch (error) {
-          if (!isSlugUniqueConstraintError(error) || attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+          if (!isSlugUniqueConstraintError(error)) {
             throw error;
+          }
+          if (attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: `Could not generate a unique assignment slug after ${attempts} attempts`,
+            });
           }
         }
       }
