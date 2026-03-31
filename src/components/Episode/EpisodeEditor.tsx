@@ -74,7 +74,9 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	}, [episode.id, hydrateFromEpisode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
-		onSuccess: () => {
+		onSuccess: (updatedEpisode) => {
+			hydrateFromEpisode(updatedEpisode);
+			hydratedEpisodeIdRef.current = updatedEpisode.id;
 			setSlugTouched(false);
 			onEpisodeUpdated?.();
 		},
