@@ -592,7 +592,8 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 		setDescription(episode.description || "");
 		setNotes(episode.notes || "");
 		hydratedEpisodeIdRef.current = episode.id;
-	}, [episode.id, episode.title, episode.description, episode.notes]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only depend on episode.id
+	}, [episode.id]);
 
 	const handleSave = async () => {
 		updateDetails({

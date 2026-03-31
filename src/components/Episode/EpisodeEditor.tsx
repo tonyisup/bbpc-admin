@@ -70,7 +70,8 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 
 		hydrateFromEpisode(episode);
 		hydratedEpisodeIdRef.current = episode.id;
-	}, [episode.id, hydrateFromEpisode, episode]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only depend on episode.id
+	}, [episode.id, hydrateFromEpisode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
 		onSuccess: () => {
