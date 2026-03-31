@@ -714,6 +714,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		kickUser
 	} = useAudioSession();
 
+	const utils = trpc.useContext();
 
 	// Queries
 	const { data: pendingEpisode } = trpc.episode.getByStatus.useQuery({ status: "pending" });
@@ -797,6 +798,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 			toast.success("Assignment guesses removed");
 			refetchRecordingData();
 			refetchBonusPoints();
+			utils.season.getUserSummary.invalidate();
 		},
 		onError: (error) => {
 			toast.error(`Failed to remove assignment guesses: ${error.message}`);

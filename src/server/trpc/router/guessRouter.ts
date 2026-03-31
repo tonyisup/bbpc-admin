@@ -159,13 +159,35 @@ export const guessRouter = router({
 
 				const deletedPoints = deletablePointIds.length === 0
 					? { count: 0 }
-					: await prisma.point.deleteMany({
-						where: {
-							id: {
-								in: deletablePointIds,
+					: await (async () => {
+						// Delete AssignmentPoints references
+						await prisma.assignmentPoints.deleteMany({
+							where: { pointsId: { in: deletablePointIds } }
+						});
+						// Nullify GamblingPoints references
+						await prisma.gamblingPoints.updateMany({
+							where: { pointsId: { in: deletablePointIds } },
+							data: { pointsId: null }
+						});
+						// Nullify remaining Guess references (if any)
+						await prisma.guess.updateMany({
+							where: { pointsId: { in: deletablePointIds } },
+							data: { pointsId: null }
+						});
+						// Nullify TagVote references
+						await prisma.tagVote.updateMany({
+							where: { pointId: { in: deletablePointIds } },
+							data: { pointId: null }
+						});
+						// Now safe to delete the points
+						return await prisma.point.deleteMany({
+							where: {
+								id: {
+									in: deletablePointIds,
+								},
 							},
-						},
-					});
+						});
+					})();
 
 				return {
 					deletedGuesses: deletedGuesses.count,
