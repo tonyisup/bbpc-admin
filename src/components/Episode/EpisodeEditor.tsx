@@ -77,8 +77,11 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 		onSuccess: (updatedEpisode) => {
 			hydrateFromEpisode(updatedEpisode);
 			hydratedEpisodeIdRef.current = updatedEpisode.id;
-			setSlugTouched(false);
 			onEpisodeUpdated?.();
+		},
+		onError: (error) => {
+			console.error("Failed to update episode:", error);
+			// Note: Add toast notification or setError state as needed
 		},
 	});
 
