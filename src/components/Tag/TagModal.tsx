@@ -51,7 +51,7 @@ const TagModal: FC<TagModalProps> = ({ open, setOpen, refreshItems, editingItem 
     } else {
       resetForm();
     }
-  }, [editingItem]);
+  }, [editingItem?.id]);
 
   const resetForm = () => {
     setName("");

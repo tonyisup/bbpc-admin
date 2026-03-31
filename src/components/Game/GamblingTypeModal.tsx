@@ -56,7 +56,7 @@ const GamblingTypeModal: FC<GamblingTypeModalProps> = ({ open, setOpen, refreshI
 		} else {
 			resetForm();
 		}
-	}, [editingItem]);
+	}, [editingItem?.id]);
 
 	const resetForm = () => {
 		setTitle("");

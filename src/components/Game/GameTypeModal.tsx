@@ -51,7 +51,7 @@ const GameTypeModal: FC<GameTypeModalProps> = ({ open, setOpen, refreshItems, ed
     } else {
       resetForm();
     }
-  }, [editingItem]);
+  }, [editingItem?.id]);
 
   const resetForm = () => {
     setTitle("");

@@ -93,6 +93,7 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
   const [reason, setReason] = useState("");
   const [adjustment, setAdjustment] = useState(0);
   const [gamePointTypeId, setGamePointTypeId] = useState<string>("null");
+  const hydratedPointIdRef = useRef<string | null>(null);
 
   // Assignment Search State
   const utils = trpc.useContext();
@@ -147,11 +148,14 @@ const PointEditPage: NextPage<InferGetServerSidePropsType<typeof getServerSidePr
 
 
   useEffect(() => {
-    if (point) {
-      setReason(point.reason || "");
-      setAdjustment(point.adjustment || 0);
-      setGamePointTypeId(point.gamePointTypeId?.toString() || "null");
+    if (!point || hydratedPointIdRef.current === point.id) {
+      return;
     }
+
+    setReason(point.reason || "");
+    setAdjustment(point.adjustment || 0);
+    setGamePointTypeId(point.gamePointTypeId?.toString() || "null");
+    hydratedPointIdRef.current = point.id;
   }, [point]);
 
   const handleSave = () => {

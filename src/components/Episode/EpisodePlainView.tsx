@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { trpc } from "../../utils/trpc";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -16,11 +16,15 @@ const EpisodePlainView: React.FC<EpisodePlainViewProps> = ({ episodeId, episodeN
   const { data: next } = trpc.episode.fullByNumber.useQuery({ number: 1 + episodeNumber })
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  const hydratedEpisodeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (episode?.notes) {
-      setNotes(episode.notes);
+    if (!episode || hydratedEpisodeIdRef.current === episode.id) {
+      return;
     }
+
+    setNotes(episode.notes ?? "");
+    hydratedEpisodeIdRef.current = episode.id;
   }, [episode]);
 
   const { mutate: updateNotes, isLoading: isSaving } = trpc.episode.updateNotes.useMutation({

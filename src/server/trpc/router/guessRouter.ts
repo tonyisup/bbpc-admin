@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { GamePointLookup } from "../../../utils/enums";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { getCurrentSeasonID } from "../utils/points";
 import { getPacificTodayPlainDate, parsePlainDate } from "@/lib/dates";
 
 export const guessRouter = router({
-	addOrUpdateGuessesForUser: protectedProcedure
+	addOrUpdateGuessesForUser: adminProcedure
 		.input(z.object({
 			assignmentId: z.string(),
 			userId: z.string(),
@@ -17,16 +17,6 @@ export const guessRouter = router({
 		}))
 		.mutation(async ({ ctx, input }) => {
 			const { assignmentId, userId, guesses } = input;
-
-			// Check if user is an admin
-			const userRoles = await ctx.prisma.userRole.findMany({
-				where: { userId: ctx.session.user.id },
-				include: { role: true },
-			});
-			const isAdmin = userRoles.some(userRole => userRole.role.admin);
-			if (!isAdmin) {
-				throw new TRPCError({ code: 'UNAUTHORIZED' });
-			}
 
 			// 1. Get current season
 			const latestSeasonId = await getCurrentSeasonID(ctx.prisma);
@@ -101,6 +91,108 @@ export const guessRouter = router({
 					}
 				}
 				return results;
+			});
+		}),
+	removeForAssignmentUser: adminProcedure
+		.input(z.object({
+			assignmentId: z.string(),
+			userId: z.string(),
+		}))
+		.mutation(async ({ ctx, input }) => {
+			return await ctx.prisma.$transaction(async (prisma) => {
+				const guesses = await prisma.guess.findMany({
+					where: {
+						userId: input.userId,
+						assignmentReview: {
+							is: {
+								assignmentId: input.assignmentId,
+							},
+						},
+					},
+					select: {
+						id: true,
+						pointsId: true,
+					},
+				});
+
+				if (guesses.length === 0) {
+					return { deletedGuesses: 0, deletedPoints: 0 };
+				}
+
+				const guessIds = guesses.map((guess) => guess.id);
+				const pointIds = Array.from(
+					new Set(
+						guesses
+							.map((guess) => guess.pointsId)
+							.filter((pointId): pointId is string => Boolean(pointId))
+					)
+				);
+				const remainingPointReferences = pointIds.length === 0
+					? []
+					: await prisma.guess.findMany({
+						where: {
+							pointsId: {
+								in: pointIds,
+							},
+							id: {
+								notIn: guessIds,
+							},
+						},
+						select: {
+							pointsId: true,
+						},
+					});
+				const lockedPointIds = new Set(
+					remainingPointReferences
+						.map((guess) => guess.pointsId)
+						.filter((pointId): pointId is string => Boolean(pointId))
+				);
+				const deletablePointIds = pointIds.filter((pointId) => !lockedPointIds.has(pointId));
+
+				const deletedGuesses = await prisma.guess.deleteMany({
+					where: {
+						id: {
+							in: guessIds,
+						},
+					},
+				});
+
+				const deletedPoints = deletablePointIds.length === 0
+					? { count: 0 }
+					: await (async () => {
+						// Delete AssignmentPoints references
+						await prisma.assignmentPoints.deleteMany({
+							where: { pointsId: { in: deletablePointIds } }
+						});
+						// Nullify GamblingPoints references
+						await prisma.gamblingPoints.updateMany({
+							where: { pointsId: { in: deletablePointIds } },
+							data: { pointsId: null }
+						});
+						// Nullify remaining Guess references (if any)
+						await prisma.guess.updateMany({
+							where: { pointsId: { in: deletablePointIds } },
+							data: { pointsId: null }
+						});
+						// Nullify TagVote references
+						await prisma.tagVote.updateMany({
+							where: { pointId: { in: deletablePointIds } },
+							data: { pointId: null }
+						});
+						// Now safe to delete the points
+						return await prisma.point.deleteMany({
+							where: {
+								id: {
+									in: deletablePointIds,
+								},
+							},
+						});
+					})();
+
+				return {
+					deletedGuesses: deletedGuesses.count,
+					deletedPoints: deletedPoints.count,
+				};
 			});
 		}),
 	add: publicProcedure

@@ -263,12 +263,25 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	}, { enabled: !!id });
 
 	const form = useForm<z.infer<typeof formSchema>>({
-		values: {
-			name: user?.name ?? '',
-			email: user?.email ?? ''
+		defaultValues: {
+			name: '',
+			email: ''
 		},
 		resolver: zodResolver(formSchema),
 	});
+
+	const { reset } = form;
+
+	useEffect(() => {
+		if (!user?.id) {
+			return;
+		}
+
+		reset({
+			name: user.name ?? '',
+			email: user.email ?? ''
+		});
+	}, [reset, user?.id]);
 
 	const refreshAllPoints = () => {
 		refetchTotalPoints();

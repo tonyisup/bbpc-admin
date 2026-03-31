@@ -53,7 +53,7 @@ export const RankedListTypeModal: FC<RankedListTypeModalProps> = ({
 			setMaxItems(existingType.maxItems);
 			setTargetType(existingType.targetType as any);
 		}
-	}, [existingType]);
+	}, [existingType?.id]);
 
 	const createType = trpc.rankedList.createType.useMutation({
 		onSuccess: () => {
