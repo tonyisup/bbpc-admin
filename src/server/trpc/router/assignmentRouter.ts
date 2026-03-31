@@ -1,9 +1,74 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
-import { createUniqueAssignmentSlug } from "../../slugs";
+import { createUniqueAssignmentSlug, slugify } from "../../slugs";
 
 export const assignmentRouter = router({
+  update: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      slug: z.string().optional(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        let slug = req.input.slug;
+
+        if (slug !== undefined) {
+          if (slug === "") {
+            const assignment = await tx.assignment.findUnique({
+              where: { id: req.input.id },
+              select: {
+                id: true,
+                episodeId: true,
+                movie: {
+                  select: {
+                    title: true,
+                  },
+                },
+              },
+            });
+
+            if (!assignment) {
+              throw new Error("Assignment not found");
+            }
+
+            slug = await createUniqueAssignmentSlug(tx, {
+              episodeId: assignment.episodeId,
+              movieTitle: assignment.movie?.title,
+            }, assignment.id);
+          } else {
+            slug = slugify(slug);
+            if (!slug) {
+              throw new Error("Invalid slug provided.");
+            }
+
+            const existing = await tx.assignment.findFirst({
+              where: {
+                slug,
+                id: {
+                  not: req.input.id,
+                },
+              },
+              select: { id: true },
+            });
+
+            if (existing) {
+              throw new Error(`Slug '${slug}' is already in use.`);
+            }
+          }
+        }
+
+        return await tx.assignment.update({
+          where: { id: req.input.id },
+          data: {
+            ...(slug !== undefined ? { slug } : {}),
+          },
+          include: {
+            episode: true,
+          },
+        });
+      });
+    }),
   setType: protectedProcedure
     .input(z.object({
       id: z.string(),
@@ -28,45 +93,34 @@ export const assignmentRouter = router({
     }))
     .mutation(async (req) => {
       return await req.ctx.prisma.$transaction(async (tx) => {
-        const [episode, movie, user] = await Promise.all([
+        const [episode, movie] = await Promise.all([
           tx.episode.findUnique({
             where: { id: req.input.episodeId },
-            select: { number: true },
+            select: { id: true },
           }),
           tx.movie.findUnique({
             where: { id: req.input.movieId },
             select: { title: true },
           }),
-          tx.user.findUnique({
-            where: { id: req.input.userId },
-            select: { name: true },
-          }),
         ]);
 
-        if (!episode || !movie || !user) {
+        if (!episode || !movie) {
           throw new Error("Unable to resolve assignment slug source data");
         }
 
-        const assignment = await tx.assignment.create({
+        const slug = await createUniqueAssignmentSlug(tx, {
+          episodeId: episode.id,
+          movieTitle: movie.title,
+        });
+
+        return await tx.assignment.create({
           data: {
             userId: req.input.userId,
             movieId: req.input.movieId,
             episodeId: req.input.episodeId,
-            type: req.input.type
-          }
-        });
-
-        const slug = await createUniqueAssignmentSlug(tx, {
-          episodeNumber: episode.number,
-          userId: req.input.userId,
-          userName: user.name,
-          movieTitle: movie.title,
-          type: req.input.type,
-        }, assignment.id);
-
-        return tx.assignment.update({
-          where: { id: assignment.id },
-          data: { slug },
+            type: req.input.type,
+            slug,
+          },
         });
       });
     }),

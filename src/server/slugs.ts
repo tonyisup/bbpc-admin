@@ -1,17 +1,10 @@
-import type { Prisma } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 const MAX_SLUG_LENGTH = 255;
 const SUFFIX_RESERVE = 16;
 
 type SlugDbClient = PrismaClient | Prisma.TransactionClient;
 type SlugEntity = "episode" | "assignment";
-
-const ASSIGNMENT_TYPE_LABELS = {
-  HOMEWORK: "homework",
-  EXTRA_CREDIT: "extra-credit",
-  BONUS: "bonus",
-} as const;
 
 export const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,17 +30,13 @@ export function buildEpisodeSlugBase(input: { number: number; title: string }) {
 }
 
 export function buildAssignmentSlugBase(input: {
-  episodeNumber: number;
-  userId: string;
-  userName: string | null | undefined;
+  episodeId: string;
   movieTitle: string | null | undefined;
-  type: keyof typeof ASSIGNMENT_TYPE_LABELS;
 }) {
-  const userLabel = input.userName?.trim() || `user-${input.userId.slice(0, 8)}`;
   const movieLabel = input.movieTitle?.trim() || "assignment";
 
   return slugify(
-    `episode-${input.episodeNumber}-${userLabel}-${movieLabel}-${ASSIGNMENT_TYPE_LABELS[input.type]}`,
+    `${input.episodeId}-${movieLabel}`,
   );
 }
 
@@ -118,11 +107,8 @@ export async function createUniqueEpisodeSlug(
 export async function createUniqueAssignmentSlug(
   prisma: SlugDbClient,
   input: {
-    episodeNumber: number;
-    userId: string;
-    userName: string | null | undefined;
+    episodeId: string;
     movieTitle: string | null | undefined;
-    type: keyof typeof ASSIGNMENT_TYPE_LABELS;
   },
   excludeId?: string,
 ) {

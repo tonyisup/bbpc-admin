@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { createUniqueAssignmentSlug } from "../../slugs";
 
 export const syllabusRouter = router({
   remove: protectedProcedure
@@ -51,10 +52,30 @@ export const syllabusRouter = router({
           userId: syllabus.userId,
           movieId: syllabus.movieId,
           episodeId: episode.id
-        }
+        },
+        select: {
+          id: true,
+          slug: true,
+        },
       });
 
       if (existingAssignment) {
+        if (!existingAssignment.slug) {
+          const repairedSlug = await createUniqueAssignmentSlug(req.ctx.prisma, {
+            episodeId: episode.id,
+            movieTitle: syllabus.movie?.title,
+          }, existingAssignment.id);
+
+          await req.ctx.prisma.assignment.update({
+            where: {
+              id: existingAssignment.id,
+            },
+            data: {
+              slug: repairedSlug,
+            },
+          });
+        }
+
         return await req.ctx.prisma.syllabus.update({
           where: {
             id: req.input.syllabusId
@@ -65,13 +86,19 @@ export const syllabusRouter = router({
         });
       }
 
+      const slug = await createUniqueAssignmentSlug(req.ctx.prisma, {
+        episodeId: episode.id,
+        movieTitle: syllabus.movie?.title,
+      });
+
       // Create the assignment
       const assignment = await req.ctx.prisma.assignment.create({
         data: {
           userId: syllabus.userId,
           movieId: syllabus.movieId,
           episodeId: episode.id,
-          type: req.input.assignmentType
+          type: req.input.assignmentType,
+          slug,
         }
       });
 
