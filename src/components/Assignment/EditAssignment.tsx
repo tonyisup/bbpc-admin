@@ -1,28 +1,30 @@
-import type { Assignment, AudioMessage, Rating, User } from "@prisma/client";
-import { useState, useMemo, type FC } from "react";
+import type { Assignment, AudioMessage, User } from "@prisma/client";
+import { useEffect, useRef, useState, type FC } from "react";
 import MovieCard from "../MovieCard";
 import { trpc } from "../../utils/trpc";
-import { Trash2, Plus, MessageSquare, Mic, Coins, User as UserIcon, X, PlusCircle, MinusCircle } from "lucide-react";
+import { Trash2, Plus, Mic, User as UserIcon } from "lucide-react";
 import Link from "next/link";
-import RatingIcon from "../Review/RatingIcon";
 import HomeworkFlag from "./HomeworkFlag";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Separator } from "../ui/separator";
 import AddAssignmentReviewModal from "../Review/AddAssignmentReviewModal";
-import AddAssignmentReviewGuessModal from "../Guess/AddAssignmentReviewGuessModal";
-import EditableRating from "../Review/EditableRating";
 import AssignmentReviews from "./AssignmentReviews";
 import AssignmentBets from "./AssignmentBets";
 import { formatInstantLocal } from "@/lib/dates";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import { useRouter } from "next/router";
+import { getAdminAssignmentPath } from "@/lib/routes";
 
 interface EditAssignmentProps {
 	assignment: Assignment;
 }
 
 const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
+	const router = useRouter();
 	const { refetch: refreshAssignment } = trpc.assignment.get.useQuery({ id: assignment.id });
 	const { data: movie } = trpc.movie.get.useQuery({ id: assignment.movieId });
 	const { data: user } = trpc.user.get.useQuery({ id: assignment.userId });
@@ -32,11 +34,40 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 	const { data: gamblingPoints, refetch: refreshGambling } = trpc.gambling.getForAssignment.useQuery({ assignmentId: assignment.id });
 
 	const [addReviewOpen, setAddReviewOpen] = useState(false);
+	const [slug, setSlug] = useState(assignment.slug ?? "");
+	const hydratedAssignmentIdRef = useRef<string | null>(null);
+
+	useEffect(() => {
+		if (hydratedAssignmentIdRef.current === assignment.id) {
+			return;
+		}
+
+		setSlug(assignment.slug ?? "");
+		hydratedAssignmentIdRef.current = assignment.id;
+	}, [assignment.id, assignment.slug]);
 
 	const handleRefresh = () => {
 		refreshAssignment();
 		refreshReviews();
 		refreshGambling();
+	};
+	const { mutate: updateAssignment, isLoading: isUpdatingAssignment } = trpc.assignment.update.useMutation({
+		onSuccess: (updatedAssignment) => {
+			setSlug(updatedAssignment.slug ?? "");
+			handleRefresh();
+			toast.success("Assignment slug updated");
+			void router.replace(getAdminAssignmentPath(updatedAssignment.slug ?? updatedAssignment.id));
+		},
+		onError: (error) => {
+			toast.error(`Failed to update assignment slug: ${error.message}`);
+		},
+	});
+	const canSaveSlug = assignment.slug === null || slug !== (assignment.slug ?? "");
+	const handleSaveSlug = () => {
+		updateAssignment({
+			id: assignment.id,
+			slug,
+		});
 	};
 
 	return (
@@ -73,6 +104,40 @@ const EditAssignment: FC<EditAssignmentProps> = ({ assignment }) => {
 					{movie && <MovieCard movie={movie} />}
 				</div>
 			</div>
+
+			<Separator />
+
+			<Card className="shadow-none border bg-card">
+				<CardHeader>
+					<CardTitle className="text-xl">Assignment Slug</CardTitle>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="grid gap-2">
+						<Label htmlFor="assignment-slug">Slug</Label>
+						<Input
+							id="assignment-slug"
+							value={slug}
+							onChange={(event) => setSlug(event.target.value)}
+							placeholder={`${assignment.episodeId}-${movie?.title ?? "movie"}`}
+						/>
+						<p className="text-xs text-muted-foreground">
+							Leave blank to regenerate the default slug from the episode ID and movie title.
+						</p>
+					</div>
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setSlug(assignment.slug ?? "")}
+							disabled={!canSaveSlug || isUpdatingAssignment}
+						>
+							Reset
+						</Button>
+						<Button onClick={handleSaveSlug} disabled={!canSaveSlug || isUpdatingAssignment}>
+							{isUpdatingAssignment ? "Saving..." : "Save Slug"}
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
 
 			<Separator />
 

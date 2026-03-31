@@ -1,10 +1,129 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
-import { createUniqueAssignmentSlug } from "../../slugs";
+import { createUniqueAssignmentSlug, slugify } from "../../slugs";
+import { isSlugUniqueConstraintError } from "../utils/prisma";
+
+const ASSIGNMENT_SLUG_RETRY_LIMIT = 3;
 
 export const assignmentRouter = router({
-  setType: protectedProcedure
+  update: adminProcedure
+    .input(z.object({
+      id: z.string(),
+      slug: z.string().optional(),
+    }))
+    .mutation(async (req) => {
+      return await req.ctx.prisma.$transaction(async (tx) => {
+        let slug = req.input.slug;
+
+        if (slug !== undefined) {
+          if (slug === "") {
+            const assignment = await tx.assignment.findUnique({
+              where: { id: req.input.id },
+              select: {
+                id: true,
+                userId: true,
+                type: true,
+                episode: {
+                  select: {
+                    number: true,
+                  },
+                },
+                movie: {
+                  select: {
+                    title: true,
+                  },
+                },
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            });
+
+            if (!assignment) {
+              throw new Error("Assignment not found");
+            }
+
+            slug = await createUniqueAssignmentSlug(tx, {
+              episodeNumber: assignment.episode!.number,
+              movieTitle: assignment.movie?.title,
+              userId: assignment.userId ?? undefined,
+              userName: assignment.user?.name,
+              assignmentType: assignment.type,
+            }, assignment.id);
+          } else {
+            slug = slugify(slug);
+            if (!slug) {
+              throw new Error("Invalid slug provided.");
+            }
+
+          }
+        }
+        let attempts = 0;
+        while (attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
+          attempts += 1;
+          try {
+            return await tx.assignment.update({
+              where: { id: req.input.id },
+              data: {
+                ...(slug !== undefined ? { slug } : {}),
+              },
+              include: {
+                episode: true,
+              },
+            });
+          } catch (error) {
+            const isSlugConflict = slug !== undefined && isSlugUniqueConstraintError(error);
+            if (!isSlugConflict) {
+              throw error;
+            }
+            if (req.input.slug && req.input.slug !== "") {
+              throw new Error(`Slug '${slug}' is already in use.`);
+            }
+            if (attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+              throw new Error("Unable to assign a unique slug. Please retry.");
+            }
+            const assignment = await tx.assignment.findUnique({
+              where: { id: req.input.id },
+              select: {
+                id: true,
+                userId: true,
+                type: true,
+                episode: {
+                  select: {
+                    number: true,
+                  },
+                },
+                movie: {
+                  select: {
+                    title: true,
+                  },
+                },
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            });
+            if (!assignment) {
+              throw new Error("Assignment not found");
+            }
+            slug = await createUniqueAssignmentSlug(tx, {
+              episodeNumber: assignment.episode!.number,
+              movieTitle: assignment.movie?.title,
+              userId: assignment.userId ?? undefined,
+              userName: assignment.user?.name,
+              assignmentType: assignment.type,
+            }, assignment.id);
+          }
+        }
+        throw new Error("Unable to update assignment.");
+      });
+    }),
+  setType: adminProcedure
     .input(z.object({
       id: z.string(),
       type: z.enum(["HOMEWORK", "EXTRA_CREDIT", "BONUS"])
@@ -19,7 +138,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  add: protectedProcedure
+  add: adminProcedure
     .input(z.object({
       userId: z.string(),
       movieId: z.string(),
@@ -31,7 +150,7 @@ export const assignmentRouter = router({
         const [episode, movie, user] = await Promise.all([
           tx.episode.findUnique({
             where: { id: req.input.episodeId },
-            select: { number: true },
+            select: { id: true, number: true },
           }),
           tx.movie.findUnique({
             where: { id: req.input.movieId },
@@ -43,34 +162,44 @@ export const assignmentRouter = router({
           }),
         ]);
 
-        if (!episode || !movie || !user) {
+        if (!episode || !movie) {
           throw new Error("Unable to resolve assignment slug source data");
         }
 
-        const assignment = await tx.assignment.create({
-          data: {
+        let attempts = 0;
+        while (attempts < ASSIGNMENT_SLUG_RETRY_LIMIT) {
+          attempts += 1;
+          const slug = await createUniqueAssignmentSlug(tx, {
+            episodeNumber: episode.number,
+            movieTitle: movie.title,
             userId: req.input.userId,
-            movieId: req.input.movieId,
-            episodeId: req.input.episodeId,
-            type: req.input.type
+            userName: user?.name,
+            assignmentType: req.input.type,
+          });
+          try {
+            return await tx.assignment.create({
+              data: {
+                userId: req.input.userId,
+                movieId: req.input.movieId,
+                episodeId: req.input.episodeId,
+                type: req.input.type,
+                slug,
+              },
+            });
+          } catch (error) {
+            const isSlugConflict = isSlugUniqueConstraintError(error);
+            if (!isSlugConflict) {
+              throw error;
+            }
+            if (attempts >= ASSIGNMENT_SLUG_RETRY_LIMIT) {
+              throw new Error("Unable to generate a unique assignment slug; please try again later");
+            }
           }
-        });
-
-        const slug = await createUniqueAssignmentSlug(tx, {
-          episodeNumber: episode.number,
-          userId: req.input.userId,
-          userName: user.name,
-          movieTitle: movie.title,
-          type: req.input.type,
-        }, assignment.id);
-
-        return tx.assignment.update({
-          where: { id: assignment.id },
-          data: { slug },
-        });
+        }
+        throw new Error("Unable to create assignment.");
       });
     }),
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignment.delete({
