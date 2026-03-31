@@ -298,8 +298,14 @@ const UserPage: NextPage<{ session: Session | null }> = () => {
 	const isProcessingGamble = isConfirming || isRejecting || isUpdatingStatus;
 
 	const { mutate: updateUser } = trpc.user.update.useMutation({
-		onSuccess: () => {
-			refetchUser();
+		onSuccess: async () => {
+			await refetchUser();
+			if (user) {
+				form.reset({
+					name: user.name ?? '',
+					email: user.email ?? ''
+				});
+			}
 			toast.success("User updated successfully");
 		},
 		onError: (err) => {

@@ -70,12 +70,18 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 
 		hydrateFromEpisode(episode);
 		hydratedEpisodeIdRef.current = episode.id;
-	}, [episode.id, hydrateFromEpisode, episode]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only depend on episode.id
+	}, [episode.id, hydrateFromEpisode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
-		onSuccess: () => {
-			setSlugTouched(false);
+		onSuccess: (updatedEpisode) => {
+			hydrateFromEpisode(updatedEpisode);
+			hydratedEpisodeIdRef.current = updatedEpisode.id;
 			onEpisodeUpdated?.();
+		},
+		onError: (error) => {
+			console.error("Failed to update episode:", error);
+			// Note: Add toast notification or setError state as needed
 		},
 	});
 
