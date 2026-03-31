@@ -64,7 +64,7 @@ const BangerModal: FC<BangerModalProps> = ({ open, setOpen, refreshItems, editin
     } else {
       resetForm();
     }
-  }, [editingItem]);
+  }, [editingItem?.id]);
 
   const resetForm = () => {
     setTitle("");

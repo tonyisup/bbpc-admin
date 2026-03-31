@@ -1,6 +1,6 @@
 import { InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
@@ -574,6 +574,7 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 	const [title, setTitle] = useState(episode.title);
 	const [description, setDescription] = useState(episode.description || "");
 	const [notes, setNotes] = useState(episode.notes || "");
+	const hydratedEpisodeIdRef = useRef<string | null>(null);
 
 	const { mutate: updateDetails, isLoading } = trpc.episode.updateDetails.useMutation({
 		onSuccess: () => {
@@ -583,9 +584,14 @@ const EpisodeHeaderEditor: React.FC<EpisodeHeaderEditorProps> = ({ episode, onUp
 	});
 
 	useEffect(() => {
+		if (hydratedEpisodeIdRef.current === episode.id) {
+			return;
+		}
+
 		setTitle(episode.title);
 		setDescription(episode.description || "");
 		setNotes(episode.notes || "");
+		hydratedEpisodeIdRef.current = episode.id;
 	}, [episode.id, episode.title, episode.description, episode.notes]);
 
 	const handleSave = async () => {

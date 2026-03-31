@@ -52,7 +52,7 @@ const RoleModal: FC<RoleModalProps> = ({ open, setOpen, refreshItems, editingIte
     } else {
       resetForm();
     }
-  }, [editingItem]);
+  }, [editingItem?.id]);
 
   const resetForm = () => {
     setName("");

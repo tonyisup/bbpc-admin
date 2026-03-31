@@ -53,7 +53,7 @@ const RatingModal: FC<RatingModalProps> = ({ open, setOpen, refreshItems, editin
     } else {
       resetForm();
     }
-  }, [editingItem]);
+  }, [editingItem?.id]);
 
   const resetForm = () => {
     setName("");

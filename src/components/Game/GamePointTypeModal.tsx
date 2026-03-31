@@ -61,7 +61,7 @@ const GamePointTypeModal: FC<GamePointTypeModalProps> = ({ open, setOpen, refres
       resetForm();
       if (defaultGameTypeId) setGameTypeId(defaultGameTypeId);
     }
-  }, [editingItem, defaultGameTypeId]);
+  }, [editingItem?.id, defaultGameTypeId]);
 
   const resetForm = () => {
     setTitle("");

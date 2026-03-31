@@ -32,7 +32,7 @@ export function EditGamblingPointModal({ gamble, isOpen, onClose, onSuccess }: E
 		if (gamble) {
 			setPoints(gamble.points);
 		}
-	}, [gamble]);
+	}, [gamble?.id]);
 
 	const { mutate: updateGamble, isLoading } = trpc.gambling.update.useMutation({
 		onSuccess: () => {

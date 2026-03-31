@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { trpc } from "../../utils/trpc";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Label } from "../ui/label";
@@ -47,23 +47,34 @@ const EpisodeEditor = ({ episode, onEpisodeUpdated }: EpisodeEditorProps) => {
 	const [seoKeywords, setSeoKeywords] = useState<string>(episode.seoKeywords ?? "");
 	const [slug, setSlug] = useState<string>(episode.slug ?? "");
 	const [slugTouched, setSlugTouched] = useState<boolean>(false);
+	const hydratedEpisodeIdRef = useRef<string | null>(null);
+
+	const hydrateFromEpisode = useCallback((nextEpisode: Episode) => {
+		setNumber(nextEpisode.number);
+		setTitle(nextEpisode.title);
+		setDescription(nextEpisode.description ?? "");
+		setDate(toPlainDateString(nextEpisode.date) ?? "");
+		setRecording(nextEpisode.recording ?? "");
+		setStatus(nextEpisode.status);
+		setSeoTitle(nextEpisode.seoTitle ?? "");
+		setSeoDescription(nextEpisode.seoDescription ?? "");
+		setSeoKeywords(nextEpisode.seoKeywords ?? "");
+		setSlug(nextEpisode.slug ?? "");
+		setSlugTouched(false);
+	}, []);
 
 	useEffect(() => {
-		setNumber(episode.number);
-		setTitle(episode.title);
-		setDescription(episode.description ?? "");
-		setDate(toPlainDateString(episode.date) ?? "");
-		setRecording(episode.recording ?? "");
-		setStatus(episode.status);
-		setSeoTitle(episode.seoTitle ?? "");
-		setSeoDescription(episode.seoDescription ?? "");
-		setSeoKeywords(episode.seoKeywords ?? "");
-		setSlug(episode.slug ?? "");
-		setSlugTouched(false);
-	}, [episode]);
+		if (hydratedEpisodeIdRef.current === episode.id) {
+			return;
+		}
+
+		hydrateFromEpisode(episode);
+		hydratedEpisodeIdRef.current = episode.id;
+	}, [episode.id, hydrateFromEpisode, episode]);
 
 	const { mutate: updateEpisode } = trpc.episode.update.useMutation({
 		onSuccess: () => {
+			setSlugTouched(false);
 			onEpisodeUpdated?.();
 		},
 	});
