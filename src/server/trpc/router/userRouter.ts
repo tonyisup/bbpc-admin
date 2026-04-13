@@ -279,6 +279,18 @@ export const userRouter = router({
 						include: {
 							role: true
 						}
+					},
+					syllabus: {
+						where: {
+							assignmentId: null
+						},
+						orderBy: {
+							order: 'desc'
+						},
+						take: 1,
+						include: {
+							movie: true
+						}
 					}
 				},
 				orderBy: {
