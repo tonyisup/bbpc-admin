@@ -169,6 +169,7 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
               <TableRow>
                 <TableHead className="w-[300px]">User</TableHead>
                 <TableHead>Roles</TableHead>
+                <TableHead>Next Syllabus</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -178,12 +179,13 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                   <TableRow key={i}>
                     <TableCell><div className="h-10 w-48 animate-pulse bg-muted rounded-md" /></TableCell>
                     <TableCell><div className="h-6 w-24 animate-pulse bg-muted rounded-full" /></TableCell>
+                    <TableCell><div className="h-6 w-32 animate-pulse bg-muted rounded-md" /></TableCell>
                     <TableCell className="text-right"><div className="ml-auto h-8 w-8 animate-pulse bg-muted rounded-md" /></TableCell>
                   </TableRow>
                 ))
               ) : filteredItems?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center h-48">
+                  <TableCell colSpan={4} className="text-center h-48">
                     <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                       <Search className="h-8 w-8 opacity-20" />
                       <p>No users found matching your search.</p>
@@ -247,6 +249,15 @@ const UsersPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>
                           <span className="text-xs text-muted-foreground">Guest</span>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {item.syllabus && item.syllabus.length > 0 && item.syllabus[0]?.movie ? (
+                        <span className="text-sm font-medium">
+                          {item.syllabus[0].movie.title}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right px-6">
                       <Button
