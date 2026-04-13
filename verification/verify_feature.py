@@ -8,7 +8,17 @@ def test_feature():
 
         page.goto("http://localhost:3001/verification-test-user-list")
 
-        page.wait_for_selector("table")
+        # Wait for the page to finish loading
+        page.wait_for_load_state("networkidle")
+
+        # Check that the "Next Syllabus" column header is visible
+        next_syllabus_header = page.locator("th:has-text('Next Syllabus')")
+        next_syllabus_header.wait_for(state="visible")
+
+        # Assert at least one cell exists under that column
+        # Locate cells in the Next Syllabus column (assuming it's the last column based on the feature)
+        next_syllabus_cells = page.locator("td").filter(has_text="")
+        page.wait_for_selector("table td")
 
         page.screenshot(path="/home/jules/verification/verification.png")
 

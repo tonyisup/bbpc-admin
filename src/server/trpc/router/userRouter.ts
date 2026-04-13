@@ -289,7 +289,11 @@ export const userRouter = router({
 						},
 						take: 1,
 						include: {
-							movie: true
+							movie: {
+								select: {
+									title: true
+								}
+							}
 						}
 					}
 				},
