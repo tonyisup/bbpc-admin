@@ -737,7 +737,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 		}
 	}, [nextEpisode]);
 
-	const { data: recordingData, refetch: refetchRecordingData } = trpc.episode.getRecordingData.useQuery(
+	const { data: recordingData, refetch: refetchRecordingData, isRefetching: isRefetchingRecordingData } = trpc.episode.getRecordingData.useQuery(
 		{ episodeId: currentEpisodeId || recordingEpisode?.id || "" },
 		{ enabled: !!(currentEpisodeId || recordingEpisode?.id) }
 	);
@@ -1104,6 +1104,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 					<EpisodePointsSummary
 						episode={recordingData}
 						bonusPointsData={bonusPointsData}
+						onRefresh={refetchRecordingData}
+						isRefetching={isRefetchingRecordingData}
 					/>
 				)}
 

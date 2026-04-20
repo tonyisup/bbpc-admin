@@ -1,16 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
-import { Trophy, Target, Coins, Star, Sigma } from "lucide-react";
+import { Trophy, Target, Coins, Star, Sigma, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type RouterOutputs } from "@/utils/trpc";
+import { Button } from "./ui/button";
 
 interface EpisodePointsSummaryProps {
     episode: NonNullable<RouterOutputs['episode']['getRecordingData']>;
     bonusPointsData?: Record<string, number>;
+    onRefresh: () => void;
+    isRefetching: boolean;
 }
 
-export const EpisodePointsSummary = ({ episode, bonusPointsData }: EpisodePointsSummaryProps) => {
+export const EpisodePointsSummary = ({ episode, bonusPointsData, onRefresh, isRefetching }: EpisodePointsSummaryProps) => {
     // Aggregate points per user
     const userStats = new Map<string, {
         id: string;
@@ -117,6 +120,9 @@ export const EpisodePointsSummary = ({ episode, bonusPointsData }: EpisodePoints
                             Breakdown of points earned during this episode
                         </CardDescription>
                     </div>
+                    <Button variant="ghost" size="icon" onClick={() => onRefresh()} disabled={isRefetching}>
+                        <RefreshCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
+                    </Button>
                 </div>
             </CardHeader>
             <CardContent>
