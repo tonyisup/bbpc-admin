@@ -67,7 +67,7 @@ export const syllabusRouter = router({
         throw new Error("Syllabus item not found");
       }
 
-      if (syllabus.userId !== req.ctx.session.user.id) {
+      if (req.ctx.session?.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to modify this syllabus item." });
       }
 
