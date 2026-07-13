@@ -9,8 +9,8 @@ IMDB_URL = "https://www.imdb.com/title"
 export interface Title {
   id: number,
   title: string,
-  backdrop_path: string,
-  poster_path: string,
+  backdrop_path: string | null,
+  poster_path: string | null,
   overview: string,
   release_date: string,
   vote_average: number,
@@ -18,7 +18,7 @@ export interface Title {
   popularity: number,
   media_type: string,
   imdb_id: string,
-  imdb_path: string,
+  imdb_path: string | null,
 }
 
 interface SearchResponse {
@@ -26,20 +26,39 @@ interface SearchResponse {
   results: Title[],
 }
 
+interface TmdbErrorResponse {
+  success?: false;
+  status_code?: number;
+  status_message?: string;
+}
+
+function assertTmdbSearchSuccess(res: TmdbErrorResponse & { results?: Title[] }) {
+  if (res.success === false || res.status_code) {
+    throw new Error(res.status_message ?? "TMDB API error");
+  }
+}
+
+function mapSearchResultPaths(title: Title): Title {
+  return {
+    ...title,
+    backdrop_path: title.backdrop_path ? IMAGE_BASE_URL + "/w1280" + title.backdrop_path : null,
+    poster_path: title.poster_path ? IMAGE_BASE_URL + "/w342" + title.poster_path : null,
+  };
+}
+
 export const tmdb = {
   getMovies: async(page: number, searchTerm=""): Promise<SearchResponse> => {
     if (!searchTerm) return { page: 0, results: [] }
-    const resp = await fetch(`${SEARCH_MOVIE_URL}&query=${searchTerm}&page=${page}`)
+    const resp = await fetch(`${SEARCH_MOVIE_URL}&query=${encodeURIComponent(searchTerm)}&page=${page}`)
+    if (!resp.ok) {
+      throw new Error(`TMDB request failed (${resp.status})`);
+    }
     const res = await resp.json()
-    
-    const titles = res.results
-      .map((title: Title) => ({
-        ...title,
-				backdrop_path: title.backdrop_path ? IMAGE_BASE_URL + "/w1280" + title.backdrop_path : null,
-				poster_path: title.poster_path ? IMAGE_BASE_URL + "/w342" + title.poster_path : null,
-      }))
+    assertTmdbSearchSuccess(res);
+
+    const titles = (res.results ?? []).map((title: Title) => mapSearchResultPaths(title));
     return {
-      page: res.page,
+      page: res.page ?? page,
       results: titles,
     }
   },
@@ -56,19 +75,22 @@ export const tmdb = {
   },
   getShows: async(page: number, searchTerm=""): Promise<SearchResponse> => {
     if (!searchTerm) return { page: 0, results: [] }
-    const resp = await fetch(`${SEARCH_TV_URL}&query=${searchTerm}&page=${page}`)
+    const resp = await fetch(`${SEARCH_TV_URL}&query=${encodeURIComponent(searchTerm)}&page=${page}`)
+    if (!resp.ok) {
+      throw new Error(`TMDB request failed (${resp.status})`);
+    }
     const res = await resp.json()
+    assertTmdbSearchSuccess(res);
 
-    const titles = res.results
-      .map((show: any) => ({
-        ...show,
-        title: show.name, // TV shows use 'name' instead of 'title'
-        release_date: show.first_air_date, // TV shows use 'first_air_date'
-				backdrop_path: show.backdrop_path ? IMAGE_BASE_URL + "/w1280" + show.backdrop_path : null,
-				poster_path: show.poster_path ? IMAGE_BASE_URL + "/w342" + show.poster_path : null,
-      }))
+    const titles = (res.results ?? []).map((show: { name: string; first_air_date: string } & Title) => ({
+      ...show,
+      title: show.name,
+      release_date: show.first_air_date,
+      backdrop_path: show.backdrop_path ? IMAGE_BASE_URL + "/w1280" + show.backdrop_path : null,
+      poster_path: show.poster_path ? IMAGE_BASE_URL + "/w342" + show.poster_path : null,
+    }))
     return {
-      page: res.page,
+      page: res.page ?? page,
       results: titles,
     }
   },

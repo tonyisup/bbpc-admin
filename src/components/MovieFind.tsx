@@ -22,8 +22,8 @@ const MovieFind: FC<MovieFindProps> = ({
     onSuccess: (result) => {
       if (!title) return;
       if (!result) return;
-			if (!title.poster_path) return;
-			if (!result.imdb_path) return;
+      if (!result.poster_path) return;
+      if (!result.imdb_path) return;
 
       const year = getPlainDateYear(result.release_date) ?? 0
 

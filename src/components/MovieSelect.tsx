@@ -32,6 +32,8 @@ const MovieSelect: FC<MovieSelectProps> = ({
   const saveTitleAsMovie = function () {
     if (!title) return;
     if (!temp_title) return;
+    if (!title.poster_path) return;
+    if (!temp_title.imdb_path) return;
 
     const year = getPlainDateYear(title.release_date)
     if (year == null) return;
