@@ -19,7 +19,8 @@ import {
 	ShieldAlert,
 	Search,
 	Film,
-	List
+	List,
+	Quote
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -40,6 +41,12 @@ export function Sidebar({ className }: SidebarProps) {
 		{
 			title: "Main",
 			routes: [
+				{
+					label: "Quotabunga",
+					icon: Quote,
+					href: "/quotabunga",
+					active: pathname.startsWith("/quotabunga"),
+				},
 				{
 					label: "Dashboard",
 					icon: LayoutDashboard,

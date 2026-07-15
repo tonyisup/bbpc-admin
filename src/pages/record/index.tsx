@@ -43,6 +43,7 @@ import { formatPlainDate } from "@/lib/dates";
 import { getAdminEpisodePath } from "@/lib/routes";
 import { SeasonLeaderboard } from "../../components/SeasonLeaderboard";
 import { EpisodePointsSummary } from "../../components/EpisodePointsSummary";
+import { QuotabungaRecordingRound } from "../../components/QuotabungaRecordingRound";
 
 // --- Types ---
 type Admin = User;
@@ -1032,6 +1033,8 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 								</ItemDescription>
 							</ItemContent>
 						</Item>
+
+						<QuotabungaRecordingRound episodeId={recordingData.id} />
 
 						{/* Extras */}
 						{recordingData.extras && recordingData.extras.length > 0 && (

@@ -25,6 +25,7 @@ model Episode {
   extras               ExtraReview[]
   links                Link[]
   rankedItems          RankedItem[]
+  quoteSubmissions     QuoteSubmission[]
 
   @@index([number])
 }
@@ -228,6 +229,7 @@ model User {
   gamblingPoints       GamblingPoints[]
   guesses              Guess[]
   points               Point[]
+  quoteSubmissions     QuoteSubmission[]
   rankedLists          RankedList[]
   reviews              Review[]
   sessions             Session[]
@@ -258,16 +260,17 @@ model Guess {
 }
 
 model Season {
-  id             String           @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
-  title          String
-  description    String?
-  gameTypeId     Int              @db.TinyInt
-  endedOn        DateTime?        @db.Date
-  startedOn      DateTime?        @db.Date
-  gamblingPoints GamblingPoints[]
-  guesses        Guess[]
-  points         Point[]
-  gameType       GameType         @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  id               String            @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  title            String
+  description      String?
+  gameTypeId       Int               @db.TinyInt
+  endedOn          DateTime?         @db.Date
+  startedOn        DateTime?         @db.Date
+  gamblingPoints   GamblingPoints[]
+  guesses          Guess[]
+  points           Point[]
+  quoteSubmissions QuoteSubmission[]
+  gameType         GameType          @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
 
   @@index([gameTypeId])
 }
@@ -293,6 +296,7 @@ model Point {
   gamblingPoints   GamblingPoints[]
   guesses          Guess[]
   tagVotes         TagVote[]
+  quoteSubmission  QuoteSubmission?
   gamePointType    GamePointType?     @relation(fields: [gamePointTypeId], references: [id], onDelete: Cascade)
   season           Season             @relation(fields: [seasonId], references: [id], onUpdate: NoAction)
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -300,6 +304,35 @@ model Point {
   @@index([userId])
   @@index([seasonId])
   @@index([gamePointTypeId])
+}
+
+model QuoteSubmission {
+  id               String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  userId           String
+  episodeId        String   @db.UniqueIdentifier
+  seasonId         String   @db.UniqueIdentifier
+  quoteText        String   @db.NVarChar(2000)
+  sourceTitle      String   @db.NVarChar(500)
+  sourceType       String   @default("MOVIE") @db.VarChar(20)
+  clipUrl          String?  @db.NVarChar(2000)
+  clipStartSeconds Int?
+  listenerNotes    String?  @db.NVarChar(1000)
+  status           String   @default("SUBMITTED") @db.VarChar(20)
+  bracketOrder     Int?     @db.SmallInt
+  placement        Int?     @db.TinyInt
+  adminNotes       String?  @db.NVarChar(1000)
+  pointId          String?  @unique @db.UniqueIdentifier
+  createdAt        DateTime @default(now()) @db.DateTime2
+  updatedAt        DateTime @default(now()) @updatedAt @db.DateTime2
+  episode          Episode  @relation(fields: [episodeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  point            Point?   @relation(fields: [pointId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  season           Season   @relation(fields: [seasonId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user             User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([episodeId, userId])
+  @@index([episodeId, status])
+  @@index([seasonId])
+  @@index([userId])
 }
 
 model AudioMessage {
