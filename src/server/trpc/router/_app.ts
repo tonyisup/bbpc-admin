@@ -21,6 +21,7 @@ import { bangerRouter } from "./bangerRouter";
 import { tagRouter } from "./tagRouter";
 import { rankedListRouter } from "./rankedListRouter";
 import { pointRouter } from "./pointRouter";
+import { quotabungaRouter } from "./quotabungaRouter";
 
 export const appRouter = router({
   rankedList: rankedListRouter,
@@ -44,6 +45,7 @@ export const appRouter = router({
   rating: ratingRouter,
   banger: bangerRouter,
   tag: tagRouter,
+  quotabunga: quotabungaRouter,
 });
 
 // export type definition of API
