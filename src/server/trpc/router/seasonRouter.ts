@@ -1,10 +1,10 @@
 
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { parsePlainDate } from "@/lib/dates";
 
 export const seasonRouter = router({
-  getAll: publicProcedure.query(({ ctx }) => {
+  getAll: adminProcedure.query(({ ctx }) => {
     return ctx.prisma.season.findMany({
       include: {
         gameType: true,
@@ -20,7 +20,7 @@ export const seasonRouter = router({
       },
     });
   }),
-  getById: publicProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(({ ctx, input }) => {
       return ctx.prisma.season.findUnique({
@@ -39,7 +39,7 @@ export const seasonRouter = router({
     }),
 
   // Paginated points for timeline tab
-  getPoints: publicProcedure
+  getPoints: adminProcedure
     .input(z.object({
       seasonId: z.string(),
       limit: z.number().min(1).max(100).default(50),
@@ -105,7 +105,7 @@ export const seasonRouter = router({
     }),
 
   // Paginated guesses for guesses tab
-  getGuesses: publicProcedure
+  getGuesses: adminProcedure
     .input(z.object({
       seasonId: z.string(),
       limit: z.number().min(1).max(100).default(50),
@@ -146,7 +146,7 @@ export const seasonRouter = router({
     }),
 
   // Paginated gambling points for gambling tab
-  getGambling: publicProcedure
+  getGambling: adminProcedure
     .input(z.object({
       seasonId: z.string(),
       limit: z.number().min(1).max(100).default(50),
@@ -183,7 +183,7 @@ export const seasonRouter = router({
     }),
 
   // Aggregated user summary for leaderboard - much more efficient than loading all points
-  getUserSummary: publicProcedure
+  getUserSummary: adminProcedure
     .input(z.object({ seasonId: z.string() }))
     .query(async ({ ctx, input }) => {
       // Use raw query for aggregating total points per user to handle COALESCE logic efficiently
@@ -245,7 +245,7 @@ export const seasonRouter = router({
     }),
 
   // Chart data query - returns aggregated points by date for performance tracking chart
-  getChartData: publicProcedure
+  getChartData: adminProcedure
     .input(z.object({
       seasonId: z.string(),
       startDate: z.date().optional(),
@@ -276,7 +276,7 @@ export const seasonRouter = router({
 
       return points;
     }),
-  create: protectedProcedure
+  create: adminProcedure
     .input(
       z.object({
         title: z.string(),
@@ -297,7 +297,7 @@ export const seasonRouter = router({
         },
       });
     }),
-  update: protectedProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -320,7 +320,7 @@ export const seasonRouter = router({
         },
       });
     }),
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => {
       return ctx.prisma.season.delete({

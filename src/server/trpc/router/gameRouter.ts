@@ -1,15 +1,15 @@
-import { publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { z } from "zod";
 import { domainDataGamePoints, domainDataGameTypes } from "@/utils/enums";
 import { GamePointType, GameType } from "@prisma/client";
 import { getCurrentSeasonID } from "../utils/points";
 
 export const gameRouter = router({
-	getGameTypes: publicProcedure.query(async (req) => {
+	getGameTypes: adminProcedure.query(async (req) => {
 		return await req.ctx.prisma.gameType.findMany();
 	}),
 
-	getAllGamePointTypes: publicProcedure.query(async (req) => {
+	getAllGamePointTypes: adminProcedure.query(async (req) => {
 		return await req.ctx.prisma.gamePointType.findMany({
 			orderBy: {
 				title: 'asc'
@@ -17,7 +17,7 @@ export const gameRouter = router({
 		});
 	}),
 
-	getGamePointsForGameType: publicProcedure
+	getGamePointsForGameType: adminProcedure
 		.input(z.object({ gameTypeId: z.number() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.gamePointType.findMany({
@@ -27,7 +27,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	addPointEvent: publicProcedure
+	addPointEvent: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			gamePointLookupId: z.string(),
@@ -65,7 +65,7 @@ export const gameRouter = router({
 			};
 		}),
 
-	addAssignmentPointEvent: publicProcedure
+	addAssignmentPointEvent: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			assignmentId: z.string(),
@@ -112,7 +112,7 @@ export const gameRouter = router({
 			};
 		}),
 
-	getUserPointTotalForAssignment: publicProcedure
+	getUserPointTotalForAssignment: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			assignmentId: z.string()
@@ -137,7 +137,7 @@ export const gameRouter = router({
 			return points.reduce((acc, point) => acc + (point.point?.gamePointType?.points ?? 0) + (point.point?.adjustment ?? 0), 0);
 		}),
 
-	getUserAssignmentPoints: publicProcedure
+	getUserAssignmentPoints: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			assignmentId: z.string()
@@ -158,7 +158,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	getUsersPointTotalsForAssignments: publicProcedure
+	getUsersPointTotalsForAssignments: adminProcedure
 		.input(z.object({
 			userIds: z.array(z.string()),
 			assignmentIds: z.array(z.string())
@@ -188,7 +188,7 @@ export const gameRouter = router({
 			return totals;
 		}),
 
-	addGameType: publicProcedure
+	addGameType: adminProcedure
 		.input(z.object({
 			title: z.string(),
 			description: z.string().optional(),
@@ -200,7 +200,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	updateGameType: publicProcedure
+	updateGameType: adminProcedure
 		.input(z.object({
 			id: z.number(),
 			title: z.string(),
@@ -215,7 +215,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	removeGameType: publicProcedure
+	removeGameType: adminProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
 			return await ctx.prisma.gameType.delete({
@@ -223,7 +223,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	addGamePointType: publicProcedure
+	addGamePointType: adminProcedure
 		.input(z.object({
 			lookupID: z.string(),
 			title: z.string(),
@@ -237,7 +237,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	updateGamePointType: publicProcedure
+	updateGamePointType: adminProcedure
 		.input(z.object({
 			id: z.number(),
 			lookupID: z.string(),
@@ -254,7 +254,7 @@ export const gameRouter = router({
 			});
 		}),
 
-	removeGamePointType: publicProcedure
+	removeGamePointType: adminProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
 			return await ctx.prisma.gamePointType.delete({

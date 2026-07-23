@@ -1,15 +1,15 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
 export const rankedListRouter = router({
-	getAllTypes: publicProcedure.query(async ({ ctx }) => {
+	getAllTypes: protectedProcedure.query(async ({ ctx }) => {
 		return await ctx.prisma.rankedListType.findMany({
 			orderBy: { createdAt: "desc" },
 		});
 	}),
 
-	createType: protectedProcedure
+	createType: adminProcedure
 		.input(
 			z.object({
 				name: z.string().min(1),
@@ -35,7 +35,7 @@ export const rankedListRouter = router({
 			});
 		}),
 
-	deleteType: protectedProcedure
+	deleteType: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
 			// Check for admin role
@@ -54,7 +54,7 @@ export const rankedListRouter = router({
 			});
 		}),
 
-	updateType: protectedProcedure
+	updateType: adminProcedure
 		.input(
 			z.object({
 				id: z.string(),
@@ -83,7 +83,7 @@ export const rankedListRouter = router({
 			});
 		}),
 
-	getLists: publicProcedure
+	getLists: protectedProcedure
 		.input(
 			z.object({
 				userId: z.string().optional(),
@@ -105,7 +105,7 @@ export const rankedListRouter = router({
 			});
 		}),
 
-	getById: publicProcedure
+	getById: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.query(async ({ ctx, input }) => {
 			const list = await ctx.prisma.rankedList.findUnique({
@@ -355,7 +355,7 @@ export const rankedListRouter = router({
 			});
 		}),
 
-	changeOwner: protectedProcedure
+	changeOwner: adminProcedure
 		.input(z.object({ id: z.string(), newUserId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
 			// Check for admin role

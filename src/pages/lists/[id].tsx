@@ -140,10 +140,10 @@ const ListEditor = () => {
 
 	const { data: list, isLoading } = trpc.rankedList.getById.useQuery(
 		{ id: id as string },
-		{ enabled: !!id }
+		{ enabled: !!id && !!session }
 	);
 
-	const userRoles = trpc.user.getRoles.useQuery();
+	const userRoles = trpc.user.getRoles.useQuery(undefined, { enabled: !!session });
 	const isAdmin = userRoles.data?.some((ur) => ur.role.admin);
 	const { data: allUsers } = trpc.user.getAll.useQuery(undefined, { enabled: isAdmin });
 

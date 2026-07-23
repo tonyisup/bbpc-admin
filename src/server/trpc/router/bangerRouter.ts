@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 export const bangerRouter = router({
-  getAll: publicProcedure.query(async ({ ctx }) => {
+  getAll: adminProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.banger.findMany({
       include: {
         episode: true,
@@ -14,7 +14,7 @@ export const bangerRouter = router({
     });
   }),
 
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       return await ctx.prisma.banger.findUnique({
@@ -26,7 +26,7 @@ export const bangerRouter = router({
       });
     }),
 
-  add: protectedProcedure
+  add: adminProcedure
     .input(
       z.object({
         title: z.string(),
@@ -42,7 +42,7 @@ export const bangerRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -61,7 +61,7 @@ export const bangerRouter = router({
       });
     }),
 
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.banger.delete({

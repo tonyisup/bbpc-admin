@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { getCurrentSeasonID } from "../utils/points";
 import { tmdb } from "@/server/tmdb/client";
 
 export const tagRouter = router({
   // Tag model
-  getTags: publicProcedure.query(async ({ ctx }) => {
+  getTags: adminProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.tag.findMany({
       orderBy: {
         name: "asc",
@@ -13,7 +13,7 @@ export const tagRouter = router({
     });
   }),
 
-  addTag: protectedProcedure
+  addTag: adminProcedure
     .input(z.object({ name: z.string(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.tag.create({
@@ -21,7 +21,7 @@ export const tagRouter = router({
       });
     }),
 
-  updateTag: protectedProcedure
+  updateTag: adminProcedure
     .input(z.object({ id: z.string(), name: z.string(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
@@ -31,7 +31,7 @@ export const tagRouter = router({
       });
     }),
 
-  removeTag: protectedProcedure
+  removeTag: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.tag.delete({
@@ -40,7 +40,7 @@ export const tagRouter = router({
     }),
 
   // TagVote model
-  getTagVotes: publicProcedure
+  getTagVotes: adminProcedure
     .input(z.object({
       tmdbId: z.number().optional(),
       take: z.number().optional().default(100),
@@ -61,7 +61,7 @@ export const tagRouter = router({
       });
     }),
 
-  removeTagVote: protectedProcedure
+  removeTagVote: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.tagVote.delete({
@@ -69,7 +69,7 @@ export const tagRouter = router({
       });
     }),
 
-  getTagVotesForUser: protectedProcedure
+  getTagVotesForUser: adminProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ ctx, input }) => {
       return await ctx.prisma.tagVote.findMany({
@@ -80,7 +80,7 @@ export const tagRouter = router({
       });
     }),
 
-  applyTagVotePoints: protectedProcedure
+  applyTagVotePoints: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const vote = await ctx.prisma.tagVote.findUnique({

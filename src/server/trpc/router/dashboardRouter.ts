@@ -1,7 +1,7 @@
-import { router, publicProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 export const dashboardRouter = router({
-  getStats: publicProcedure.query(async ({ ctx }) => {
+  getStats: adminProcedure.query(async ({ ctx }) => {
     const [
       episodeCount,
       userCount,
@@ -91,7 +91,7 @@ export const dashboardRouter = router({
     };
   }),
 
-  getGuessesStats: publicProcedure.query(async ({ ctx }) => {
+  getGuessesStats: adminProcedure.query(async ({ ctx }) => {
     const episodes = await ctx.prisma.episode.findMany({
       take: 10,
       orderBy: { number: 'desc' },

@@ -28,16 +28,20 @@ import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { ScrollArea } from "../ui/scroll-area"
 import { Separator } from "../ui/separator"
+import { trpc } from "../../utils/trpc"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
 	const { data: session } = useSession()
+	const { data: isAdmin } = trpc.auth.isAdmin.useQuery(undefined, {
+		enabled: !!session,
+	})
 
 	const pathname = router.pathname
 
-	const sections = [
+	const adminSections = [
 		{
 			title: "Main",
 			routes: [
@@ -184,6 +188,27 @@ export function Sidebar({ className }: SidebarProps) {
 			]
 		}
 	]
+	const sections = isAdmin
+		? adminSections
+		: [
+			{
+				title: "Member Tools",
+				routes: [
+					{
+						label: "Ranked Lists",
+						icon: List,
+						href: "/lists",
+						active: pathname.startsWith("/lists"),
+					},
+					{
+						label: "Recording Room",
+						icon: Mic2,
+						href: "/record?guest=true",
+						active: pathname === "/record",
+					},
+				],
+			},
+		]
 
 	useEffect(() => {
 		const isDark = localStorage.getItem("theme") === "dark" ||

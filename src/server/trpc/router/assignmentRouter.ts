@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
 import { createUniqueAssignmentSlug, slugify } from "../../slugs";
 import { isSlugUniqueConstraintError } from "../utils/prisma";
@@ -208,7 +208,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findUnique({
@@ -220,7 +220,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  getForEpisode: publicProcedure
+  getForEpisode: adminProcedure
     .input(z.object({ episodeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany({
@@ -257,11 +257,11 @@ export const assignmentRouter = router({
         }
       })
     }),
-  getAll: publicProcedure
+  getAll: adminProcedure
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany();
     }),
-  search: protectedProcedure
+  search: adminProcedure
     .input(z.object({ query: z.string() }))
     .query(async ({ ctx, input }) => {
       if (!input.query || input.query.length < 2) return [];
@@ -287,7 +287,7 @@ export const assignmentRouter = router({
         }
       });
     }),
-  getAudioMessages: protectedProcedure
+  getAudioMessages: adminProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.audioMessage.findMany({
@@ -297,7 +297,7 @@ export const assignmentRouter = router({
         }
       })
     }),
-  removeAudioMessage: protectedProcedure
+  removeAudioMessage: adminProcedure
     .input(z.object({
       id: z.number(),
     }))

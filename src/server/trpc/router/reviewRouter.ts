@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 export const reviewRouter = router({
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.review.findUnique({
@@ -17,7 +17,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  add: protectedProcedure
+  add: adminProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -42,7 +42,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  addToAssignment: protectedProcedure
+  addToAssignment: adminProcedure
     .input(
       z.object({
         assignmentId: z.string(),
@@ -69,7 +69,7 @@ export const reviewRouter = router({
       });
     }),
 
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       // Delete dependent ExtraReviews
@@ -99,7 +99,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  removeAssignment: protectedProcedure
+  removeAssignment: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.assignmentReview.delete({
@@ -112,7 +112,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  getExtrasForEpisode: publicProcedure
+  getExtrasForEpisode: adminProcedure
     .input(z.object({ episodeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.review.findMany({
@@ -130,7 +130,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  getForAssignment: protectedProcedure
+  getForAssignment: adminProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignmentReview.findMany({
@@ -154,10 +154,10 @@ export const reviewRouter = router({
         },
       });
     }),
-  getRatings: publicProcedure.query(async (req) => {
+  getRatings: adminProcedure.query(async (req) => {
     return await req.ctx.prisma.rating.findMany({ orderBy: { value: "desc" } });
   }),
-  setReviewRating: protectedProcedure
+  setReviewRating: adminProcedure
     .input(z.object({ reviewId: z.string(), ratingId: z.string().nullish() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.review.update({
@@ -169,7 +169,7 @@ export const reviewRouter = router({
         },
       });
     }),
-  getAll: publicProcedure
+  getAll: adminProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).nullish(),

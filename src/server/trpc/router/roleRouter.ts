@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 export const roleRouter = router({
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       return await ctx.prisma.role.findUnique({
@@ -10,7 +10,7 @@ export const roleRouter = router({
       });
     }),
 
-  getAll: publicProcedure.query(({ ctx }) => {
+  getAll: adminProcedure.query(({ ctx }) => {
     return ctx.prisma.role.findMany({
       include: {
         _count: {
@@ -23,11 +23,11 @@ export const roleRouter = router({
     });
   }),
 
-  getSummary: publicProcedure.query(({ ctx }) => {
+  getSummary: adminProcedure.query(({ ctx }) => {
     return ctx.prisma.role.count();
   }),
 
-  add: protectedProcedure
+  add: adminProcedure
     .input(
       z.object({
         name: z.string(),
@@ -41,7 +41,7 @@ export const roleRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.number(),
@@ -58,7 +58,7 @@ export const roleRouter = router({
       });
     }),
 
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.role.delete({

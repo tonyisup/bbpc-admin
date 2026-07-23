@@ -721,9 +721,9 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 	// Queries
 	const { data: pendingEpisode } = trpc.episode.getByStatus.useQuery({ status: "pending" });
 	const { data: nextEpisode, refetch: refetchNextEpisode } = trpc.episode.getByStatus.useQuery({ status: "next" });
-	const { data: admins } = trpc.user.getAdmins.useQuery();
-	const { data: ratings } = trpc.review.getRatings.useQuery();
-	const { data: users } = trpc.user.getAll.useQuery();
+	const { data: admins } = trpc.user.getAdmins.useQuery(undefined, { enabled: isAdmin });
+	const { data: ratings } = trpc.review.getRatings.useQuery(undefined, { enabled: isAdmin });
+	const { data: users } = trpc.user.getAll.useQuery(undefined, { enabled: isAdmin });
 
 	const { data: recordingEpisode, refetch: refetchRecordingEpisode } = trpc.episode.getByStatus.useQuery(
 		{ status: "recording" },
@@ -751,7 +751,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 
 	const { data: bonusPointsData, refetch: refetchBonusPoints } = trpc.game.getUsersPointTotalsForAssignments.useQuery(
 		{ userIds: allUserIds, assignmentIds: allAssignmentIds },
-		{ enabled: !!(users && recordingData?.assignments) }
+		{ enabled: isAdmin && !!(users && recordingData?.assignments) }
 	);
 
 	// Mutations
@@ -1034,7 +1034,7 @@ const Record: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> =
 							</ItemContent>
 						</Item>
 
-						<QuotabungaRecordingRound episodeId={recordingData.id} />
+						{isAdmin && <QuotabungaRecordingRound episodeId={recordingData.id} />}
 
 						{/* Extras */}
 						{recordingData.extras && recordingData.extras.length > 0 && (

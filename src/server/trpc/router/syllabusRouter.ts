@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { type Assignment } from "@prisma/client";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { createUniqueAssignmentSlug } from "../../slugs";
 import { isSlugUniqueConstraintError } from "../utils/prisma";
 
 const ASSIGNMENT_SLUG_RETRY_LIMIT = 3;
 
 export const syllabusRouter = router({
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({
       id: z.string()
     }))
@@ -32,7 +32,7 @@ export const syllabusRouter = router({
         }
       });
     }),
-  assignEpisode: protectedProcedure
+  assignEpisode: adminProcedure
     .input(z.object({
       syllabusId: z.string(),
       episodeNumber: z.number(),
@@ -185,7 +185,7 @@ export const syllabusRouter = router({
         }
       });
     }),
-  removeEpisodeFromSyllabusItem: protectedProcedure
+  removeEpisodeFromSyllabusItem: adminProcedure
     .input(z.object({
       syllabusId: z.string()
     }))
@@ -200,7 +200,7 @@ export const syllabusRouter = router({
       });
     }),
 
-  getAll: publicProcedure
+  getAll: adminProcedure
     .input(z.object({
       limit: z.number().min(1).max(100).nullish(),
       cursor: z.string().nullish(),

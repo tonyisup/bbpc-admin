@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 
 export const showRouter = router({
-  find: publicProcedure
+  find: protectedProcedure
     .input(z.object({
       searchTerm: z.string(),
     }))
@@ -16,7 +16,7 @@ export const showRouter = router({
         }
       })
     }),
-  search: publicProcedure
+  search: protectedProcedure
     .input(z.object({
       searchTerm: z.string(),
       page: z.number().optional().default(1),
@@ -24,7 +24,7 @@ export const showRouter = router({
     .query(({ ctx, input }) => {
       return ctx.tmdb.getShows(input.page, input.searchTerm)
     }),
-  getTitle: publicProcedure
+  getTitle: protectedProcedure
     .input(z.object({
       id: z.number(),
     }))
@@ -66,7 +66,7 @@ export const showRouter = router({
         }
       })
     }),
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(({ ctx, input }) => {
       return ctx.prisma.show.findUnique({
@@ -95,15 +95,15 @@ export const showRouter = router({
         }
       });
     }),
-  getAll: publicProcedure
+  getAll: adminProcedure
     .query(({ ctx }) => {
       return ctx.prisma.show.findMany();
     }),
-  getSummary: publicProcedure
+  getSummary: adminProcedure
     .query(({ ctx }) => {
       return ctx.prisma.show.count();
     }),
-  update: protectedProcedure
+  update: adminProcedure
     .input(z.object({
       id: z.string(),
       title: z.string(),
@@ -118,7 +118,7 @@ export const showRouter = router({
         data,
       });
     }),
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.show.delete({

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { env } from "../../../env/server.mjs";
 import { BlobServiceClient } from "@azure/storage-blob";
 
 export const azureRouter = router({
-	listContainers: protectedProcedure
+	listContainers: adminProcedure
 		.query(async () => {
 			const blobServiceClient = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING);
 			const containers = [];
@@ -14,7 +14,7 @@ export const azureRouter = router({
 			return containers;
 		}),
 
-	listBlobs: protectedProcedure
+	listBlobs: adminProcedure
 		.input(z.object({
 			containerName: z.string(),
 			continuationToken: z.string().optional(),
@@ -55,7 +55,7 @@ export const azureRouter = router({
 			};
 		}),
 
-	triggerUploadWorkflow: protectedProcedure
+	triggerUploadWorkflow: adminProcedure
 		.input(z.object({
 			containerName: z.string(),
 			blobName: z.string(),
@@ -92,7 +92,7 @@ export const azureRouter = router({
 			return { success: true };
 		}),
 
-	getBlobUrl: protectedProcedure
+	getBlobUrl: adminProcedure
 		.input(z.object({
 			containerName: z.string(),
 			blobName: z.string(),

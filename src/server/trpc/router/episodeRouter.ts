@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 import { utapi } from "../../uploadthing";
 import { createUniqueEpisodeSlug, slugify } from "../../slugs";
 import { parsePlainDate } from "@/lib/dates";
 
 export const episodeRouter = router({
-  getLinks: publicProcedure
+  getLinks: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findUnique({
@@ -18,7 +18,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  addLink: protectedProcedure
+  addLink: adminProcedure
     .input(z.object({ episodeId: z.string(), url: z.string(), text: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.link.create({
@@ -33,14 +33,14 @@ export const episodeRouter = router({
         }
       })
     }),
-  removeLink: protectedProcedure
+  removeLink: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.link.delete({
         where: { id: input.id }
       })
     }),
-  getAssigments: publicProcedure
+  getAssigments: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.assignment.findMany({
@@ -49,7 +49,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  add: protectedProcedure
+  add: adminProcedure
     .input(z.object({ number: z.number(), title: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.$transaction(async (tx) => {
@@ -72,7 +72,7 @@ export const episodeRouter = router({
         });
       });
     }),
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       return await req.ctx.prisma.episode.delete({
@@ -81,7 +81,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  update: protectedProcedure
+  update: adminProcedure
     .input(z.object({
       id: z.string(),
       number: z.number(),
@@ -160,7 +160,7 @@ export const episodeRouter = router({
         return episode;
       });
     }),
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findUnique({
@@ -169,7 +169,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  full: publicProcedure
+  full: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findUnique({
@@ -196,7 +196,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  fullByNumber: publicProcedure
+  fullByNumber: adminProcedure
     .input(z.object({ number: z.number() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findFirst({
@@ -223,7 +223,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  getAll: publicProcedure
+  getAll: protectedProcedure
     .input(z.object({
       limit: z.number().min(1).max(100).nullish(),
       cursor: z.string().nullish(),
@@ -257,11 +257,11 @@ export const episodeRouter = router({
         nextCursor,
       };
     }),
-  getSummary: publicProcedure
+  getSummary: adminProcedure
     .query(({ ctx }) => {
       return ctx.prisma.episode.count();
     }),
-  getAudioMessages: protectedProcedure
+  getAudioMessages: adminProcedure
     .input(z.object({ episodeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.audioEpisodeMessage.findMany({
@@ -271,7 +271,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  removeAudioMessage: protectedProcedure
+  removeAudioMessage: adminProcedure
     .input(z.object({
       id: z.number(),
     }))
@@ -297,7 +297,7 @@ export const episodeRouter = router({
 
       return { success: true };
     }),
-  addAudioMessage: protectedProcedure
+  addAudioMessage: adminProcedure
     .input(z.object({
       episodeId: z.string(),
       url: z.string(),
@@ -315,7 +315,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(z.object({
       id: z.string(),
       status: z.string(),
@@ -349,7 +349,7 @@ export const episodeRouter = router({
         return episode;
       });
     }),
-  updateDetails: protectedProcedure
+  updateDetails: adminProcedure
     .input(z.object({
       id: z.string(),
       title: z.string().optional(),
@@ -366,7 +366,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  updateNotes: protectedProcedure
+  updateNotes: adminProcedure
     .input(z.object({
       id: z.string(),
       notes: z.string().optional()
@@ -379,7 +379,7 @@ export const episodeRouter = router({
         }
       })
     }),
-  getByStatus: publicProcedure
+  getByStatus: protectedProcedure
     .input(z.object({ status: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.episode.findFirst({

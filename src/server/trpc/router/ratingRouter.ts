@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 export const ratingRouter = router({
-  getAll: publicProcedure.query(async ({ ctx }) => {
+  getAll: adminProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.rating.findMany({
       orderBy: {
         value: "desc",
@@ -10,7 +10,7 @@ export const ratingRouter = router({
     });
   }),
 
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       return await ctx.prisma.rating.findUnique({
@@ -18,7 +18,7 @@ export const ratingRouter = router({
       });
     }),
 
-  add: protectedProcedure
+  add: adminProcedure
     .input(
       z.object({
         name: z.string(),
@@ -34,7 +34,7 @@ export const ratingRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -53,7 +53,7 @@ export const ratingRouter = router({
       });
     }),
 
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.rating.delete({

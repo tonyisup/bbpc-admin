@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { adminProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 import { calculateUserPoints, getCurrentSeasonID } from "../utils/points";
 
 export const gamblingRouter = router({
-  getForGamblingType: publicProcedure
+  getForGamblingType: adminProcedure
     .input(z.object({ gamblingTypeId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.gamblingPoints.findMany({
@@ -16,7 +16,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  getForUser: publicProcedure
+  getForUser: adminProcedure
     .input(z.object({
       userId: z.string(),
       seasonId: z.string().optional()
@@ -44,7 +44,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  add: publicProcedure
+  add: adminProcedure
     .input(z.object({
       userId: z.string(),
       gamblingTypeId: z.string(),
@@ -143,7 +143,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  remove: publicProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async (req) => {
       const gamble = await req.ctx.prisma.gamblingPoints.findUnique({
@@ -162,7 +162,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  addPointForGamblingPoint: publicProcedure
+  addPointForGamblingPoint: adminProcedure
     .input(z.object({
       userId: z.string(),
       seasonId: z.string(),
@@ -187,7 +187,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  getForAssignment: publicProcedure
+  getForAssignment: adminProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async (req) => {
       return await req.ctx.prisma.gamblingPoints.findMany({
@@ -204,7 +204,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  getUserAssignmentGamblePoints: publicProcedure
+  getUserAssignmentGamblePoints: adminProcedure
     .input(z.object({
       userId: z.string(),
       assignmentId: z.string()
@@ -222,7 +222,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  confirmGamble: publicProcedure
+  confirmGamble: adminProcedure
     .input(z.object({
       gambleId: z.string(),
       seasonId: z.string().optional(), // Fallback
@@ -269,7 +269,7 @@ export const gamblingRouter = router({
       });
     }),
 
-  rejectGamble: publicProcedure
+  rejectGamble: adminProcedure
     .input(z.object({
       gambleId: z.string(),
     }))
@@ -377,7 +377,7 @@ export const gamblingRouter = router({
     }),
 
   // GamblingType Management
-  getAllTypes: publicProcedure.query(async ({ ctx }) => {
+  getAllTypes: adminProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.gamblingType.findMany({
       orderBy: { createdAt: 'desc' }
     });

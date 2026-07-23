@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 import { calculateUserPoints, getCurrentSeasonID } from "../utils/points";
 
 export const userRouter = router({
-	add: publicProcedure
+	add: adminProcedure
 		.input(z.object({
 			name: z.string(),
 			email: z.string(),
@@ -16,7 +16,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	remove: publicProcedure
+	remove: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.user.delete({
@@ -25,7 +25,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	update: protectedProcedure
+	update: adminProcedure
 		.input(z.object({
 			id: z.string(),
 			name: z.string(),
@@ -42,7 +42,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	addRole: publicProcedure
+	addRole: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			roleId: z.number(),
@@ -55,7 +55,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	removeRole: publicProcedure
+	removeRole: adminProcedure
 		.input(z.object({
 			id: z.string(),
 		}))
@@ -66,7 +66,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	get: publicProcedure
+	get: adminProcedure
 		.input(z.object({ id: z.string().optional() }))
 		.query(async (req) => {
 			if (!req.input.id) {
@@ -85,7 +85,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	getRoles: publicProcedure
+	getRoles: protectedProcedure
 		.query(async (req) => {
 			if (!req.ctx.session?.user) {
 				return;
@@ -99,7 +99,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	getTotalPointsForSeason: publicProcedure
+	getTotalPointsForSeason: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			seasonId: z.string().optional()
@@ -111,7 +111,7 @@ export const userRouter = router({
 			// "all" -> we should map this to null in the frontend or here
 			return await calculateUserPoints(ctx.prisma, userId, seasonId === "all" ? null : seasonId);
 		}),
-	getPoints: publicProcedure
+	getPoints: adminProcedure
 		.input(z.object({
 			id: z.string(),
 			seasonId: z.string().optional()
@@ -211,7 +211,7 @@ export const userRouter = router({
 				},
 			});
 		}),
-	addPoint: protectedProcedure
+	addPoint: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			seasonId: z.string(),
@@ -231,7 +231,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	removePoint: protectedProcedure
+	removePoint: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
 			/* remove gambling points */
@@ -271,7 +271,7 @@ export const userRouter = router({
 				}
 			})
 		}),
-	getAll: publicProcedure
+	getAll: adminProcedure
 		.query(({ ctx }) => {
 			return ctx.prisma.user.findMany({
 				include: {
@@ -302,11 +302,11 @@ export const userRouter = router({
 				}
 			});
 		}),
-	getSummary: publicProcedure
+	getSummary: adminProcedure
 		.query(({ ctx }) => {
 			return ctx.prisma.user.count();
 		}),
-	getSyllabus: publicProcedure
+	getSyllabus: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.syllabus.findMany({
@@ -326,7 +326,7 @@ export const userRouter = router({
 				}
 			});
 		}),
-	reorderSyllabus: protectedProcedure
+	reorderSyllabus: adminProcedure
 		.input(z.array(z.object({
 			id: z.string(),
 			order: z.number()
@@ -341,7 +341,7 @@ export const userRouter = router({
 				)
 			);
 		}),
-	getAdmins: publicProcedure
+	getAdmins: adminProcedure
 		.query(async ({ ctx }) => {
 			return await ctx.prisma.user.findMany({
 				where: {

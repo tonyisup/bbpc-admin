@@ -40,9 +40,12 @@ const ListsDashboard = () => {
 		{ enabled: !!session }
 	);
 
-	const { data: types, isLoading: isLoadingTypes } = trpc.rankedList.getAllTypes.useQuery();
+	const { data: types, isLoading: isLoadingTypes } = trpc.rankedList.getAllTypes.useQuery(
+		undefined,
+		{ enabled: !!session }
+	);
 
-	const userRoles = trpc.user.getRoles.useQuery();
+	const userRoles = trpc.user.getRoles.useQuery(undefined, { enabled: !!session });
 	const isAdmin = userRoles.data?.some((ur) => ur.role.admin);
 
 	const createList = trpc.rankedList.upsertList.useMutation({

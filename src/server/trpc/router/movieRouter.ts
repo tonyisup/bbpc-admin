@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { router, publicProcedure, protectedProcedure } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 
 export const movieRouter = router({
-  find: publicProcedure
+  find: protectedProcedure
     .input(z.object({
       searchTerm: z.string(),
     }))
@@ -16,7 +16,7 @@ export const movieRouter = router({
         }
       })
     }),
-  search: publicProcedure
+  search: protectedProcedure
     .input(z.object({
       searchTerm: z.string(),
       page: z.number().optional().default(1),
@@ -24,7 +24,7 @@ export const movieRouter = router({
     .query(({ ctx, input }) => {
       return ctx.tmdb.getMovies(input.page, input.searchTerm)
     }),
-  getTitle: publicProcedure
+  getTitle: protectedProcedure
     .input(z.object({
       id: z.number(),
     }))
@@ -69,7 +69,7 @@ export const movieRouter = router({
         }
       })
     }),
-  get: publicProcedure
+  get: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(({ ctx, input }) => {
       return ctx.prisma.movie.findUnique({
@@ -98,7 +98,7 @@ export const movieRouter = router({
         }
       });
     }),
-  getAll: publicProcedure
+  getAll: adminProcedure
     .query(({ ctx }) => {
       return ctx.prisma.movie.findMany({
         include: {
@@ -111,11 +111,11 @@ export const movieRouter = router({
         }
       });
     }),
-  getSummary: publicProcedure
+  getSummary: adminProcedure
     .query(({ ctx }) => {
       return ctx.prisma.movie.count();
     }),
-  remove: protectedProcedure
+  remove: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.prisma.movie.delete({

@@ -16,8 +16,15 @@ import { getAdminEpisodePath } from "@/lib/routes";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
-  const { data: stats } = trpc.dashboard.getStats.useQuery(undefined, { enabled: !!session });
-  const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(undefined, { enabled: !!session });
+  const { data: isAdmin, isLoading: isAdminLoading } =
+    trpc.auth.isAdmin.useQuery(undefined, { enabled: !!session });
+  const { data: stats } = trpc.dashboard.getStats.useQuery(undefined, {
+    enabled: isAdmin === true,
+  });
+  const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(
+    undefined,
+    { enabled: isAdmin === true },
+  );
 
   // If not logged in, the Layout component centers this content
   if (!session) {
@@ -34,6 +41,36 @@ const Home: NextPage = () => {
           <CardContent className="flex justify-center pb-8">
             <Button onClick={() => signIn()} size="lg">
               Sign In with Provider
+            </Button>
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
+
+  if (isAdminLoading) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <>
+        <Head>
+          <title>BBPC Member Tools</title>
+        </Head>
+        <Card className="mx-auto mt-12 max-w-xl">
+          <CardHeader>
+            <CardTitle>Member Tools</CardTitle>
+            <CardDescription>
+              This account does not have administrator access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href="/lists">Open Ranked Lists</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/record?guest=true">Join the Recording Room</Link>
             </Button>
           </CardContent>
         </Card>

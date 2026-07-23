@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { GamePointLookup } from "../../../utils/enums";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "../trpc";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { getCurrentSeasonID } from "../utils/points";
 import { getPacificTodayPlainDate, parsePlainDate } from "@/lib/dates";
@@ -195,7 +195,7 @@ export const guessRouter = router({
 				};
 			});
 		}),
-	add: publicProcedure
+	add: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			assignmentReviewId: z.string(),
@@ -214,7 +214,7 @@ export const guessRouter = router({
 			})
 		}),
 
-	remove: publicProcedure
+	remove: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async (req) => {
 			return await req.ctx.prisma.guess.delete({
@@ -223,7 +223,7 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	get: publicProcedure
+	get: adminProcedure
 		.input(z.object({ id: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findUnique({
@@ -232,7 +232,7 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	update: publicProcedure
+	update: adminProcedure
 		.input(z.object({
 			id: z.string(),
 			ratingId: z.string()
@@ -247,7 +247,7 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	setPointForGuess: publicProcedure
+	setPointForGuess: adminProcedure
 		.input(z.object({
 			id: z.string(),
 			gamePointId: z.string(),
@@ -262,7 +262,7 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	getForAssignment: publicProcedure
+	getForAssignment: adminProcedure
 		.input(z.object({ assignmentId: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany({
@@ -283,7 +283,7 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	getForEpisode: publicProcedure
+	getForEpisode: adminProcedure
 		.input(z.object({ episodeId: z.string() }))
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany({
@@ -305,7 +305,7 @@ export const guessRouter = router({
 			})
 		}),
 
-	getForUser: publicProcedure
+	getForUser: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			seasonId: z.string().optional()
@@ -355,16 +355,16 @@ export const guessRouter = router({
 				}
 			})
 		}),
-	getAll: publicProcedure
+	getAll: adminProcedure
 		.query(async (req) => {
 			return await req.ctx.prisma.guess.findMany();
 		}),
-	seasons: publicProcedure
+	seasons: adminProcedure
 		.query(async (req) => {
 			return await req.ctx.prisma.season.findMany()
 		}),
 
-	currentSeason: publicProcedure
+	currentSeason: protectedProcedure
 		.query(async ({ ctx }) => {
 			const today = parsePlainDate(getPacificTodayPlainDate());
 			return await ctx.prisma.season.findFirst({
@@ -385,7 +385,7 @@ export const guessRouter = router({
 		}),
 
 	/* we should always create a new season when we end the current season */
-	endSeason: publicProcedure
+	endSeason: adminProcedure
 		.input(z.object({
 			endedSeasonId: z.string(),
 			newSeasonTitle: z.string(),
@@ -412,7 +412,7 @@ export const guessRouter = router({
 			return newSeason;
 		}),
 
-	addPointForGuess: publicProcedure
+	addPointForGuess: adminProcedure
 		.input(z.object({
 			userId: z.string(),
 			seasonId: z.string(),
