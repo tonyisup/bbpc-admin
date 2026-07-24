@@ -345,4 +345,26 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       /trpc|@prisma|next-auth/u
     );
   });
+
+  test("admits paginated Banger CRUD with stale-delete protection", async () => {
+    const [middleware, route, bangers, bangersComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/banger/index.tsx"),
+        read("src/convex/bangers.ts"),
+        read("src/components/Banger/ConvexBangersPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/banger"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(bangers).toMatch(/episodes\/bangers:listAdminPage/u);
+    expect(bangers).toMatch(/episodes\/bangers:create/u);
+    expect(bangers).toMatch(/episodes\/bangers:update/u);
+    expect(bangers).toMatch(/episodes\/bangers:remove/u);
+    expect(bangers).toMatch(/expected/u);
+    expect(bangers).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(bangersComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
