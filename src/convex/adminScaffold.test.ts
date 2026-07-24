@@ -132,15 +132,17 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
   });
 
   test("admits the complete game configuration catalog through Convex", async () => {
-    const [middleware, route, gameConfig, gameConfigComponent] =
+    const [middleware, route, gamblingRoute, gameConfig, gameConfigComponent] =
       await Promise.all([
         read("src/middleware.ts"),
         read("src/pages/game/index.tsx"),
+        read("src/pages/gambling/index.tsx"),
         read("src/convex/gameConfig.ts"),
         read("src/components/Game/ConvexGameConfigPage.tsx"),
       ]);
 
     expect(middleware).toMatch(/"\/game"/u);
+    expect(middleware).toMatch(/"\/gambling"/u);
     expect(route).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
     );
@@ -148,6 +150,9 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(gameConfig).toMatch(/games\/config:listGamePointTypes/u);
     expect(gameConfig).toMatch(/games\/gambling:listTypes/u);
     expect(gameConfig).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(gamblingRoute).toMatch(
+      /ConvexGameConfigPage defaultTab="gambling-types"/u
+    );
     expect(gameConfigComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 

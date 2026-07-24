@@ -452,7 +452,11 @@ function EmptyRow({
   );
 }
 
-export function ConvexGameConfigPage() {
+export function ConvexGameConfigPage({
+  defaultTab = "game-types",
+}: {
+  defaultTab?: "game-types" | "point-types" | "gambling-types";
+}) {
   const convex = useConvex();
   const [catalog, setCatalog] = useState<ConvexAdminGameCatalog | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -649,7 +653,7 @@ export function ConvexGameConfigPage() {
             <Loader2 className="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Tabs className="w-full" defaultValue="game-types">
+          <Tabs className="w-full" defaultValue={defaultTab}>
             <TabsList className="grid w-full max-w-lg grid-cols-3">
               <TabsTrigger value="game-types">Game Types</TabsTrigger>
               <TabsTrigger value="point-types">Point Types</TabsTrigger>
