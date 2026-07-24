@@ -7,6 +7,7 @@ import {
   loadConvexAdminRoles,
   updateConvexAdminRole,
 } from "./roles";
+import { BBPC_CLIENT_API_VERSION } from "./identity";
 
 const role = {
   id: "role-1",
@@ -47,6 +48,25 @@ describe("Convex admin role adapter", () => {
     await expect(
       deleteConvexAdminRole(client, role.id)
     ).resolves.toBeUndefined();
+    expect(mutation).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      expect.objectContaining({
+        clientApiVersion: BBPC_CLIENT_API_VERSION,
+      })
+    );
+    expect(mutation).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({
+        clientApiVersion: BBPC_CLIENT_API_VERSION,
+        id: role.id,
+      })
+    );
+    expect(mutation).toHaveBeenNthCalledWith(3, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: role.id,
+    });
   });
 
   test("rejects drifted role responses", async () => {

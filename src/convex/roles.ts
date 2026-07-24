@@ -2,6 +2,8 @@ import type { ConvexReactClient } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { z } from "zod";
 
+import { BBPC_CLIENT_API_VERSION } from "./identity";
+
 const roleSchema = z.object({
   id: z.string().min(1),
   legacyId: z.number().nullable(),
@@ -28,19 +30,30 @@ const listRolesReference = makeFunctionReference<
 
 const createRoleReference = makeFunctionReference<
   "mutation",
-  { name: string; description: string; admin: boolean },
+  {
+    clientApiVersion: string;
+    name: string;
+    description: string;
+    admin: boolean;
+  },
   unknown
 >("identity/admin:createRole");
 
 const updateRoleReference = makeFunctionReference<
   "mutation",
-  { id: string; name: string; description: string; admin: boolean },
+  {
+    clientApiVersion: string;
+    id: string;
+    name: string;
+    description: string;
+    admin: boolean;
+  },
   unknown
 >("identity/admin:updateRole");
 
 const deleteRoleReference = makeFunctionReference<
   "mutation",
-  { id: string },
+  { clientApiVersion: string; id: string },
   unknown
 >("identity/admin:deleteRole");
 
@@ -63,7 +76,12 @@ export async function createConvexAdminRole(
   client: ConvexReactClient,
   input: ConvexAdminRoleInput
 ): Promise<void> {
-  roleSchema.parse(await client.mutation(createRoleReference, input));
+  roleSchema.parse(
+    await client.mutation(createRoleReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      ...input,
+    })
+  );
 }
 
 export async function updateConvexAdminRole(
@@ -72,7 +90,11 @@ export async function updateConvexAdminRole(
   input: ConvexAdminRoleInput
 ): Promise<void> {
   roleSchema.parse(
-    await client.mutation(updateRoleReference, { id, ...input })
+    await client.mutation(updateRoleReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id,
+      ...input,
+    })
   );
 }
 
@@ -81,6 +103,9 @@ export async function deleteConvexAdminRole(
   id: string
 ): Promise<void> {
   deleteRoleResultSchema.parse(
-    await client.mutation(deleteRoleReference, { id })
+    await client.mutation(deleteRoleReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id,
+    })
   );
 }

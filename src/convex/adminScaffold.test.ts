@@ -46,6 +46,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
 
     expect(middleware).toMatch(/const convexReadyPages = new Set/u);
     expect(middleware).toMatch(/"\/role"/u);
+    expect(middleware).toMatch(/"\/user"/u);
     expect(middleware).toMatch(/status: 503/u);
     expect(middleware).toMatch(/NextResponse\.redirect/u);
     expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);
@@ -77,5 +78,23 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(roles).toMatch(/identity\/admin:deleteRole/u);
     expect(roles).toMatch(/roleSummarySchema/u);
     expect(rolesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
+
+  test("admits users only through paginated versioned Convex calls", async () => {
+    const [route, users, usersComponent] = await Promise.all([
+      read("src/pages/user/index.tsx"),
+      read("src/convex/users.ts"),
+      read("src/components/User/ConvexUsersPage.tsx"),
+    ]);
+
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(users).toMatch(/identity\/admin:listUsersPage/u);
+    expect(users).toMatch(/identity\/admin:setUserStatus/u);
+    expect(users).toMatch(/identity\/admin:assignRole/u);
+    expect(users).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(usersComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+    expect(usersComponent).not.toMatch(/deleteConvexAdminUser/u);
   });
 });
