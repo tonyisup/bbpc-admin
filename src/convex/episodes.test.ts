@@ -6,6 +6,7 @@ import {
   ADMIN_EPISODES_PAGE_SIZE,
   createConvexAdminEpisode,
   loadConvexAdminEpisodesPage,
+  searchConvexAdminEpisodes,
 } from "./episodes";
 
 const episode = {
@@ -64,5 +65,18 @@ describe("Convex admin episode catalog adapter", () => {
     const client = { query } as unknown as ConvexReactClient;
 
     await expect(loadConvexAdminEpisodesPage(client, null)).rejects.toThrow();
+  });
+
+  test("validates bounded episode target search", async () => {
+    const query = vi.fn().mockResolvedValue([episode]);
+    const client = { query } as unknown as ConvexReactClient;
+
+    await expect(
+      searchConvexAdminEpisodes(client, "episode")
+    ).resolves.toEqual([episode]);
+    expect(query).toHaveBeenCalledWith(expect.anything(), {
+      query: "episode",
+      limit: 10,
+    });
   });
 });

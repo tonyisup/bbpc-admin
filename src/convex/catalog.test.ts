@@ -7,6 +7,7 @@ import {
   deleteConvexAdminShow,
   loadConvexAdminMoviesPage,
   loadConvexAdminShowsPage,
+  searchConvexCatalogMovies,
   searchConvexTmdbMovies,
   upsertConvexAdminMovie,
   upsertConvexAdminShow,
@@ -101,6 +102,19 @@ describe("Convex admin media catalog adapter", () => {
     expect(action).toHaveBeenCalledWith(expect.anything(), {
       query: "arrival",
       page: 1,
+    });
+  });
+
+  test("keeps ranked-list target search inside the canonical catalog", async () => {
+    const query = vi.fn().mockResolvedValue([movie]);
+    const client = { query } as unknown as ConvexReactClient;
+
+    await expect(
+      searchConvexCatalogMovies(client, "arrival")
+    ).resolves.toEqual([movie]);
+    expect(query).toHaveBeenCalledWith(expect.anything(), {
+      query: "arrival",
+      limit: 10,
     });
   });
 

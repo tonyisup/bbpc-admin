@@ -10,6 +10,7 @@ const convexReadyPages = new Set([
   "/episode",
   "/game",
   "/gambling",
+  "/lists",
   "/movie",
   "/rating",
   "/role",
@@ -41,7 +42,10 @@ export default function middleware(
       { status: 503 }
     );
   }
-  if (!convexReadyPages.has(pathname) && !pathname.startsWith("/__clerk/")) {
+  const isConvexReadyPage =
+    convexReadyPages.has(pathname) ||
+    /^\/lists\/[^/]+$/u.test(pathname);
+  if (!isConvexReadyPage && !pathname.startsWith("/__clerk/")) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/";
     destination.searchParams.set("unavailable", pathname);

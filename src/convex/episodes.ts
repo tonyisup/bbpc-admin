@@ -40,6 +40,12 @@ const listEpisodesReference = makeFunctionReference<
   unknown
 >("episodes/public:listPage");
 
+const searchEpisodesReference = makeFunctionReference<
+  "query",
+  { query: string; limit: number },
+  unknown
+>("episodes/public:search");
+
 const createEpisodeReference = makeFunctionReference<
   "mutation",
   {
@@ -90,4 +96,13 @@ export async function createConvexAdminEpisode(
       title: input.title,
     })
   );
+}
+
+export async function searchConvexAdminEpisodes(
+  client: ConvexReactClient,
+  query: string
+): Promise<ConvexAdminEpisode[]> {
+  return z
+    .array(episodeSchema)
+    .parse(await client.query(searchEpisodesReference, { query, limit: 10 }));
 }

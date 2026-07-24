@@ -269,4 +269,35 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(rankingTypes).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(rankingTypesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits owner/admin ranked-list dashboards and exact detail paths", async () => {
+    const [
+      middleware,
+      route,
+      detailRoute,
+      rankedLists,
+      listsComponent,
+      detailComponent,
+    ] = await Promise.all([
+      read("src/middleware.ts"),
+      read("src/pages/lists/index.tsx"),
+      read("src/pages/lists/[id].tsx"),
+      read("src/convex/rankedLists.ts"),
+      read("src/components/Ranking/ConvexRankedListsPage.tsx"),
+      read("src/components/Ranking/ConvexRankedListDetailPage.tsx"),
+    ]);
+
+    expect(middleware).toMatch(/"\/lists"/u);
+    expect(middleware).toMatch(/\^\\\/lists\\\/\[\^\/\]\+\$/u);
+    expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
+    expect(detailRoute).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
+    expect(rankedLists).toMatch(/rankings\/lists:listMine/u);
+    expect(rankedLists).toMatch(/rankings\/lists:listAdminPage/u);
+    expect(rankedLists).toMatch(/rankings\/lists:updateAccessible/u);
+    expect(rankedLists).toMatch(/rankings\/items:upsert/u);
+    expect(rankedLists).toMatch(/rankings\/items:move/u);
+    expect(rankedLists).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(listsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+    expect(detailComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });

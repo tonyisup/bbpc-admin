@@ -81,6 +81,18 @@ const listShowsPageReference = makeFunctionReference<
   unknown
 >("catalog/public:listShowsPage");
 
+const searchCatalogMoviesReference = makeFunctionReference<
+  "query",
+  { query: string; limit: number },
+  unknown
+>("catalog/public:searchMovies");
+
+const searchCatalogShowsReference = makeFunctionReference<
+  "query",
+  { query: string; limit: number },
+  unknown
+>("catalog/public:searchShows");
+
 const searchMoviesReference = makeFunctionReference<
   "action",
   { query: string; page?: number },
@@ -189,6 +201,28 @@ export async function searchConvexTmdbMovies(
   ).results;
 }
 
+export async function searchConvexCatalogMovies(
+  client: ConvexReactClient,
+  query: string
+): Promise<ConvexAdminMovie[]> {
+  return z
+    .array(catalogMovieSchema)
+    .parse(
+      await client.query(searchCatalogMoviesReference, { query, limit: 10 })
+    );
+}
+
+export async function searchConvexCatalogShows(
+  client: ConvexReactClient,
+  query: string
+): Promise<ConvexAdminShow[]> {
+  return z
+    .array(catalogShowSchema)
+    .parse(
+      await client.query(searchCatalogShowsReference, { query, limit: 10 })
+    );
+}
+
 export async function searchConvexTmdbShows(
   client: ConvexReactClient,
   query: string
@@ -201,8 +235,8 @@ export async function searchConvexTmdbShows(
 export async function upsertConvexAdminMovie(
   client: ConvexReactClient,
   title: ConvexTmdbTitle
-): Promise<void> {
-  catalogMovieSchema.parse(
+): Promise<ConvexAdminMovie> {
+  return catalogMovieSchema.parse(
     await client.mutation(upsertMovieReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       title: title.title,
@@ -220,8 +254,8 @@ export async function upsertConvexAdminMovie(
 export async function upsertConvexAdminShow(
   client: ConvexReactClient,
   title: ConvexTmdbTitle
-): Promise<void> {
-  catalogShowSchema.parse(
+): Promise<ConvexAdminShow> {
+  return catalogShowSchema.parse(
     await client.mutation(upsertShowReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       title: title.title,
