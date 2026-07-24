@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -242,9 +243,9 @@ export function ConvexMediaCatalogPage({ kind }: { kind: MediaKind }) {
         </div>
 
         <div className="rounded-md border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Relationship-heavy detail pages remain unavailable in Convex mode.
-          Deletion succeeds only when the backend proves this item is
-          unreferenced.
+          Detail pages expose at most 100 runtime-validated reviews and their
+          bounded episode relationships. Deletion still succeeds only when
+          the backend proves this item is unreferenced.
         </div>
 
         <section className="flex flex-col gap-4 rounded-lg border bg-card p-6 shadow-sm">
@@ -432,13 +433,19 @@ export function ConvexMediaCatalogPage({ kind }: { kind: MediaKind }) {
                           )}
                         </TableCell>
                         <TableCell className="font-medium">
+                          <Link
+                            className="hover:underline"
+                            href={`/${kind}/${item.id}`}
+                          >
+                            {item.title}
+                          </Link>
                           <a
-                            className="inline-flex items-center gap-1 hover:underline"
+                            aria-label={`Open external details for ${item.title}`}
+                            className="ml-2 inline-flex align-middle text-muted-foreground hover:text-foreground"
                             href={item.url}
                             rel="noopener noreferrer"
                             target="_blank"
                           >
-                            {item.title}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </TableCell>

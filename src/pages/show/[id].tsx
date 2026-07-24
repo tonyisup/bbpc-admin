@@ -1,20 +1,32 @@
-import { GetServerSidePropsContext, InferGetServerSidePropsType, NextPage } from "next";
-import Head from "next/head";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { ChevronLeft } from "lucide-react";
-import { trpc } from "../../utils/trpc";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]";
-import { ssr } from "../../server/db/ssr";
-import { Button } from "../../components/ui/button";
-import MediaDetailPage from "../../components/Media/MediaDetailPage";
+import type { GetServerSideProps, NextPage } from "next";
+import dynamic from "next/dynamic";
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+const ConvexShowDetailPage = dynamic(
+  () =>
+    import("@/components/Media/ConvexMediaDetailPage").then(
+      (module) => module.ConvexShowDetailPage
+    ),
+  { loading: () => null }
+);
+const SqlShowDetailPage = dynamic(
+  () => import("@/components/Media/SqlShowDetailPage"),
+  { loading: () => null }
+);
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex") {
+    return { props: {} };
+  }
+
+  const [{ getServerSession }, { ssr }, { authOptions }] = await Promise.all([
+    import("next-auth"),
+    import("@/server/db/ssr"),
+    import("../api/auth/[...nextauth]"),
+  ]);
   const session = await getServerSession(context.req, context.res, authOptions);
-  const isAdmin = await ssr.isAdmin(session?.user?.id || "");
+  const isAdmin = await ssr.isAdmin(session?.user?.id ?? "");
 
-  if (!session || !isAdmin) {
+  if (session === null || !isAdmin) {
     return {
       redirect: {
         destination: "/",
@@ -23,45 +35,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  return {
-    props: {
-      session,
-    },
-  };
-}
-
-const ShowDetailPage: NextPage<InferGetServerSidePropsType<typeof getServerSideProps>> = () => {
-  const { query } = useRouter();
-  const id = query.id as string;
-
-  const { data: show, isLoading } = trpc.show.get.useQuery(
-    { id },
-    { enabled: !!id }
-  );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!show) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <h2 className="text-2xl font-bold">Show not found</h2>
-        <Button asChild variant="outline">
-          <Link href="/show">
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Shows
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
-  return <MediaDetailPage media={show} type="show" />;
+  return { props: { session } };
 };
+
+const ShowDetailPage: NextPage = () =>
+  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex" ? (
+    <ConvexShowDetailPage />
+  ) : (
+    <SqlShowDetailPage />
+  );
 
 export default ShowDetailPage;
