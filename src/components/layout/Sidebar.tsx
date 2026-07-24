@@ -30,10 +30,11 @@ import { Separator } from "../ui/separator"
 import { useBbpcAdminAuth } from "../auth/BbpcAdminAuthContext"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
+const convexReadyRoutes = new Set(["/", "/about", "/role"])
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
-	const { signOut, user } = useBbpcAdminAuth()
+	const { backend, signOut, user } = useBbpcAdminAuth()
 	const isAdmin = user?.isAdmin === true
 
 	const pathname = router.pathname
@@ -206,6 +207,16 @@ export function Sidebar({ className }: SidebarProps) {
 				],
 			},
 		]
+	const visibleSections = backend === "convex"
+		? sections
+			.map((section) => ({
+				...section,
+				routes: section.routes.filter((route) =>
+					convexReadyRoutes.has(route.href)
+				),
+			}))
+			.filter((section) => section.routes.length > 0)
+		: sections
 
 	useEffect(() => {
 		const isDark = localStorage.getItem("theme") === "dark" ||
@@ -237,7 +248,7 @@ export function Sidebar({ className }: SidebarProps) {
 				<Separator />
 				<ScrollArea className="flex-1 px-3">
 					<div className="space-y-6 py-2">
-						{sections.map((section) => (
+						{visibleSections.map((section) => (
 							<div key={section.title} className="space-y-1">
 								<h3 className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-2">
 									{section.title}

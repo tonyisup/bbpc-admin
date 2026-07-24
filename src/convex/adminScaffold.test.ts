@@ -45,6 +45,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       ]);
 
     expect(middleware).toMatch(/const convexReadyPages = new Set/u);
+    expect(middleware).toMatch(/"\/role"/u);
     expect(middleware).toMatch(/status: 503/u);
     expect(middleware).toMatch(/NextResponse\.redirect/u);
     expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);
@@ -56,6 +57,25 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     );
     expect(dashboardComponent).not.toMatch(/trpc|@prisma/u);
     expect(sidebar).toMatch(/user\?\.isAdmin === true/u);
+    expect(sidebar).toMatch(/backend === "convex"/u);
     expect(sidebar).not.toMatch(/trpc\.auth\.isAdmin|useSession/u);
+  });
+
+  test("admits roles only through the direct Convex adapter", async () => {
+    const [route, roles, rolesComponent] = await Promise.all([
+      read("src/pages/role/index.tsx"),
+      read("src/convex/roles.ts"),
+      read("src/components/Role/ConvexRolesPage.tsx"),
+    ]);
+
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(roles).toMatch(/identity\/admin:listRoles/u);
+    expect(roles).toMatch(/identity\/admin:createRole/u);
+    expect(roles).toMatch(/identity\/admin:updateRole/u);
+    expect(roles).toMatch(/identity\/admin:deleteRole/u);
+    expect(roles).toMatch(/roleSummarySchema/u);
+    expect(rolesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 });
