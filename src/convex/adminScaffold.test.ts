@@ -150,4 +150,23 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(gameConfig).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(gameConfigComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits the global syllabus through native Convex pagination", async () => {
+    const [middleware, route, syllabus, syllabusComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/syllabus/index.tsx"),
+        read("src/convex/syllabus.ts"),
+        read("src/components/Syllabus/ConvexSyllabusPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/syllabus"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(syllabus).toMatch(/syllabus\/admin:listPage/u);
+    expect(syllabus).toMatch(/syllabus\/admin:removeEntry/u);
+    expect(syllabus).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(syllabusComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
