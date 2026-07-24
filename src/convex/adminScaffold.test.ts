@@ -320,4 +320,29 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(reviews).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(reviewsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits bounded Quotabunga moderation with stale-write guards", async () => {
+    const [middleware, route, quotabunga, quotabungaComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/quotabunga/index.tsx"),
+        read("src/convex/quotabunga.ts"),
+        read("src/components/Quotabunga/ConvexQuotabungaPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/quotabunga"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(quotabunga).toMatch(/games\/quotes:listAdminEpisodes/u);
+    expect(quotabunga).toMatch(/games\/quotes:listAdminForEpisode/u);
+    expect(quotabunga).toMatch(/games\/quotes:randomizeIncluded/u);
+    expect(quotabunga).toMatch(/games\/quotes:awardPlacements/u);
+    expect(quotabunga).toMatch(/expectedAwards/u);
+    expect(quotabunga).toMatch(/expectedAward/u);
+    expect(quotabunga).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(quotabungaComponent).not.toMatch(
+      /trpc|@prisma|next-auth/u
+    );
+  });
 });
