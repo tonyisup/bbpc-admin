@@ -1,5 +1,5 @@
-import { NextPage } from "next";
-import { useSession, signIn } from "next-auth/react";
+import { useBbpcAdminAuth } from "@/components/auth/BbpcAdminAuthContext";
+import { type NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../utils/trpc";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
@@ -15,19 +15,38 @@ import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
 import { getAdminEpisodePath } from "@/lib/routes";
 
 const Home: NextPage = () => {
-  const { data: session } = useSession();
-  const { data: isAdmin, isLoading: isAdminLoading } =
-    trpc.auth.isAdmin.useQuery(undefined, { enabled: !!session });
+  const {
+    accountIssue,
+    accountStatus,
+    backend,
+    refreshAccount,
+    signIn,
+    signOut,
+    status,
+    user,
+  } = useBbpcAdminAuth();
+  const { data: isSqlAdmin, isLoading: isSqlAdminLoading } =
+    trpc.auth.isAdmin.useQuery(undefined, {
+      enabled: backend === "sql" && user !== null,
+    });
+  const isAdmin =
+    backend === "convex" ? user?.isAdmin === true : isSqlAdmin === true;
   const { data: stats } = trpc.dashboard.getStats.useQuery(undefined, {
-    enabled: isAdmin === true,
+    enabled: backend === "sql" && isAdmin,
   });
   const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(
     undefined,
-    { enabled: isAdmin === true },
+    { enabled: backend === "sql" && isAdmin },
   );
 
-  // If not logged in, the Layout component centers this content
-  if (!session) {
+  if (
+    status === "loading" ||
+    (backend === "convex" && accountStatus === "resolving")
+  ) {
+    return null;
+  }
+
+  if (!user) {
     return (
       <>
         <Head>
@@ -39,7 +58,7 @@ const Home: NextPage = () => {
             <CardDescription>Sign in to manage the podcast</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center pb-8">
-            <Button onClick={() => signIn()} size="lg">
+            <Button onClick={signIn} size="lg">
               Sign In with Provider
             </Button>
           </CardContent>
@@ -48,7 +67,34 @@ const Home: NextPage = () => {
     );
   }
 
-  if (isAdminLoading) {
+  if (backend === "convex" && accountStatus !== "ready") {
+    const message =
+      accountIssue === "account-disabled"
+        ? "This account is disabled."
+        : accountIssue === "identity-conflict"
+          ? "This sign-in is already linked to another BBPC account."
+          : accountIssue === "linking-disabled"
+            ? "Account linking is paused in this environment."
+            : accountIssue === "stale-client"
+              ? "This admin client is out of date."
+              : "The BBPC account could not be resolved.";
+    return (
+      <Card className="w-[420px] max-w-[calc(100vw-2rem)] shadow-lg">
+        <CardHeader>
+          <CardTitle>Admin account needs attention</CardTitle>
+          <CardDescription>{message}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex gap-2">
+          <Button onClick={refreshAccount}>Try again</Button>
+          <Button variant="outline" onClick={signOut}>
+            Sign out
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (backend === "sql" && isSqlAdminLoading) {
     return null;
   }
 
@@ -56,23 +102,57 @@ const Home: NextPage = () => {
     return (
       <>
         <Head>
-          <title>BBPC Member Tools</title>
+          <title>
+            {backend === "convex"
+              ? "BBPC Admin - Access Required"
+              : "BBPC Member Tools"}
+          </title>
         </Head>
         <Card className="mx-auto mt-12 max-w-xl">
           <CardHeader>
-            <CardTitle>Member Tools</CardTitle>
+            <CardTitle>
+              {backend === "convex" ? "Administrator access required" : "Member Tools"}
+            </CardTitle>
             <CardDescription>
               This account does not have administrator access.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href="/lists">Open Ranked Lists</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/record?guest=true">Join the Recording Room</Link>
-            </Button>
+            {backend === "sql" ? (
+              <>
+                <Button asChild>
+                  <Link href="/lists">Open Ranked Lists</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/record?guest=true">Join the Recording Room</Link>
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={signOut}>
+                Sign out
+              </Button>
+            )}
           </CardContent>
+        </Card>
+      </>
+    );
+  }
+
+  if (backend === "convex") {
+    return (
+      <>
+        <Head>
+          <title>BBPC Admin - Convex Migration</title>
+        </Head>
+        <Card className="mx-auto mt-12 max-w-2xl">
+          <CardHeader>
+            <CardTitle>Convex administrator verified</CardTitle>
+            <CardDescription>
+              The Clerk identity is linked to the canonical BBPC administrator
+              account. Admin data routes remain closed until each Convex
+              adapter passes its authorization and behavior gates.
+            </CardDescription>
+          </CardHeader>
         </Card>
       </>
     );
@@ -89,7 +169,7 @@ const Home: NextPage = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">
-            Welcome back, {session.user?.name}.
+            Welcome back, {user.name}.
           </p>
         </div>
 

@@ -24,20 +24,17 @@ import {
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
 import { ScrollArea } from "../ui/scroll-area"
 import { Separator } from "../ui/separator"
-import { trpc } from "../../utils/trpc"
+import { useBbpcAdminAuth } from "../auth/BbpcAdminAuthContext"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
-	const { data: session } = useSession()
-	const { data: isAdmin } = trpc.auth.isAdmin.useQuery(undefined, {
-		enabled: !!session,
-	})
+	const { signOut, user } = useBbpcAdminAuth()
+	const isAdmin = user?.isAdmin === true
 
 	const pathname = router.pathname
 
@@ -268,15 +265,15 @@ export function Sidebar({ className }: SidebarProps) {
 
 				<div className="mt-auto p-4 space-y-4">
 					<Separator />
-					{session?.user && (
+					{user && (
 						<div className="flex items-center gap-3 px-2 py-1">
 							<Avatar className="h-8 w-8 border">
-								<AvatarImage src={session.user.image || ""} />
-								<AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
+								<AvatarImage src={user.image || ""} />
+								<AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
 							</Avatar>
 							<div className="flex flex-col min-w-0">
-								<span className="text-xs font-bold truncate">{session.user.name}</span>
-								<span className="text-[10px] text-muted-foreground truncate">{session.user.email}</span>
+								<span className="text-xs font-bold truncate">{user.name}</span>
+								<span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
 							</div>
 						</div>
 					)}
