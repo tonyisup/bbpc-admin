@@ -130,4 +130,24 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(seasons).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(seasonsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits the complete game configuration catalog through Convex", async () => {
+    const [middleware, route, gameConfig, gameConfigComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/game/index.tsx"),
+        read("src/convex/gameConfig.ts"),
+        read("src/components/Game/ConvexGameConfigPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/game"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(gameConfig).toMatch(/games\/config:listGameTypes/u);
+    expect(gameConfig).toMatch(/games\/config:listGamePointTypes/u);
+    expect(gameConfig).toMatch(/games\/gambling:listTypes/u);
+    expect(gameConfig).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(gameConfigComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });

@@ -6,6 +6,7 @@ const handleClerkRequest = clerkMiddleware();
 const convexReadyPages = new Set([
   "/",
   "/about",
+  "/game",
   "/rating",
   "/role",
   "/season",
