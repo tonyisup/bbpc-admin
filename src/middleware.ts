@@ -10,10 +10,12 @@ const convexReadyPages = new Set([
   "/episode",
   "/game",
   "/gambling",
+  "/movie",
   "/rating",
   "/role",
   "/season",
   "/syllabus",
+  "/show",
   "/tag",
   "/user",
 ]);

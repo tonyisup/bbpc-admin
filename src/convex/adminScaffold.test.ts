@@ -216,6 +216,41 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(episodesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 
+  test("admits only bounded movie and show catalogs with safe deletion", async () => {
+    const [
+      middleware,
+      movieRoute,
+      showRoute,
+      catalog,
+      catalogComponent,
+    ] = await Promise.all([
+      read("src/middleware.ts"),
+      read("src/pages/movie/index.tsx"),
+      read("src/pages/show/index.tsx"),
+      read("src/convex/catalog.ts"),
+      read("src/components/Media/ConvexMediaCatalogPage.tsx"),
+    ]);
+
+    expect(middleware).toMatch(/"\/movie"/u);
+    expect(middleware).toMatch(/"\/show"/u);
+    expect(middleware).not.toMatch(/\/movie\/\*/u);
+    expect(middleware).not.toMatch(/\/show\/\*/u);
+    expect(movieRoute).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(showRoute).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(catalog).toMatch(/catalog\/public:listMoviesPage/u);
+    expect(catalog).toMatch(/catalog\/public:listShowsPage/u);
+    expect(catalog).toMatch(/catalog\/external:searchMovies/u);
+    expect(catalog).toMatch(/catalog\/external:searchShows/u);
+    expect(catalog).toMatch(/catalog\/admin:deleteMovie/u);
+    expect(catalog).toMatch(/catalog\/admin:deleteShow/u);
+    expect(catalog).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(catalogComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
+
   test("admits the bounded ranked-list type catalog through Convex", async () => {
     const [middleware, route, rankingTypes, rankingTypesComponent] =
       await Promise.all([
