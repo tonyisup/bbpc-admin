@@ -189,4 +189,25 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(tagsComponent).toMatch(/legacyAwardTombstone/u);
     expect(tagsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits only the bounded episode catalog and safe creation", async () => {
+    const [middleware, route, episodes, episodesComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/episode/index.tsx"),
+        read("src/convex/episodes.ts"),
+        read("src/components/Episode/ConvexEpisodesPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/episode"/u);
+    expect(middleware).not.toMatch(/\/episode\/\*/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(episodes).toMatch(/episodes\/public:listPage/u);
+    expect(episodes).toMatch(/episodes\/admin:createEpisode/u);
+    expect(episodes).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(episodes).not.toMatch(/removeEpisode/u);
+    expect(episodesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
