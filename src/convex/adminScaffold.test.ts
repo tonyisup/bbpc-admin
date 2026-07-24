@@ -215,4 +215,23 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(episodes).not.toMatch(/removeEpisode/u);
     expect(episodesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits the bounded ranked-list type catalog through Convex", async () => {
+    const [middleware, route, rankingTypes, rankingTypesComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/admin/ranked-types.tsx"),
+        read("src/convex/rankingTypes.ts"),
+        read("src/components/Ranking/ConvexRankingTypesPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/admin\/ranked-types"/u);
+    expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
+    expect(rankingTypes).toMatch(/rankings\/types:list/u);
+    expect(rankingTypes).toMatch(/rankings\/types:create/u);
+    expect(rankingTypes).toMatch(/rankings\/types:update/u);
+    expect(rankingTypes).toMatch(/rankings\/types:remove/u);
+    expect(rankingTypes).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(rankingTypesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
