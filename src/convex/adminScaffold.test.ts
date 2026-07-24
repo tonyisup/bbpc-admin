@@ -300,4 +300,24 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(listsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
     expect(detailComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits bounded reviews with confirmed cascade deletion", async () => {
+    const [middleware, route, reviews, reviewsComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/review/index.tsx"),
+        read("src/convex/reviews.ts"),
+        read("src/components/Review/ConvexReviewsPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(/"\/review"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(reviews).toMatch(/reviews\/admin:listPage/u);
+    expect(reviews).toMatch(/reviews\/admin:getDeleteImpact/u);
+    expect(reviews).toMatch(/expectedImpact/u);
+    expect(reviews).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(reviewsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
