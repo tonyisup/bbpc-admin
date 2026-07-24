@@ -35,17 +35,26 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
   });
 
   test("keeps unported Convex routes fail-closed", async () => {
-    const [middleware, home, sidebar] = await Promise.all([
-      read("src/middleware.ts"),
-      read("src/pages/index.tsx"),
-      read("src/components/layout/Sidebar.tsx"),
-    ]);
+    const [middleware, home, sidebar, dashboard, dashboardComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/index.tsx"),
+        read("src/components/layout/Sidebar.tsx"),
+        read("src/convex/dashboard.ts"),
+        read("src/components/Dashboard/ConvexAdminDashboard.tsx"),
+      ]);
 
     expect(middleware).toMatch(/const convexReadyPages = new Set/u);
     expect(middleware).toMatch(/status: 503/u);
     expect(middleware).toMatch(/NextResponse\.redirect/u);
     expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);
-    expect(home).toMatch(/Convex administrator verified/u);
+    expect(home).toMatch(/<ConvexAdminDashboard userName=\{user\.name\}/u);
+    expect(dashboard).toMatch(/admin\/dashboard:overview/u);
+    expect(dashboard).toMatch(/dashboardOverviewSchema\.parse/u);
+    expect(dashboardComponent).toMatch(
+      /No legacy SQL\s+fallback was attempted/u
+    );
+    expect(dashboardComponent).not.toMatch(/trpc|@prisma/u);
     expect(sidebar).toMatch(/user\?\.isAdmin === true/u);
     expect(sidebar).not.toMatch(/trpc\.auth\.isAdmin|useSession/u);
   });

@@ -2,7 +2,13 @@ import { useBbpcAdminAuth } from "@/components/auth/BbpcAdminAuthContext";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { trpc } from "../utils/trpc";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Mic2, Users, Film, Star, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +17,7 @@ import ExtraCard from "../components/Extra/ExtraCard";
 import MovieCard from "../components/MovieCard";
 
 import GuessesGraph from "../components/Dashboard/GuessesGraph";
+import { ConvexAdminDashboard } from "../components/Dashboard/ConvexAdminDashboard";
 import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
 import { getAdminEpisodePath } from "@/lib/routes";
 
@@ -36,7 +43,7 @@ const Home: NextPage = () => {
   });
   const { data: guessesStats } = trpc.dashboard.getGuessesStats.useQuery(
     undefined,
-    { enabled: backend === "sql" && isAdmin },
+    { enabled: backend === "sql" && isAdmin }
   );
 
   if (
@@ -72,12 +79,12 @@ const Home: NextPage = () => {
       accountIssue === "account-disabled"
         ? "This account is disabled."
         : accountIssue === "identity-conflict"
-          ? "This sign-in is already linked to another BBPC account."
-          : accountIssue === "linking-disabled"
-            ? "Account linking is paused in this environment."
-            : accountIssue === "stale-client"
-              ? "This admin client is out of date."
-              : "The BBPC account could not be resolved.";
+        ? "This sign-in is already linked to another BBPC account."
+        : accountIssue === "linking-disabled"
+        ? "Account linking is paused in this environment."
+        : accountIssue === "stale-client"
+        ? "This admin client is out of date."
+        : "The BBPC account could not be resolved.";
     return (
       <Card className="w-[420px] max-w-[calc(100vw-2rem)] shadow-lg">
         <CardHeader>
@@ -111,7 +118,9 @@ const Home: NextPage = () => {
         <Card className="mx-auto mt-12 max-w-xl">
           <CardHeader>
             <CardTitle>
-              {backend === "convex" ? "Administrator access required" : "Member Tools"}
+              {backend === "convex"
+                ? "Administrator access required"
+                : "Member Tools"}
             </CardTitle>
             <CardDescription>
               This account does not have administrator access.
@@ -142,18 +151,9 @@ const Home: NextPage = () => {
     return (
       <>
         <Head>
-          <title>BBPC Admin - Convex Migration</title>
+          <title>BBPC Admin - Dashboard</title>
         </Head>
-        <Card className="mx-auto mt-12 max-w-2xl">
-          <CardHeader>
-            <CardTitle>Convex administrator verified</CardTitle>
-            <CardDescription>
-              The Clerk identity is linked to the canonical BBPC administrator
-              account. Admin data routes remain closed until each Convex
-              adapter passes its authorization and behavior gates.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <ConvexAdminDashboard userName={user.name} />
       </>
     );
   }
@@ -168,15 +168,13 @@ const Home: NextPage = () => {
       <div className="flex flex-col gap-8">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Welcome back, {user.name}.
-          </p>
+          <p className="text-muted-foreground">Welcome back, {user.name}.</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link href="/episode">
-            <Card className="hover:bg-muted/50 transition cursor-pointer">
+            <Card className="cursor-pointer transition hover:bg-muted/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Episodes
@@ -184,7 +182,9 @@ const Home: NextPage = () => {
                 <Mic2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.counts.episodes ?? 0}</div>
+                <div className="text-2xl font-bold">
+                  {stats?.counts.episodes ?? 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   View and edit podcast episodes
                 </p>
@@ -193,15 +193,15 @@ const Home: NextPage = () => {
           </Link>
 
           <Link href="/user">
-            <Card className="hover:bg-muted/50 transition cursor-pointer">
+            <Card className="cursor-pointer transition hover:bg-muted/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Users
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.counts.users ?? 0}</div>
+                <div className="text-2xl font-bold">
+                  {stats?.counts.users ?? 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Manage admin users
                 </p>
@@ -217,7 +217,9 @@ const Home: NextPage = () => {
               <Film className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.counts.movies ?? 0}</div>
+              <div className="text-2xl font-bold">
+                {stats?.counts.movies ?? 0}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Movies in the database
               </p>
@@ -232,15 +234,17 @@ const Home: NextPage = () => {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.counts.reviews ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                Reviews submitted
-              </p>
+              <div className="text-2xl font-bold">
+                {stats?.counts.reviews ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground">Reviews submitted</p>
             </CardContent>
           </Card>
         </div>
 
-        {guessesStats && <GuessesGraph data={guessesStats} className="col-span-7" />}
+        {guessesStats && (
+          <GuessesGraph data={guessesStats} className="col-span-7" />
+        )}
 
         {/* Latest Episode */}
         <Card className="col-span-4">
@@ -254,29 +258,40 @@ const Home: NextPage = () => {
             {stats?.latestEpisode ? (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-lg">Episode {stats.latestEpisode.number}: {stats.latestEpisode.title}</span>
+                  <span className="text-lg font-semibold">
+                    Episode {stats.latestEpisode.number}:{" "}
+                    {stats.latestEpisode.title}
+                  </span>
                   {stats.latestEpisode.date && (
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       {formatPlainDate(stats.latestEpisode.date)}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {stats.latestEpisode.description || "No description available."}
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {stats.latestEpisode.description ||
+                    "No description available."}
                 </p>
-                <div className="flex gap-2 justify-around">
+                <div className="flex justify-around gap-2">
                   {stats.latestEpisode.assignments?.map((assignment) => (
-                    <AssignmentCard key={assignment.id} assignment={assignment} />
+                    <AssignmentCard
+                      key={assignment.id}
+                      assignment={assignment}
+                    />
                   ))}
                 </div>
-                <div className="flex gap-2 justify-around">
+                <div className="flex justify-around gap-2">
                   {stats.latestEpisode.extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
                 <div className="mt-2">
-                  <Link href={getAdminEpisodePath(stats.latestEpisode.slug ?? stats.latestEpisode.id)}>
+                  <Link
+                    href={getAdminEpisodePath(
+                      stats.latestEpisode.slug ?? stats.latestEpisode.id
+                    )}
+                  >
                     <Button variant="outline" size="sm">
                       View Details
                     </Button>
@@ -284,7 +299,9 @@ const Home: NextPage = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No episodes found.</p>
+              <p className="text-sm text-muted-foreground">
+                No episodes found.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -293,37 +310,46 @@ const Home: NextPage = () => {
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Upcoming Episode</CardTitle>
-            <CardDescription>
-              The next scheduled episode.
-            </CardDescription>
+            <CardDescription>The next scheduled episode.</CardDescription>
           </CardHeader>
           <CardContent>
             {stats?.upcomingEpisode ? (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-lg">Episode {stats.upcomingEpisode.number}: {stats.upcomingEpisode.title}</span>
+                  <span className="text-lg font-semibold">
+                    Episode {stats.upcomingEpisode.number}:{" "}
+                    {stats.upcomingEpisode.title}
+                  </span>
                   {stats.upcomingEpisode.date && (
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       {formatPlainDate(stats.upcomingEpisode.date)}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {stats.upcomingEpisode.description || "No description available."}
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {stats.upcomingEpisode.description ||
+                    "No description available."}
                 </p>
-                <div className="flex gap-2 justify-around">
+                <div className="flex justify-around gap-2">
                   {stats.upcomingEpisode.assignments?.map((assignment) => (
-                    <AssignmentCard key={assignment.id} assignment={assignment} />
+                    <AssignmentCard
+                      key={assignment.id}
+                      assignment={assignment}
+                    />
                   ))}
                 </div>
-                <div className="flex gap-2 justify-around">
+                <div className="flex justify-around gap-2">
                   {stats.upcomingEpisode.extras?.map((extra) => (
                     <ExtraCard key={extra.id} extra={extra} />
                   ))}
                 </div>
                 <div className="mt-2">
-                  <Link href={getAdminEpisodePath(stats.upcomingEpisode.slug ?? stats.upcomingEpisode.id)}>
+                  <Link
+                    href={getAdminEpisodePath(
+                      stats.upcomingEpisode.slug ?? stats.upcomingEpisode.id
+                    )}
+                  >
                     <Button variant="outline" size="sm">
                       View Details
                     </Button>
@@ -331,7 +357,9 @@ const Home: NextPage = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No upcoming episodes found.</p>
+              <p className="text-sm text-muted-foreground">
+                No upcoming episodes found.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -345,18 +373,26 @@ const Home: NextPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 flex gap-2">
+            <div className="flex gap-2 space-y-4">
               {stats?.latestSyllabus.map((item) => (
-                <div key={item.id} className="flex-1 flex flex-col items-center justify-between">
+                <div
+                  key={item.id}
+                  className="flex flex-1 flex-col items-center justify-between"
+                >
                   <span className="text-xs text-muted-foreground">
                     {formatInstantLocal(item.createdAt)}
                   </span>
                   <MovieCard movie={item.movie} showTitle={false} />
-                  <span className="text-xs text-muted-foreground">{item.user.name || "Unknown User"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {item.user.name || "Unknown User"}
+                  </span>
                 </div>
               ))}
-              {(!stats?.latestSyllabus || stats.latestSyllabus.length === 0) && (
-                <p className="text-sm text-muted-foreground">No syllabus items found.</p>
+              {(!stats?.latestSyllabus ||
+                stats.latestSyllabus.length === 0) && (
+                <p className="text-sm text-muted-foreground">
+                  No syllabus items found.
+                </p>
               )}
             </div>
           </CardContent>
@@ -364,6 +400,6 @@ const Home: NextPage = () => {
       </div>
     </>
   );
-}
+};
 
 export default Home;

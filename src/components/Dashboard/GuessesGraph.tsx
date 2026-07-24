@@ -23,6 +23,7 @@ interface GuessesData {
 interface GuessesGraphProps {
 	data: GuessesData[];
 	className?: string;
+	interactive?: boolean;
 }
 
 interface CustomTooltipProps {
@@ -30,14 +31,13 @@ interface CustomTooltipProps {
 	payload?: {
 		payload: GuessesData;
 	}[];
-	label?: string;
 }
 
 interface BarClickData {
 	payload?: GuessesData;
 }
 
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 	if (active && payload && payload.length) {
 		const data = payload[0]?.payload as GuessesData;
 		return (
@@ -51,7 +51,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 	return null;
 };
 
-const GuessesGraph: React.FC<GuessesGraphProps> = ({ data, className }) => {
+const GuessesGraph: React.FC<GuessesGraphProps> = ({
+	data,
+	className,
+	interactive = true
+}) => {
 	const router = useRouter();
 
 	return (
@@ -83,15 +87,19 @@ const GuessesGraph: React.FC<GuessesGraphProps> = ({ data, className }) => {
 								dataKey="guesses"
 								fill="currentColor"
 								radius={[4, 4, 0, 0]}
-								className="fill-primary cursor-pointer"
-								onClick={(data) => {
-									const point = (data as BarClickData | undefined)?.payload;
-									if (!point) {
-										return;
-									}
+								className={`fill-primary${interactive ? ' cursor-pointer' : ''}`}
+								onClick={
+									interactive
+										? (data) => {
+												const point = (data as BarClickData | undefined)?.payload;
+												if (!point) {
+													return;
+												}
 
-									router.push(getAdminEpisodePath(point.slug ?? point.id));
-								}}
+												router.push(getAdminEpisodePath(point.slug ?? point.id));
+											}
+										: undefined
+								}
 							/>
 						</BarChart>
 					</ResponsiveContainer>
