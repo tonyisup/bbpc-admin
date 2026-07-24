@@ -3,7 +3,14 @@ import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const handleClerkRequest = clerkMiddleware();
-const convexReadyPages = new Set(["/", "/about", "/rating", "/role", "/user"]);
+const convexReadyPages = new Set([
+  "/",
+  "/about",
+  "/rating",
+  "/role",
+  "/season",
+  "/user",
+]);
 
 export default function middleware(
   request: NextRequest,

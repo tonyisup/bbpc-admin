@@ -113,4 +113,21 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(ratings).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(ratingsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits only the season catalog, not season detail tools", async () => {
+    const [middleware, route, seasons, seasonsComponent] = await Promise.all([
+      read("src/middleware.ts"),
+      read("src/pages/season/index.tsx"),
+      read("src/convex/seasons.ts"),
+      read("src/components/seasons/ConvexSeasonsPage.tsx"),
+    ]);
+
+    expect(middleware).toMatch(/"\/season"/u);
+    expect(middleware).not.toMatch(/\/season\/\*/u);
+    expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
+    expect(seasons).toMatch(/games\/seasons:listPage/u);
+    expect(seasons).toMatch(/games\/config:listGameTypes/u);
+    expect(seasons).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(seasonsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
