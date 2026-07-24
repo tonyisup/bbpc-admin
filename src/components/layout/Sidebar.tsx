@@ -30,7 +30,7 @@ import { Separator } from "../ui/separator"
 import { useBbpcAdminAuth } from "../auth/BbpcAdminAuthContext"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
-const convexReadyRoutes = new Set(["/", "/about", "/game", "/rating", "/role", "/season", "/syllabus", "/user"])
+const convexReadyRoutes = new Set(["/", "/about", "/game", "/rating", "/role", "/season", "/syllabus", "/tag", "/user"])
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()

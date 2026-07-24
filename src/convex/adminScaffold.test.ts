@@ -169,4 +169,24 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(syllabus).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(syllabusComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
+
+  test("admits tags and paginated votes with explicit award evidence", async () => {
+    const [middleware, route, tags, tagsComponent] = await Promise.all([
+      read("src/middleware.ts"),
+      read("src/pages/tag/index.tsx"),
+      read("src/convex/tags.ts"),
+      read("src/components/Tag/ConvexTagsPage.tsx"),
+    ]);
+
+    expect(middleware).toMatch(/"\/tag"/u);
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(tags).toMatch(/games\/tags:listCatalog/u);
+    expect(tags).toMatch(/games\/tags:listVotesPage/u);
+    expect(tags).toMatch(/games\/tags:applyVotePoints/u);
+    expect(tags).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(tagsComponent).toMatch(/legacyAwardTombstone/u);
+    expect(tagsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });

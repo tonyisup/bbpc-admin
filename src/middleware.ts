@@ -11,6 +11,7 @@ const convexReadyPages = new Set([
   "/role",
   "/season",
   "/syllabus",
+  "/tag",
   "/user",
 ]);
 
