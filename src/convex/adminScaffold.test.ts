@@ -97,4 +97,20 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(usersComponent).not.toMatch(/trpc|@prisma|next-auth/u);
     expect(usersComponent).not.toMatch(/deleteConvexAdminUser/u);
   });
+
+  test("admits rating catalog writes only through Convex", async () => {
+    const [route, ratings, ratingsComponent] = await Promise.all([
+      read("src/pages/rating/index.tsx"),
+      read("src/convex/ratings.ts"),
+      read("src/components/Rating/ConvexRatingsPage.tsx"),
+    ]);
+
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(ratings).toMatch(/ratings\/admin:list/u);
+    expect(ratings).toMatch(/ratings\/admin:removeIfUnreferenced/u);
+    expect(ratings).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(ratingsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+  });
 });
