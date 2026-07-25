@@ -37,6 +37,7 @@ import {
 } from "@/convex/episodeDetails";
 import { getConvexDomainErrorCode } from "@/convex/identity";
 import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
+import { getAdminAssignmentPath } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -385,15 +386,27 @@ function Relationships({
                     {assignment.playable ? "Playable" : "Not playable"}
                   </span>
                 </div>
-                <Link
-                  className="mt-3 block font-bold hover:text-primary"
-                  href={`/movie/${assignment.movie.id}`}
-                >
-                  {assignment.movie.title} ({assignment.movie.year})
-                </Link>
+                {assignment.slug === null ? (
+                  <p className="mt-3 font-bold">
+                    {assignment.movie.title} ({assignment.movie.year})
+                  </p>
+                ) : (
+                  <Link
+                    className="mt-3 block font-bold hover:text-primary"
+                    href={getAdminAssignmentPath(assignment.slug)}
+                  >
+                    {assignment.movie.title} ({assignment.movie.year})
+                  </Link>
+                )}
                 <p className="text-sm text-muted-foreground">
                   {assignment.user.name ?? "Unnamed user"}
                 </p>
+                <Link
+                  className="mt-2 inline-block text-xs text-muted-foreground hover:text-primary"
+                  href={`/movie/${assignment.movie.id}`}
+                >
+                  View movie
+                </Link>
               </div>
             ))
           )}

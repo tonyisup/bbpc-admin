@@ -256,6 +256,34 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     );
   });
 
+  test("admits the bounded assignment relationship workbench", async () => {
+    const [middleware, route, details, detailComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/assignment/[slug].tsx"),
+        read("src/convex/assignmentDetails.ts"),
+        read(
+          "src/components/Assignment/ConvexAssignmentDetailPage.tsx"
+        ),
+      ]);
+
+    expect(middleware).toMatch(
+      /\^\\\/assignment\\\/\[\^\/\]\+\$/u
+    );
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*assignmentId: null/u
+    );
+    expect(details).toMatch(/assignments\/admin:getWorkbench/u);
+    expect(details).toMatch(/assignments\/admin:listAudioMessages/u);
+    expect(details).toMatch(/reviews\/admin:createForAssignment/u);
+    expect(details).toMatch(/games\/guesses:create/u);
+    expect(details).toMatch(/games\/gambling:updateStatus/u);
+    expect(details).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(detailComponent).not.toMatch(
+      /trpc|@prisma|next-auth|UploadDropzone/u
+    );
+  });
+
   test("admits bounded movie and show catalogs with safe deletion", async () => {
     const [
       middleware,
