@@ -214,25 +214,46 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(tagsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 
-  test("admits only the bounded episode catalog and safe creation", async () => {
-    const [middleware, route, episodes, episodesComponent] =
+  test("admits bounded episode catalog and core workbench", async () => {
+    const [
+      middleware,
+      route,
+      detailRoute,
+      episodes,
+      details,
+      episodesComponent,
+      detailComponent,
+    ] =
       await Promise.all([
         read("src/middleware.ts"),
         read("src/pages/episode/index.tsx"),
+        read("src/pages/episode/[slug].tsx"),
         read("src/convex/episodes.ts"),
+        read("src/convex/episodeDetails.ts"),
         read("src/components/Episode/ConvexEpisodesPage.tsx"),
+        read("src/components/Episode/ConvexEpisodeDetailPage.tsx"),
       ]);
 
     expect(middleware).toMatch(/"\/episode"/u);
-    expect(middleware).not.toMatch(/\/episode\/\*/u);
+    expect(middleware).toMatch(/\^\\\/episode\\\/\[\^\/\]\+\$/u);
     expect(route).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
+    );
+    expect(detailRoute).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*episodeId: null/u
     );
     expect(episodes).toMatch(/episodes\/public:listPage/u);
     expect(episodes).toMatch(/episodes\/admin:createEpisode/u);
     expect(episodes).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(episodes).not.toMatch(/removeEpisode/u);
+    expect(details).toMatch(/episodes\/admin:updateEpisode/u);
+    expect(details).toMatch(/episodes\/admin:addLink/u);
+    expect(details).toMatch(/episodes\/admin:listAudioMessages/u);
+    expect(details).toMatch(/episodes\/admin:removeAudioMessage/u);
     expect(episodesComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+    expect(detailComponent).not.toMatch(
+      /trpc|@prisma|next-auth|UploadDropzone/u
+    );
   });
 
   test("admits bounded movie and show catalogs with safe deletion", async () => {

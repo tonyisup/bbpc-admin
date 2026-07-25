@@ -4,7 +4,63 @@ import { z } from "zod";
 
 import { BBPC_CLIENT_API_VERSION } from "./identity";
 
-const episodeSchema = z.object({
+const episodeMovieSchema = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  year: z.number(),
+  poster: z.string().nullable(),
+  url: z.string(),
+  tmdbId: z.number().nullable(),
+});
+
+const episodeShowSchema = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  year: z.number(),
+  poster: z.string().nullable(),
+  url: z.string(),
+});
+
+const episodeUserSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().nullable(),
+  image: z.string().nullable(),
+});
+
+const episodeAssignmentSchema = z.object({
+  id: z.string().min(1),
+  type: z.string(),
+  playable: z.boolean(),
+  slug: z.string().nullable(),
+  user: episodeUserSchema,
+  movie: episodeMovieSchema,
+});
+
+const episodeExtraSchema = z
+  .object({
+    id: z.string().min(1),
+    review: z.object({
+      id: z.string().min(1),
+      movie: episodeMovieSchema.nullable(),
+      show: episodeShowSchema.nullable(),
+    }),
+  })
+  .superRefine((extra, context) => {
+    if ((extra.review.movie === null) === (extra.review.show === null)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "An episode extra must have exactly one media target.",
+      });
+    }
+  });
+
+const episodeLinkSchema = z.object({
+  id: z.string().min(1),
+  url: z.string().url(),
+  text: z.string(),
+});
+
+export const adminEpisodeSummarySchema = z.object({
   id: z.string().min(1),
   number: z.number(),
   title: z.string(),
@@ -13,13 +69,13 @@ const episodeSchema = z.object({
   description: z.string().nullable(),
   status: z.string().nullable(),
   slug: z.string().nullable(),
-  assignments: z.array(z.unknown()),
-  extras: z.array(z.unknown()),
-  links: z.array(z.unknown()),
+  assignments: z.array(episodeAssignmentSchema),
+  extras: z.array(episodeExtraSchema),
+  links: z.array(episodeLinkSchema),
 });
 
 const episodesPageSchema = z.object({
-  page: z.array(episodeSchema),
+  page: z.array(adminEpisodeSummarySchema),
   isDone: z.boolean(),
   continueCursor: z.string(),
   splitCursor: z.string().nullable().optional(),
@@ -58,7 +114,9 @@ const createEpisodeReference = makeFunctionReference<
 
 export const ADMIN_EPISODES_PAGE_SIZE = 20;
 
-export type ConvexAdminEpisode = z.infer<typeof episodeSchema>;
+export type ConvexAdminEpisode = z.infer<
+  typeof adminEpisodeSummarySchema
+>;
 
 export interface ConvexAdminEpisodesPage {
   episodes: ConvexAdminEpisode[];
@@ -89,7 +147,7 @@ export async function createConvexAdminEpisode(
   client: ConvexReactClient,
   input: { number: number; title: string }
 ): Promise<void> {
-  episodeSchema.parse(
+  adminEpisodeSummarySchema.parse(
     await client.mutation(createEpisodeReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       number: input.number,
@@ -103,6 +161,6 @@ export async function searchConvexAdminEpisodes(
   query: string
 ): Promise<ConvexAdminEpisode[]> {
   return z
-    .array(episodeSchema)
+    .array(adminEpisodeSummarySchema)
     .parse(await client.query(searchEpisodesReference, { query, limit: 10 }));
 }

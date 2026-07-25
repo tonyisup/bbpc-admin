@@ -1,6 +1,7 @@
 import { useConvex } from "convex/react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -241,8 +242,8 @@ export function ConvexEpisodesPage() {
         </div>
 
         <div className="rounded-md border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Episode detail editing and deletion remain unavailable in Convex mode
-          until their relationship-safe tools are migrated.
+          Episode workbenches are available for canonical slugs. Assignment
+          and extra relationship editing remains in dedicated routes.
         </div>
 
         {loadFailed ? (
@@ -290,7 +291,16 @@ export function ConvexEpisodesPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">{episode.title}</span>
+                        {episode.slug === null ? (
+                          <span className="font-medium">{episode.title}</span>
+                        ) : (
+                          <Link
+                            className="font-medium hover:text-primary"
+                            href={`/episode/${episode.slug}`}
+                          >
+                            {episode.title}
+                          </Link>
+                        )}
                         <code className="text-xs text-muted-foreground">
                           {episode.slug ?? "No slug"}
                         </code>
