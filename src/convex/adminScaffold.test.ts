@@ -114,21 +114,40 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(ratingsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 
-  test("admits only the season catalog, not season detail tools", async () => {
-    const [middleware, route, seasons, seasonsComponent] = await Promise.all([
+  test("admits bounded season catalog and detail tools", async () => {
+    const [
+      middleware,
+      route,
+      detailRoute,
+      seasons,
+      details,
+      seasonsComponent,
+      detailComponent,
+    ] = await Promise.all([
       read("src/middleware.ts"),
       read("src/pages/season/index.tsx"),
+      read("src/pages/season/[id].tsx"),
       read("src/convex/seasons.ts"),
+      read("src/convex/seasonDetails.ts"),
       read("src/components/seasons/ConvexSeasonsPage.tsx"),
+      read("src/components/seasons/ConvexSeasonDetailPage.tsx"),
     ]);
 
     expect(middleware).toMatch(/"\/season"/u);
-    expect(middleware).not.toMatch(/\/season\/\*/u);
+    expect(middleware).toMatch(/movie\|season\|show/u);
     expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
+    expect(detailRoute).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"/u
+    );
     expect(seasons).toMatch(/games\/seasons:listPage/u);
     expect(seasons).toMatch(/games\/config:listGameTypes/u);
     expect(seasons).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(details).toMatch(/games\/seasons:getPerformance/u);
+    expect(details).toMatch(/games\/points:listForSeasonPage/u);
+    expect(details).toMatch(/games\/guesses:listForSeasonPage/u);
+    expect(details).toMatch(/games\/gambling:listForSeasonPage/u);
     expect(seasonsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+    expect(detailComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 
   test("admits the complete game configuration catalog through Convex", async () => {
@@ -267,7 +286,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(middleware).toMatch(
-      /\^\\\/\(\?:movie\|show\)\\\/\[\^\/\]\+\$/u
+      /\^\\\/\(\?:movie\|season\|show\)\\\/\[\^\/\]\+\$/u
     );
     expect(movieRoute).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u

@@ -16,7 +16,7 @@ const boundedCountSchema = z.object({
   isExact: z.boolean(),
 });
 
-const seasonSchema = z.object({
+export const adminSeasonSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
   description: z.string().nullable(),
@@ -32,7 +32,7 @@ const seasonSchema = z.object({
 });
 
 const seasonsPageSchema = z.object({
-  page: z.array(seasonSchema),
+  page: z.array(adminSeasonSchema),
   isDone: z.boolean(),
   continueCursor: z.string(),
   splitCursor: z.string().nullable().optional(),
@@ -99,7 +99,7 @@ const deleteSeasonReference = makeFunctionReference<
 export const ADMIN_SEASONS_PAGE_SIZE = 30;
 
 export type ConvexAdminGameType = z.infer<typeof gameTypeSchema>;
-export type ConvexAdminSeason = z.infer<typeof seasonSchema>;
+export type ConvexAdminSeason = z.infer<typeof adminSeasonSchema>;
 export interface ConvexAdminSeasonInput {
   title: string;
   description: string | null;
@@ -144,7 +144,7 @@ export async function createConvexAdminSeason(
   client: ConvexReactClient,
   input: ConvexAdminSeasonInput
 ): Promise<void> {
-  seasonSchema.parse(
+  adminSeasonSchema.parse(
     await client.mutation(createSeasonReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       title: input.title,
@@ -161,7 +161,7 @@ export async function updateConvexAdminSeason(
   id: string,
   input: ConvexAdminSeasonInput
 ): Promise<void> {
-  seasonSchema.parse(
+  adminSeasonSchema.parse(
     await client.mutation(updateSeasonReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       id,

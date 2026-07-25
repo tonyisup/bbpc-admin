@@ -48,7 +48,7 @@ export default function middleware(
   const isConvexReadyPage =
     convexReadyPages.has(pathname) ||
     /^\/lists\/[^/]+$/u.test(pathname) ||
-    /^\/(?:movie|show)\/[^/]+$/u.test(pathname);
+    /^\/(?:movie|season|show)\/[^/]+$/u.test(pathname);
   if (!isConvexReadyPage && !pathname.startsWith("/__clerk/")) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/";

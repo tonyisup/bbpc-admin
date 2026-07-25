@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -60,7 +61,7 @@ import {
 } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 
-function mutationFailureMessage(error: unknown): string {
+export function seasonMutationFailureMessage(error: unknown): string {
   switch (getConvexDomainErrorCode(error)) {
     case "CONFLICT":
       return "That season is referenced by game activity or conflicts with existing data.";
@@ -80,7 +81,7 @@ function nullableText(value: string): string | null {
   return trimmed.length === 0 ? null : trimmed;
 }
 
-function SeasonEditor({
+export function ConvexSeasonEditor({
   editingSeason,
   gameTypes,
   isSaving,
@@ -334,7 +335,7 @@ export function ConvexSeasonsPage() {
         refresh();
       })
       .catch((error: unknown) => {
-        toast.error(mutationFailureMessage(error));
+      toast.error(seasonMutationFailureMessage(error));
       })
       .finally(() => {
         setPendingAction(null);
@@ -349,7 +350,7 @@ export function ConvexSeasonsPage() {
         refresh();
       })
       .catch((error: unknown) => {
-        toast.error(mutationFailureMessage(error));
+        toast.error(seasonMutationFailureMessage(error));
       })
       .finally(() => {
         setPendingAction(null);
@@ -362,7 +363,7 @@ export function ConvexSeasonsPage() {
         <title>Seasons - BBPC Admin</title>
       </Head>
       {editingSeason !== undefined && gameTypes !== null && (
-        <SeasonEditor
+        <ConvexSeasonEditor
           editingSeason={editingSeason}
           gameTypes={gameTypes}
           isSaving={pendingAction !== null}
@@ -522,6 +523,9 @@ export function ConvexSeasonsPage() {
                       </div>
                     </div>
                     <div className="mt-auto flex justify-end gap-2">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/season/${season.id}`}>View details</Link>
+                      </Button>
                       <Button
                         aria-label={`Edit ${season.title}`}
                         disabled={pendingAction !== null}
