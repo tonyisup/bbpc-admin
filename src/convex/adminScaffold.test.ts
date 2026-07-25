@@ -50,6 +50,9 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(middleware).toMatch(/const convexReadyPages = new Set/u);
     expect(middleware).toMatch(/"\/role"/u);
     expect(middleware).toMatch(/"\/user"/u);
+    expect(middleware).toMatch(/pathname\.startsWith\("\/api\/auth"\)/u);
+    expect(middleware).toMatch(/pathname\.startsWith\("\/api\/trpc"\)/u);
+    expect(middleware).toMatch(/status: 404/u);
     expect(middleware).toMatch(/status: 503/u);
     expect(middleware).toMatch(/NextResponse\.redirect/u);
     expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);

@@ -39,6 +39,15 @@ export default function middleware(
   }
 
   const { pathname } = request.nextUrl;
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/trpc")
+  ) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
   if (pathname.startsWith("/api/")) {
     return NextResponse.json(
       { error: "This admin API route has not migrated to Convex." },
