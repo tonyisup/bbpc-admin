@@ -26,6 +26,9 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(app).toMatch(
       /ClerkProvider[\s\S]*ConvexProviderWithClerk[\s\S]*ClerkBbpcAdminAuthProvider/u
     );
+    expect(app).toMatch(
+      /ClerkBbpcAdminAuthProvider>\s*<SharedApp>/u
+    );
     expect(identity).toMatch(/identity\/profile:me/u);
     expect(identity).toMatch(/identity\/linking:linkOrCreateMe/u);
     expect(authContext).toMatch(

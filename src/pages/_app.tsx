@@ -63,11 +63,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <ClerkProvider publishableKey={publishableKey}>
       <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
         <ClerkBbpcAdminAuthProvider>
-          <SessionProvider session={null}>
-            <SharedApp>
-              <Component {...pageProps} />
-            </SharedApp>
-          </SessionProvider>
+          <SharedApp>
+            <Component {...pageProps} />
+          </SharedApp>
         </ClerkBbpcAdminAuthProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
