@@ -134,7 +134,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(middleware).toMatch(/"\/season"/u);
-    expect(middleware).toMatch(/movie\|season\|show/u);
+    expect(middleware).toMatch(/movie\|point\|season\|show/u);
     expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
     expect(detailRoute).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"/u
@@ -284,6 +284,35 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     );
   });
 
+  test("admits the bounded point relationship workbench", async () => {
+    const [middleware, route, details, detailComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/point/[id].tsx"),
+        read("src/convex/pointDetails.ts"),
+        read("src/components/Point/ConvexPointDetailPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(
+      /\^\\\/\(\?:movie\|point\|season\|show\)\\\/\[\^\/\]\+\$/u
+    );
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*pointId: null/u
+    );
+    expect(details).toMatch(/games\/points:getWorkbench/u);
+    expect(details).toMatch(
+      /games\/points:searchAssignmentsForLink/u
+    );
+    expect(details).toMatch(/games\/points:update/u);
+    expect(details).toMatch(/games\/points:remove/u);
+    expect(details).toMatch(/expectedImpact/u);
+    expect(details).toMatch(/expectedLinkId/u);
+    expect(details).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(detailComponent).not.toMatch(
+      /trpc|@prisma|next-auth|UploadDropzone/u
+    );
+  });
+
   test("admits bounded movie and show catalogs with safe deletion", async () => {
     const [
       middleware,
@@ -335,7 +364,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(middleware).toMatch(
-      /\^\\\/\(\?:movie\|season\|show\)\\\/\[\^\/\]\+\$/u
+      /\^\\\/\(\?:movie\|point\|season\|show\)\\\/\[\^\/\]\+\$/u
     );
     expect(movieRoute).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u
