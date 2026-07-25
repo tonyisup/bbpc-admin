@@ -72,4 +72,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
   );
 };
 
-export default trpc.withTRPC(MyApp);
+const App =
+  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex"
+    ? MyApp
+    : trpc.withTRPC(MyApp);
+
+export default App;

@@ -29,6 +29,10 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(app).toMatch(
       /ClerkBbpcAdminAuthProvider>\s*<SharedApp>/u
     );
+    expect(app).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"\s*\?\s*MyApp\s*:\s*trpc\.withTRPC\(MyApp\)/u
+    );
+    expect(app).not.toMatch(/export default trpc\.withTRPC/u);
     expect(identity).toMatch(/identity\/profile:me/u);
     expect(identity).toMatch(/identity\/linking:linkOrCreateMe/u);
     expect(authContext).toMatch(
@@ -57,6 +61,14 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(middleware).toMatch(/NextResponse\.redirect/u);
     expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);
     expect(home).toMatch(/<ConvexAdminDashboard userName=\{user\.name\}/u);
+    expect(home).toMatch(
+      /return backend === "convex" \? <ConvexHome \/> : <SqlHome \/>/u
+    );
+    const convexHome = home.slice(
+      home.indexOf("const ConvexHome"),
+      home.indexOf("const Home"),
+    );
+    expect(convexHome).not.toMatch(/trpc|next-auth|@prisma/u);
     expect(dashboard).toMatch(/admin\/dashboard:overview/u);
     expect(dashboard).toMatch(/dashboardOverviewSchema\.parse/u);
     expect(dashboardComponent).toMatch(
