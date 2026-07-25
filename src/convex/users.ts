@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { BBPC_CLIENT_API_VERSION } from "./identity";
 
-const roleSchema = z.object({
+export const adminRoleSchema = z.object({
   id: z.string().min(1),
   legacyId: z.number().nullable(),
   name: z.string(),
@@ -13,14 +13,14 @@ const roleSchema = z.object({
   permissions: z.array(z.string()),
 });
 
-const roleMembershipSchema = z.object({
+export const adminRoleMembershipSchema = z.object({
   id: z.string().min(1),
   assignedAt: z.number().nullable(),
   assignedBy: z.string().min(1).nullable(),
-  role: roleSchema,
+  role: adminRoleSchema,
 });
 
-const adminUserSchema = z.object({
+export const adminUserSchema = z.object({
   id: z.string().min(1),
   legacyId: z.string().nullable(),
   name: z.string().nullable(),
@@ -30,7 +30,7 @@ const adminUserSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   isAdmin: z.boolean(),
-  roles: z.array(roleMembershipSchema),
+  roles: z.array(adminRoleMembershipSchema),
   nextSyllabus: z
     .object({
       id: z.string().min(1),
@@ -198,7 +198,7 @@ export async function assignConvexAdminUserRole(
   userId: string,
   roleId: string
 ): Promise<void> {
-  roleMembershipSchema.parse(
+  adminRoleMembershipSchema.parse(
     await client.mutation(assignRoleReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       userId,

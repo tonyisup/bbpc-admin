@@ -98,6 +98,35 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(usersComponent).not.toMatch(/deleteConvexAdminUser/u);
   });
 
+  test("admits bounded exact user activity and relationship tools", async () => {
+    const [middleware, route, details, detailComponent] =
+      await Promise.all([
+        read("src/middleware.ts"),
+        read("src/pages/user/[id].tsx"),
+        read("src/convex/userDetails.ts"),
+        read("src/components/User/ConvexUserDetailPage.tsx"),
+      ]);
+
+    expect(middleware).toMatch(
+      /\^\\\/\(\?:movie\|point\|season\|show\|user\)\\\/\[\^\/\]\+\$/u
+    );
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*userId: null/u
+    );
+    expect(details).toMatch(/identity\/admin:getUser/u);
+    expect(details).toMatch(/games\/points:listForUserPage/u);
+    expect(details).toMatch(/games\/guesses:listForUserPage/u);
+    expect(details).toMatch(/games\/gambling:listForUserPage/u);
+    expect(details).toMatch(/games\/tags:listVotesForUserPage/u);
+    expect(details).toMatch(/syllabus\/admin:reorderPendingForUser/u);
+    expect(details).toMatch(/expectedStatus/u);
+    expect(details).toMatch(/expectedOrder/u);
+    expect(details).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(detailComponent).not.toMatch(
+      /trpc|@prisma|next-auth|UploadDropzone/u
+    );
+  });
+
   test("admits rating catalog writes only through Convex", async () => {
     const [route, ratings, ratingsComponent] = await Promise.all([
       read("src/pages/rating/index.tsx"),
@@ -134,7 +163,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(middleware).toMatch(/"\/season"/u);
-    expect(middleware).toMatch(/movie\|point\|season\|show/u);
+    expect(middleware).toMatch(/movie\|point\|season\|show\|user/u);
     expect(route).toMatch(/NEXT_PUBLIC_BBPC_BACKEND === "convex"/u);
     expect(detailRoute).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"/u
@@ -294,7 +323,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       ]);
 
     expect(middleware).toMatch(
-      /\^\\\/\(\?:movie\|point\|season\|show\)\\\/\[\^\/\]\+\$/u
+      /\^\\\/\(\?:movie\|point\|season\|show\|user\)\\\/\[\^\/\]\+\$/u
     );
     expect(route).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*pointId: null/u
@@ -364,7 +393,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(middleware).toMatch(
-      /\^\\\/\(\?:movie\|point\|season\|show\)\\\/\[\^\/\]\+\$/u
+      /\^\\\/\(\?:movie\|point\|season\|show\|user\)\\\/\[\^\/\]\+\$/u
     );
     expect(movieRoute).toMatch(
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*return \{ props: \{\} \}[\s\S]*Promise\.all/u

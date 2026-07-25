@@ -35,7 +35,7 @@ const gamePointTypeSchema = z.object({
   gameType: gameTypeSchema,
 });
 
-const pointSchema = z.object({
+export const adminPointSchema = z.object({
   id: z.string().min(1),
   user: pointUserSchema,
   season: seasonSummarySchema,
@@ -102,7 +102,7 @@ const episodeSchema = z.object({
   slug: z.string().nullable(),
 });
 
-const guessSchema = z.object({
+export const adminGuessSchema = z.object({
   id: z.string().min(1),
   createdAt: z.number(),
   user: pointUserSchema,
@@ -118,7 +118,7 @@ const guessSchema = z.object({
     review: reviewCoreSchema,
   }),
   season: seasonSummarySchema,
-  point: pointSchema.nullable(),
+  point: adminPointSchema.nullable(),
 });
 
 const assignmentSchema = z.object({
@@ -141,7 +141,7 @@ const gamblingTypeSchema = z.object({
   createdAt: z.number(),
 });
 
-const gamblingEntrySchema = z.object({
+export const adminGamblingEntrySchema = z.object({
   id: z.string().min(1),
   points: z.number(),
   createdAt: z.number(),
@@ -152,7 +152,7 @@ const gamblingEntrySchema = z.object({
   gamblingType: gamblingTypeSchema,
   targetUser: pointUserSchema.nullable(),
   season: seasonSummarySchema.nullable(),
-  awardPoint: pointSchema.nullable(),
+  awardPoint: adminPointSchema.nullable(),
 });
 
 function pageSchema<T extends z.ZodTypeAny>(itemSchema: T) {
@@ -245,10 +245,10 @@ export const ADMIN_SEASON_ACTIVITY_PAGE_SIZE = 30;
 export type ConvexAdminSeasonPerformance = z.infer<
   typeof performanceSchema
 >;
-export type ConvexAdminSeasonPoint = z.infer<typeof pointSchema>;
-export type ConvexAdminSeasonGuess = z.infer<typeof guessSchema>;
+export type ConvexAdminSeasonPoint = z.infer<typeof adminPointSchema>;
+export type ConvexAdminSeasonGuess = z.infer<typeof adminGuessSchema>;
 export type ConvexAdminSeasonGamblingEntry = z.infer<
-  typeof gamblingEntrySchema
+  typeof adminGamblingEntrySchema
 >;
 
 export interface ConvexAdminSeasonActivityPage<T> {
@@ -316,7 +316,7 @@ export async function loadConvexAdminSeasonPointsPage(
   const result = await loadSeasonPage(
     client,
     listPointsReference,
-    pointSchema,
+    adminPointSchema,
     seasonId,
     cursor
   );
@@ -334,7 +334,7 @@ export async function loadConvexAdminSeasonGuessesPage(
   const result = await loadSeasonPage(
     client,
     listGuessesReference,
-    guessSchema,
+    adminGuessSchema,
     seasonId,
     cursor
   );
@@ -354,7 +354,7 @@ export async function loadConvexAdminSeasonGamblingPage(
   const result = await loadSeasonPage(
     client,
     listGamblingReference,
-    gamblingEntrySchema,
+    adminGamblingEntrySchema,
     seasonId,
     cursor
   );

@@ -50,7 +50,7 @@ export default function middleware(
     /^\/lists\/[^/]+$/u.test(pathname) ||
     /^\/assignment\/[^/]+$/u.test(pathname) ||
     /^\/episode\/[^/]+$/u.test(pathname) ||
-    /^\/(?:movie|point|season|show)\/[^/]+$/u.test(pathname);
+    /^\/(?:movie|point|season|show|user)\/[^/]+$/u.test(pathname);
   if (!isConvexReadyPage && !pathname.startsWith("/__clerk/")) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/";

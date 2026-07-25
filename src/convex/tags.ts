@@ -26,7 +26,7 @@ const tagVoteAwardSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("legacyAwardTombstone") }),
 ]);
 
-const tagVoteSchema = z.object({
+export const adminTagVoteSchema = z.object({
   id: z.string().min(1),
   tag: z.string(),
   tmdbId: z.number(),
@@ -37,7 +37,7 @@ const tagVoteSchema = z.object({
 });
 
 const tagVotesPageSchema = z.object({
-  page: z.array(tagVoteSchema),
+  page: z.array(adminTagVoteSchema),
   isDone: z.boolean(),
   continueCursor: z.string(),
   splitCursor: z.string().nullable().optional(),
@@ -114,7 +114,7 @@ const deleteVoteReference = makeFunctionReference<
 export const ADMIN_TAG_VOTES_PAGE_SIZE = 50;
 
 export type ConvexAdminTag = z.infer<typeof tagSchema>;
-export type ConvexAdminTagVote = z.infer<typeof tagVoteSchema>;
+export type ConvexAdminTagVote = z.infer<typeof adminTagVoteSchema>;
 
 export interface ConvexAdminTagInput {
   name: string;
@@ -198,7 +198,7 @@ export async function applyConvexAdminTagVotePoints(
   id: string,
   today: string
 ): Promise<void> {
-  tagVoteSchema.parse(
+  adminTagVoteSchema.parse(
     await client.mutation(applyVotePointsReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       id,

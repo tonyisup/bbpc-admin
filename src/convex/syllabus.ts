@@ -27,7 +27,7 @@ const assignmentSchema = z.object({
   }),
 });
 
-const syllabusEntrySchema = z.object({
+export const adminSyllabusEntrySchema = z.object({
   id: z.string().min(1),
   order: z.number(),
   createdAt: z.number(),
@@ -43,7 +43,7 @@ const syllabusEntrySchema = z.object({
 });
 
 const syllabusPageSchema = z.object({
-  page: z.array(syllabusEntrySchema),
+  page: z.array(adminSyllabusEntrySchema),
   isDone: z.boolean(),
   continueCursor: z.string(),
   splitCursor: z.string().nullable().optional(),
@@ -77,7 +77,7 @@ const removeSyllabusReference = makeFunctionReference<
 export const ADMIN_SYLLABUS_PAGE_SIZE = 50;
 
 export type ConvexAdminSyllabusEntry = z.infer<
-  typeof syllabusEntrySchema
+  typeof adminSyllabusEntrySchema
 >;
 
 export interface ConvexAdminSyllabusPage {
