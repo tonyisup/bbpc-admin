@@ -90,12 +90,12 @@ function RankedListCard({
           <CardTitle className="line-clamp-1 pt-2 text-xl">
             {list.title ?? list.type.name}
           </CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <Badge className="text-[10px]" variant="outline">
               {list.type.name}
             </Badge>
             <span>by {list.user.name ?? "Unnamed user"}</span>
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-end justify-between gap-3">

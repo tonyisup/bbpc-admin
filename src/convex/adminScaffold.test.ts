@@ -471,6 +471,12 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(rankedLists).toMatch(/rankings\/items:move/u);
     expect(rankedLists).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(listsComponent).not.toMatch(/trpc|@prisma|next-auth/u);
+    expect(listsComponent).not.toMatch(
+      /<CardDescription className="flex flex-wrap/u
+    );
+    expect(listsComponent).toMatch(
+      /<div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">[\s\S]*?<Badge/u
+    );
     expect(detailComponent).not.toMatch(/trpc|@prisma|next-auth/u);
   });
 
