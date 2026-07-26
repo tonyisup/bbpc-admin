@@ -35,11 +35,11 @@ const domainErrorSchema = z.object({
   ]),
 });
 
-const meReference = makeFunctionReference<
+const administratorMeReference = makeFunctionReference<
   "query",
   Record<string, never>,
   unknown
->("identity/profile:me");
+>("identity/profile:administratorMe");
 
 const linkOrCreateMeReference = makeFunctionReference<
   "mutation",
@@ -82,16 +82,21 @@ export async function resolveConvexIdentity(
   client: ConvexReactClient
 ): Promise<ConvexIdentityProfile> {
   try {
-    return identityProfileSchema.parse(await client.query(meReference, {}));
+    return identityProfileSchema.parse(
+      await client.query(administratorMeReference, {})
+    );
   } catch (error) {
     if (getConvexDomainErrorCode(error) !== "IDENTITY_NOT_LINKED") {
       throw error;
     }
   }
 
-  return identityLinkResultSchema.parse(
+  identityLinkResultSchema.parse(
     await client.mutation(linkOrCreateMeReference, {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
     })
+  );
+  return identityProfileSchema.parse(
+    await client.query(administratorMeReference, {})
   );
 }

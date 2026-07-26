@@ -33,7 +33,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       /NEXT_PUBLIC_BBPC_BACKEND === "convex"\s*\?\s*MyApp\s*:\s*trpc\.withTRPC\(MyApp\)/u
     );
     expect(app).not.toMatch(/export default trpc\.withTRPC/u);
-    expect(identity).toMatch(/identity\/profile:me/u);
+    expect(identity).toMatch(/identity\/profile:administratorMe/u);
     expect(identity).toMatch(/identity\/linking:linkOrCreateMe/u);
     expect(authContext).toMatch(
       /A Clerk subject must never become an application-data ID/u
@@ -114,13 +114,25 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(users).toMatch(/BBPC_CLIENT_API_VERSION/u);
     expect(usersComponent).not.toMatch(/trpc|@prisma|next-auth/u);
     expect(usersComponent).not.toMatch(/deleteConvexAdminUser/u);
+    expect(usersComponent).toMatch(
+      /href=\{`\/user\/\$\{encodeURIComponent\(user\.id\)\}`\}/u
+    );
   });
 
   test("admits bounded exact user activity and relationship tools", async () => {
-    const [middleware, route, details, detailComponent] =
+    const [
+      middleware,
+      route,
+      identity,
+      impersonation,
+      details,
+      detailComponent,
+    ] =
       await Promise.all([
         read("src/middleware.ts"),
         read("src/pages/user/[id].tsx"),
+        read("src/convex/identity.ts"),
+        read("src/convex/impersonation.ts"),
         read("src/convex/userDetails.ts"),
         read("src/components/User/ConvexUserDetailPage.tsx"),
       ]);
@@ -140,6 +152,14 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(details).toMatch(/expectedStatus/u);
     expect(details).toMatch(/expectedOrder/u);
     expect(details).toMatch(/BBPC_CLIENT_API_VERSION/u);
+    expect(identity).toMatch(/identity\/profile:administratorMe/u);
+    expect(impersonation).toMatch(
+      /identity\/impersonation:current[\s\S]*identity\/impersonation:start[\s\S]*identity\/impersonation:revoke/u
+    );
+    expect(detailComponent).toMatch(
+      /Audited impersonation[\s\S]*startConvexImpersonation[\s\S]*revokeConvexImpersonation/u
+    );
+    expect(impersonation).not.toMatch(/trpc|@prisma|next-auth/u);
     expect(detailComponent).not.toMatch(
       /trpc|@prisma|next-auth|UploadDropzone/u
     );

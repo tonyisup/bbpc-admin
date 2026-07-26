@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -606,7 +607,10 @@ export function ConvexUsersPage() {
                       key={user.id}
                     >
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
+                        <Link
+                          className="flex items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          href={`/user/${encodeURIComponent(user.id)}`}
+                        >
                           <Avatar className="h-10 w-10 border shadow-sm">
                             <AvatarImage
                               alt={user.name ?? "User"}
@@ -624,7 +628,7 @@ export function ConvexUsersPage() {
                               {user.email ?? "No email"}
                             </span>
                           </div>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge

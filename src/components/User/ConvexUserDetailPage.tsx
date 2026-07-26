@@ -18,6 +18,7 @@ import {
   Trash2,
   Trophy,
   UserRound,
+  UserRoundCog,
   Vote,
   X,
 } from "lucide-react";
@@ -38,6 +39,12 @@ import {
   loadConvexAdminGameCatalog,
 } from "@/convex/gameConfig";
 import { getConvexDomainErrorCode } from "@/convex/identity";
+import {
+  type ConvexImpersonationSession,
+  loadCurrentConvexImpersonation,
+  revokeConvexImpersonation,
+  startConvexImpersonation,
+} from "@/convex/impersonation";
 import {
   type ConvexAdminRole,
   loadConvexAdminRoles,
@@ -233,6 +240,11 @@ export function ConvexUserDetailPage() {
   const [pointTypeId, setPointTypeId] = useState("none");
   const [wagerPoints, setWagerPoints] = useState("0");
   const [wagerTypeId, setWagerTypeId] = useState("");
+  const [impersonation, setImpersonation] =
+    useState<ConvexImpersonationSession | null>(null);
+  const [impersonationReason, setImpersonationReason] = useState("");
+  const [impersonationDuration, setImpersonationDuration] =
+    useState("15");
 
   const seasonSelector = useMemo<ConvexUserSeasonSelector>(
     () =>
@@ -267,17 +279,20 @@ export function ConvexUserDetailPage() {
         seasonPage,
         nextRoles,
         nextCatalog,
+        nextImpersonation,
       ] = await Promise.all([
         loadConvexUserSyllabus(client, userId),
         loadConvexAdminSeasonsPage(client, null),
         loadConvexAdminRoles(client),
         loadConvexAdminGameCatalog(client),
+        loadCurrentConvexImpersonation(client),
       ]);
       setSyllabus(nextSyllabus);
       setSeasons(seasonPage.seasons);
       setSelectorsIncomplete(!seasonPage.isDone);
       setRoles(nextRoles);
       setCatalog(nextCatalog);
+      setImpersonation(nextImpersonation);
     } catch (loadError) {
       setError(operationMessage(loadError));
     } finally {
@@ -1402,6 +1417,123 @@ export function ConvexUserDetailPage() {
                       </p>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Audited impersonation</CardTitle>
+                  <CardDescription>
+                    Temporarily use member-scoped public features as this
+                    account. Administrator permissions stay attached to your
+                    real account and never transfer to the target.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {impersonation === null ? (
+                    <>
+                      <div className="grid gap-4 md:grid-cols-[1fr_10rem]">
+                        <div className="grid gap-2">
+                          <Label htmlFor="impersonation-reason">
+                            Support reason
+                          </Label>
+                          <Input
+                            id="impersonation-reason"
+                            maxLength={500}
+                            onChange={(event) =>
+                              setImpersonationReason(event.target.value)
+                            }
+                            placeholder="Describe the support task"
+                            value={impersonationReason}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="impersonation-duration">
+                            Duration
+                          </Label>
+                          <select
+                            className="h-10 rounded-md border bg-background px-3 text-sm"
+                            id="impersonation-duration"
+                            onChange={(event) =>
+                              setImpersonationDuration(event.target.value)
+                            }
+                            value={impersonationDuration}
+                          >
+                            <option value="5">5 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">60 minutes</option>
+                          </select>
+                        </div>
+                      </div>
+                      <Button
+                        disabled={
+                          busy !== null ||
+                          user.status !== "active" ||
+                          impersonationReason.trim().length < 10
+                        }
+                        onClick={() => {
+                          const durationMinutes = Number(
+                            impersonationDuration
+                          );
+                          void runMutation(
+                            "impersonation:start",
+                            async () => {
+                              const session =
+                                await startConvexImpersonation(client, {
+                                  targetUserId: user.id,
+                                  reason: impersonationReason,
+                                  durationMinutes,
+                                });
+                              setImpersonation(session);
+                              setImpersonationReason("");
+                            },
+                            "Impersonation started. Open the public app to use member features.",
+                            "base"
+                          );
+                        }}
+                      >
+                        <UserRoundCog className="mr-2 h-4 w-4" />
+                        Impersonate this user
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                      <div>
+                        <p className="font-medium">
+                          Impersonating{" "}
+                          {impersonation.targetName ?? "unnamed user"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Ends{" "}
+                          {formatInstantLocal(
+                            new Date(impersonation.endsAt)
+                          )}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {impersonation.reason}
+                        </p>
+                      </div>
+                      <Button
+                        disabled={busy !== null}
+                        onClick={() => {
+                          void runMutation(
+                            "impersonation:revoke",
+                            () =>
+                              revokeConvexImpersonation(
+                                client,
+                                impersonation.id
+                              ),
+                            "Impersonation ended",
+                            "base"
+                          );
+                        }}
+                        variant="outline"
+                      >
+                        End impersonation
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
