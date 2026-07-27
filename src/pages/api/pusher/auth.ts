@@ -1,13 +1,16 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { pusher } from "../../../lib/pusher";
-import { ssr } from "../../../server/db/ssr";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../api/auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  if (process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex") {
+    res.setHeader("Cache-Control", "no-store");
+    return res
+      .status(503)
+      .json({ message: "Legacy Pusher signaling is unavailable." });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
@@ -18,6 +21,18 @@ export default async function handler(
   if (!socketId || !channel) {
     return res.status(400).json({ message: "Missing socket_id or channel_name" });
   }
+
+  const [
+    { pusher },
+    { ssr },
+    { getServerSession },
+    { authOptions },
+  ] = await Promise.all([
+    import("../../../lib/pusher"),
+    import("../../../server/db/ssr"),
+    import("next-auth"),
+    import("../../../server/auth/sqlOptions"),
+  ]);
 
   // Attempt to get user session
   const session = await getServerSession(req, res, authOptions);

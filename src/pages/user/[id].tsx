@@ -27,7 +27,7 @@ export const getServerSideProps: GetServerSideProps<
   const [{ getServerSession }, { authOptions }, { ssr }] =
     await Promise.all([
       import("next-auth"),
-      import("../api/auth/[...nextauth]"),
+      import("@/server/auth/sqlOptions"),
       import("@/server/db/ssr"),
     ]);
   const session = await getServerSession(

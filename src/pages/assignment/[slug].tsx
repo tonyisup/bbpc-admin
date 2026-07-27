@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps<
     { getAdminAssignmentPath },
   ] = await Promise.all([
     import("next-auth"),
-    import("../api/auth/[...nextauth]"),
+    import("@/server/auth/sqlOptions"),
     import("@/server/db/ssr"),
     import("@/lib/routes"),
   ]);

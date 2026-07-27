@@ -1,56 +1,17 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-// Prisma adapter for NextAuth, optional and can be removed
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import EmailProvider from "next-auth/providers/email";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-import { env } from "../../../env/server.mjs";
-import { prisma } from "../../../server/db/client";
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex") {
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(404).end();
+  }
 
-export const authOptions: NextAuthOptions = {
-  // Include user.id on session
-  callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-
-        // Check if user is admin
-        const adminRole = await prisma.userRole.findFirst({
-          where: {
-            userId: user.id,
-            role: {
-              admin: true,
-            },
-          },
-        });
-
-        session.user.role = adminRole ? "admin" : "user";
-      }
-      return session;
-    },
-  },
-  // Configure one or more authentication providers
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD
-        }
-      },
-      from: env.EMAIL_FROM,
-    }),
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true
-    }),
-    // ...add more providers here
-  ],
-};
-
-export default NextAuth(authOptions);
-
+  const [{ default: NextAuth }, { authOptions }] = await Promise.all([
+    import("next-auth"),
+    import("@/server/auth/sqlOptions"),
+  ]);
+  return NextAuth(req, res, authOptions);
+}

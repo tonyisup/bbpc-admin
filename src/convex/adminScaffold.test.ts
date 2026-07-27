@@ -80,6 +80,69 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(sidebar).not.toMatch(/trpc\.auth\.isAdmin|useSession/u);
   });
 
+  test("rejects legacy admin APIs before loading their SQL stacks", async () => {
+    const [
+      authRoute,
+      sqlAuthOptions,
+      pusherAuth,
+      pusherSignal,
+      restricted,
+      trpcRoute,
+      uploadthing,
+    ] =
+      await Promise.all([
+        read("src/pages/api/auth/[...nextauth].ts"),
+        read("src/server/auth/sqlOptions.ts"),
+        read("src/pages/api/pusher/auth.ts"),
+        read("src/pages/api/pusher/signal.ts"),
+        read("src/pages/api/restricted.ts"),
+        read("src/pages/api/trpc/[trpc].ts"),
+        read("src/pages/api/uploadthing.ts"),
+      ]);
+
+    for (const source of [
+      authRoute,
+      pusherAuth,
+      pusherSignal,
+      restricted,
+      trpcRoute,
+      uploadthing,
+    ]) {
+      expect(source).toMatch(
+        /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*Cache-Control/u
+      );
+    }
+
+    expect(authRoute).not.toMatch(
+      /^import .*["'](?:next-auth|@next-auth|@\/server\/auth\/sqlOptions)["'];?$/mu
+    );
+    expect(authRoute).toMatch(
+      /import\("next-auth"\)[\s\S]*import\("@\/server\/auth\/sqlOptions"\)/u
+    );
+    expect(sqlAuthOptions).toMatch(
+      /PrismaAdapter\(prisma\)[\s\S]*EmailProvider[\s\S]*GoogleProvider/u
+    );
+
+    expect(pusherAuth).not.toMatch(
+      /^import .*["'](?:next-auth|\.\.\/\.\.\/\.\.\/(?:lib\/pusher|server\/db\/ssr|server\/auth\/sqlOptions))["'];?$/mu
+    );
+    expect(pusherAuth).toMatch(
+      /import\("\.\.\/\.\.\/\.\.\/lib\/pusher"\)[\s\S]*import\("\.\.\/\.\.\/\.\.\/server\/db\/ssr"\)[\s\S]*import\("next-auth"\)[\s\S]*import\("\.\.\/\.\.\/\.\.\/server\/auth\/sqlOptions"\)/u
+    );
+    expect(pusherSignal).not.toMatch(
+      /^import .*["'](?:next-auth|\.\.\/\.\.\/\.\.\/(?:lib\/pusher|server\/auth\/sqlOptions))["'];?$/mu
+    );
+    expect(restricted).not.toMatch(
+      /^import .*get-server-auth-session["'];?$/mu
+    );
+    expect(trpcRoute).not.toMatch(
+      /^import .*["'](?:@trpc\/server\/adapters\/next|\.\.\/\.\.\/\.\.\/server\/trpc\/(?:context|router\/_app))["'];?$/mu
+    );
+    expect(uploadthing).not.toMatch(
+      /^import .*["'](?:uploadthing\/next-legacy|\.\.\/\.\.\/server\/uploadthing\/core)["'];?$/mu
+    );
+  });
+
   test("admits roles only through the direct Convex adapter", async () => {
     const [route, roles, rolesComponent] = await Promise.all([
       read("src/pages/role/index.tsx"),

@@ -3,7 +3,7 @@ import Head from "next/head";
 import { useState, useEffect, useRef } from "react";
 import { trpc, RouterOutputs } from "../../utils/trpc";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]";
+import { authOptions } from "@/server/auth/sqlOptions";
 import { ssr } from "../../server/db/ssr";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";

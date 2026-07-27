@@ -21,7 +21,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const [{ getServerSession }, { ssr }, { authOptions }] = await Promise.all([
     import("next-auth"),
     import("@/server/db/ssr"),
-    import("../api/auth/[...nextauth]"),
+    import("@/server/auth/sqlOptions"),
   ]);
   const session = await getServerSession(context.req, context.res, authOptions);
   const isAdmin = await ssr.isAdmin(session?.user?.id ?? "");
