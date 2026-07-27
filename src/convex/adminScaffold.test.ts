@@ -8,12 +8,14 @@ async function read(path: string) {
 
 describe("SQL-default Clerk and Convex admin scaffold", () => {
   test("pins the shared clients and selects providers before rendering", async () => {
-    const [packageJsonText, app, authContext, identity] = await Promise.all([
-      read("package.json"),
-      read("src/pages/_app.tsx"),
-      read("src/components/auth/BbpcAdminAuthContext.tsx"),
-      read("src/convex/identity.ts"),
-    ]);
+    const [packageJsonText, app, authContext, identity, envSchema] =
+      await Promise.all([
+        read("package.json"),
+        read("src/pages/_app.tsx"),
+        read("src/components/auth/BbpcAdminAuthContext.tsx"),
+        read("src/convex/identity.ts"),
+        read("src/env/schema.mjs"),
+      ]);
     const packageJson = JSON.parse(packageJsonText) as {
       dependencies: Record<string, string>;
     };
@@ -39,6 +41,17 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       /A Clerk subject must never become an application-data ID/u
     );
     expect(authContext).toMatch(/isAdmin: profile\?\.isAdmin \?\? false/u);
+    expect(envSchema).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND !== "convex"[\s\S]*z\.string\(\)\.min\(1\)[\s\S]*z\.string\(\)\.optional\(\)\.default\(""\)/u
+    );
+    expect(envSchema).toMatch(/DATABASE_URL: sqlRequiredString/u);
+    expect(envSchema).toMatch(/EMAIL_FROM: sqlRequiredEmail/u);
+    expect(envSchema).toMatch(
+      /AUDIO_CHAPTERIZER_WEBHOOK_URL: sqlRequiredUrl/u
+    );
+    expect(envSchema).toMatch(
+      /NEXT_PUBLIC_PUSHER_KEY: sqlRequiredString/u
+    );
   });
 
   test("keeps unported Convex routes fail-closed", async () => {
@@ -140,6 +153,26 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     );
     expect(uploadthing).not.toMatch(
       /^import .*["'](?:uploadthing\/next-legacy|\.\.\/\.\.\/server\/uploadthing\/core)["'];?$/mu
+    );
+  });
+
+  test("selects the backend before loading the legacy recording studio", async () => {
+    const [route, sqlRecordingPage, sqlRecordingServer] = await Promise.all([
+      read("src/pages/record/index.tsx"),
+      read("src/components/Recording/SqlRecordPage.tsx"),
+      read("src/server/sql/recordPage.ts"),
+    ]);
+
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*unavailable=%2Frecord[\s\S]*import\("@\/server\/sql\/recordPage"\)/u
+    );
+    expect(route).not.toMatch(/next-auth|@prisma|trpc|server\/db/u);
+    expect(sqlRecordingPage).toMatch(/trpc\.episode\.getRecordingData/u);
+    expect(sqlRecordingPage).not.toMatch(
+      /server\/auth|server\/db|getServerSideProps/u
+    );
+    expect(sqlRecordingServer).toMatch(
+      /@\/server\/auth\/sqlOptions[\s\S]*@\/server\/db\/ssr/u
     );
   });
 
