@@ -1,16 +1,11 @@
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
+import { ClerkBbpcAdminAuthProvider } from "@/components/auth/BbpcAdminAuthContext";
+import { AdminAppFrame } from "@/components/providers/AdminAppFrame";
+import type { SqlAdminPageProps } from "@/components/providers/SqlAdminApp";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import dynamic from "next/dynamic";
-import { type AppType } from "next/app";
-import { type Session } from "next-auth";
-
-import { ClerkBbpcAdminAuthProvider } from "../components/auth/BbpcAdminAuthContext";
-import type { SqlAdminSessionProvidersProps } from "../components/auth/SqlAdminSessionProviders";
-import Layout from "../components/layout/Layout";
-import { ThemeProvider } from "../components/theme-provider";
-import { Toaster } from "../components/ui/sonner";
-import { trpc } from "../utils/trpc";
+import { type AppProps, type AppType } from "next/app";
 
 import "../styles/globals.css";
 
@@ -22,44 +17,17 @@ const convexClient =
     ? new ConvexReactClient(convexUrl)
     : null;
 
-const SqlAdminSessionProviders = convexBackendSelected
+const SqlAdminApp = convexBackendSelected
   ? null
-  : dynamic<SqlAdminSessionProvidersProps>(
-      () => import("../components/auth/SqlAdminSessionProviders"),
+  : dynamic<AppProps<SqlAdminPageProps>>(
+      () => import("@/components/providers/SqlAdminApp"),
       { loading: () => null }
     );
 
-function SharedApp({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
-      disableTransitionOnChange
-    >
-      <Layout>{children}</Layout>
-      <Toaster />
-    </ThemeProvider>
-  );
-}
-
-const MyApp: AppType<{ session: Session | null }> = ({
+const ConvexAdminApp: AppType<SqlAdminPageProps> = ({
   Component,
-  pageProps: { session, ...pageProps },
+  pageProps,
 }) => {
-  if (!convexBackendSelected) {
-    if (SqlAdminSessionProviders === null) {
-      throw new Error("SQL mode requires the legacy session providers.");
-    }
-    return (
-      <SqlAdminSessionProviders session={session}>
-        <SharedApp>
-          <Component {...pageProps} />
-        </SharedApp>
-      </SqlAdminSessionProviders>
-    );
-  }
-
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (publishableKey === undefined || convexClient === null) {
     throw new Error(
@@ -71,18 +39,23 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <ClerkProvider publishableKey={publishableKey}>
       <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
         <ClerkBbpcAdminAuthProvider>
-          <SharedApp>
+          <AdminAppFrame>
             <Component {...pageProps} />
-          </SharedApp>
+          </AdminAppFrame>
         </ClerkBbpcAdminAuthProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
 };
 
-const App =
-  convexBackendSelected
-    ? MyApp
-    : trpc.withTRPC(MyApp);
+const App: AppType<SqlAdminPageProps> = (props) => {
+  if (convexBackendSelected) {
+    return <ConvexAdminApp {...props} />;
+  }
+  if (SqlAdminApp === null) {
+    throw new Error("SQL mode requires the legacy tRPC app.");
+  }
+  return <SqlAdminApp {...props} />;
+};
 
 export default App;

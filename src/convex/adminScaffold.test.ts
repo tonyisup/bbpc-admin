@@ -14,6 +14,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       authContext,
       sqlSessionProviders,
       sqlAuthProvider,
+      sqlApp,
       identity,
       envSchema,
     ] =
@@ -23,6 +24,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
         read("src/components/auth/BbpcAdminAuthContext.tsx"),
         read("src/components/auth/SqlAdminSessionProviders.tsx"),
         read("src/components/auth/SqlBbpcAdminAuthProvider.tsx"),
+        read("src/components/providers/SqlAdminApp.tsx"),
         read("src/convex/identity.ts"),
         read("src/env/schema.mjs"),
       ]);
@@ -33,13 +35,13 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(packageJson.dependencies["@clerk/nextjs"]).toBe("6.39.6");
     expect(packageJson.dependencies.convex).toBe("1.42.3");
     expect(app).toMatch(
-      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*const SqlAdminSessionProviders = convexBackendSelected\s*\?\s*null\s*:\s*dynamic/u
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*const SqlAdminApp = convexBackendSelected\s*\?\s*null\s*:\s*dynamic/u
     );
     expect(app).toMatch(
-      /if \(!convexBackendSelected\)[\s\S]*<SqlAdminSessionProviders/u
+      /if \(convexBackendSelected\)[\s\S]*<ConvexAdminApp[\s\S]*<SqlAdminApp/u
     );
     expect(app).not.toMatch(
-      /next-auth\/react|SqlBbpcAdminAuthProvider/u
+      /next-auth\/react|SqlBbpcAdminAuthProvider|trpc/u
     );
     expect(sqlSessionProviders).toMatch(
       /<SessionProvider[\s\S]*<SqlBbpcAdminAuthProvider/u
@@ -47,14 +49,14 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(sqlAuthProvider).toMatch(
       /useSession[\s\S]*BbpcAdminAuthStateProvider/u
     );
+    expect(sqlApp).toMatch(
+      /<SqlAdminSessionProviders[\s\S]*<AdminAppFrame[\s\S]*trpc\.withTRPC\(SqlAdminApp\)/u
+    );
     expect(app).toMatch(
       /ClerkProvider[\s\S]*ConvexProviderWithClerk[\s\S]*ClerkBbpcAdminAuthProvider/u
     );
     expect(app).toMatch(
-      /ClerkBbpcAdminAuthProvider>\s*<SharedApp>/u
-    );
-    expect(app).toMatch(
-      /convexBackendSelected\s*\?\s*MyApp\s*:\s*trpc\.withTRPC\(MyApp\)/u
+      /ClerkBbpcAdminAuthProvider>\s*<AdminAppFrame>/u
     );
     expect(app).not.toMatch(/export default trpc\.withTRPC/u);
     expect(identity).toMatch(/identity\/profile:administratorMe/u);

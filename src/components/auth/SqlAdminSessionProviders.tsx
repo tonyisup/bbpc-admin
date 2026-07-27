@@ -8,7 +8,7 @@ export interface SqlAdminSessionProvidersProps {
   session: Session | null;
 }
 
-export default function SqlAdminSessionProviders({
+export function SqlAdminSessionProviders({
   children,
   session,
 }: SqlAdminSessionProvidersProps) {
