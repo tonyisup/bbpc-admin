@@ -227,6 +227,25 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(sqlExplorer).toMatch(/trpc\.azure\.triggerUploadWorkflow/u);
   });
 
+  test("selects the backend before loading legacy integration test pages", async () => {
+    const [uploadRoute, audioRoute, sqlUploadPage, sqlAudioPage] =
+      await Promise.all([
+        read("src/pages/test.tsx"),
+        read("src/pages/test-audio.tsx"),
+        read("src/components/Legacy/SqlUploadTestPage.tsx"),
+        read("src/components/Legacy/SqlAudioTestPage.tsx"),
+      ]);
+
+    for (const route of [uploadRoute, audioRoute]) {
+      expect(route).toMatch(
+        /NEXT_PUBLIC_BBPC_BACKEND !== "convex"[\s\S]*dynamic/u
+      );
+      expect(route).not.toMatch(/UploadButton|useAudioSession|AudioStream/u);
+    }
+    expect(sqlUploadPage).toMatch(/UploadButton/u);
+    expect(sqlAudioPage).toMatch(/useAudioSession[\s\S]*AudioStream/u);
+  });
+
   test("admits roles only through the direct Convex adapter", async () => {
     const [route, roles, rolesComponent] = await Promise.all([
       read("src/pages/role/index.tsx"),
