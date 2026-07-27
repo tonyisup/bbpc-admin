@@ -8,11 +8,21 @@ async function read(path: string) {
 
 describe("SQL-default Clerk and Convex admin scaffold", () => {
   test("pins the shared clients and selects providers before rendering", async () => {
-    const [packageJsonText, app, authContext, identity, envSchema] =
+    const [
+      packageJsonText,
+      app,
+      authContext,
+      sqlSessionProviders,
+      sqlAuthProvider,
+      identity,
+      envSchema,
+    ] =
       await Promise.all([
         read("package.json"),
         read("src/pages/_app.tsx"),
         read("src/components/auth/BbpcAdminAuthContext.tsx"),
+        read("src/components/auth/SqlAdminSessionProviders.tsx"),
+        read("src/components/auth/SqlBbpcAdminAuthProvider.tsx"),
         read("src/convex/identity.ts"),
         read("src/env/schema.mjs"),
       ]);
@@ -23,7 +33,19 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(packageJson.dependencies["@clerk/nextjs"]).toBe("6.39.6");
     expect(packageJson.dependencies.convex).toBe("1.42.3");
     expect(app).toMatch(
-      /NEXT_PUBLIC_BBPC_BACKEND !== "convex"[\s\S]*SessionProvider[\s\S]*SqlBbpcAdminAuthProvider/u
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*const SqlAdminSessionProviders = convexBackendSelected\s*\?\s*null\s*:\s*dynamic/u
+    );
+    expect(app).toMatch(
+      /if \(!convexBackendSelected\)[\s\S]*<SqlAdminSessionProviders/u
+    );
+    expect(app).not.toMatch(
+      /next-auth\/react|SqlBbpcAdminAuthProvider/u
+    );
+    expect(sqlSessionProviders).toMatch(
+      /<SessionProvider[\s\S]*<SqlBbpcAdminAuthProvider/u
+    );
+    expect(sqlAuthProvider).toMatch(
+      /useSession[\s\S]*BbpcAdminAuthStateProvider/u
     );
     expect(app).toMatch(
       /ClerkProvider[\s\S]*ConvexProviderWithClerk[\s\S]*ClerkBbpcAdminAuthProvider/u
@@ -32,7 +54,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       /ClerkBbpcAdminAuthProvider>\s*<SharedApp>/u
     );
     expect(app).toMatch(
-      /NEXT_PUBLIC_BBPC_BACKEND === "convex"\s*\?\s*MyApp\s*:\s*trpc\.withTRPC\(MyApp\)/u
+      /convexBackendSelected\s*\?\s*MyApp\s*:\s*trpc\.withTRPC\(MyApp\)/u
     );
     expect(app).not.toMatch(/export default trpc\.withTRPC/u);
     expect(identity).toMatch(/identity\/profile:administratorMe/u);

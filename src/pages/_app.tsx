@@ -1,14 +1,12 @@
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import dynamic from "next/dynamic";
 import { type AppType } from "next/app";
 import { type Session } from "next-auth";
-import { SessionProvider } from "next-auth/react";
 
-import {
-  ClerkBbpcAdminAuthProvider,
-  SqlBbpcAdminAuthProvider,
-} from "../components/auth/BbpcAdminAuthContext";
+import { ClerkBbpcAdminAuthProvider } from "../components/auth/BbpcAdminAuthContext";
+import type { SqlAdminSessionProvidersProps } from "../components/auth/SqlAdminSessionProviders";
 import Layout from "../components/layout/Layout";
 import { ThemeProvider } from "../components/theme-provider";
 import { Toaster } from "../components/ui/sonner";
@@ -16,11 +14,20 @@ import { trpc } from "../utils/trpc";
 
 import "../styles/globals.css";
 
+const convexBackendSelected =
+  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex";
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 const convexClient =
-  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex" && convexUrl !== undefined
+  convexBackendSelected && convexUrl !== undefined
     ? new ConvexReactClient(convexUrl)
     : null;
+
+const SqlAdminSessionProviders = convexBackendSelected
+  ? null
+  : dynamic<SqlAdminSessionProvidersProps>(
+      () => import("../components/auth/SqlAdminSessionProviders"),
+      { loading: () => null }
+    );
 
 function SharedApp({ children }: { children: React.ReactNode }) {
   return (
@@ -40,15 +47,16 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  if (process.env.NEXT_PUBLIC_BBPC_BACKEND !== "convex") {
+  if (!convexBackendSelected) {
+    if (SqlAdminSessionProviders === null) {
+      throw new Error("SQL mode requires the legacy session providers.");
+    }
     return (
-      <SessionProvider session={session}>
-        <SqlBbpcAdminAuthProvider>
-          <SharedApp>
-            <Component {...pageProps} />
-          </SharedApp>
-        </SqlBbpcAdminAuthProvider>
-      </SessionProvider>
+      <SqlAdminSessionProviders session={session}>
+        <SharedApp>
+          <Component {...pageProps} />
+        </SharedApp>
+      </SqlAdminSessionProviders>
     );
   }
 
@@ -73,7 +81,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
 };
 
 const App =
-  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex"
+  convexBackendSelected
     ? MyApp
     : trpc.withTRPC(MyApp);
 
