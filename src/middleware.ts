@@ -7,6 +7,7 @@ const convexReadyPages = new Set([
   "/",
   "/about",
   "/admin/ranked-types",
+  "/admin/side-effects",
   "/banger",
   "/episode",
   "/game",

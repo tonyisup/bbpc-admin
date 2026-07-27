@@ -20,7 +20,8 @@ import {
 	Search,
 	Film,
 	List,
-	Quote
+	Quote,
+	RotateCcw
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -30,7 +31,7 @@ import { Separator } from "../ui/separator"
 import { useBbpcAdminAuth } from "../auth/BbpcAdminAuthContext"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
-const convexReadyRoutes = new Set(["/", "/about", "/admin/ranked-types", "/banger", "/episode", "/game", "/lists", "/movie", "/quotabunga", "/rating", "/review", "/role", "/season", "/show", "/syllabus", "/tag", "/user"])
+const convexReadyRoutes = new Set(["/", "/about", "/admin/ranked-types", "/admin/side-effects", "/banger", "/episode", "/game", "/lists", "/movie", "/quotabunga", "/rating", "/review", "/role", "/season", "/show", "/syllabus", "/tag", "/user"])
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
@@ -165,7 +166,13 @@ export function Sidebar({ className }: SidebarProps) {
 					icon: List,
 					href: "/admin/ranked-types",
 					active: pathname === "/admin/ranked-types",
-				}
+				},
+				...(backend === "convex" ? [{
+					label: "External Cleanup",
+					icon: RotateCcw,
+					href: "/admin/side-effects",
+					active: pathname === "/admin/side-effects",
+				}] : [])
 			]
 		},
 		{
