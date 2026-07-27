@@ -213,6 +213,20 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     );
   });
 
+  test("selects the backend before loading the legacy Azure explorer", async () => {
+    const [route, sqlExplorer] = await Promise.all([
+      read("src/pages/azure-blobs.tsx"),
+      read("src/components/Azure/SqlAzureBlobsPage.tsx"),
+    ]);
+
+    expect(route).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND !== "convex"[\s\S]*dynamic\(\(\) => import\("@\/components\/Azure\/SqlAzureBlobsPage"\)/u
+    );
+    expect(route).not.toMatch(/trpc|AZURE|server\/db/u);
+    expect(sqlExplorer).toMatch(/trpc\.azure\.listContainers/u);
+    expect(sqlExplorer).toMatch(/trpc\.azure\.triggerUploadWorkflow/u);
+  });
+
   test("admits roles only through the direct Convex adapter", async () => {
     const [route, roles, rolesComponent] = await Promise.all([
       read("src/pages/role/index.tsx"),
