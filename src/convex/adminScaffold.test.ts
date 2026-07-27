@@ -77,10 +77,18 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
   });
 
   test("keeps unported Convex routes fail-closed", async () => {
-    const [middleware, home, sidebar, dashboard, dashboardComponent] =
+    const [
+      middleware,
+      home,
+      sqlHome,
+      sidebar,
+      dashboard,
+      dashboardComponent,
+    ] =
       await Promise.all([
         read("src/middleware.ts"),
         read("src/pages/index.tsx"),
+        read("src/components/Dashboard/SqlAdminHome.tsx"),
         read("src/components/layout/Sidebar.tsx"),
         read("src/convex/dashboard.ts"),
         read("src/components/Dashboard/ConvexAdminDashboard.tsx"),
@@ -94,11 +102,16 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(middleware).toMatch(/status: 404/u);
     expect(middleware).toMatch(/status: 503/u);
     expect(middleware).toMatch(/NextResponse\.redirect/u);
-    expect(home).toMatch(/enabled: backend === "sql" && isAdmin/u);
+    expect(home).toMatch(
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*SqlAdminHome = convexBackendSelected\s*\?\s*null\s*:\s*dynamic/u
+    );
+    expect(home).not.toMatch(/trpc|next-auth|@prisma/u);
     expect(home).toMatch(/<ConvexAdminDashboard userName=\{user\.name\}/u);
     expect(home).toMatch(
-      /return backend === "convex" \? <ConvexHome \/> : <SqlHome \/>/u
+      /if \(convexBackendSelected\)[\s\S]*return <ConvexHome \/>/u
     );
+    expect(sqlHome).toMatch(/enabled: isAdmin/u);
+    expect(sqlHome).toMatch(/trpc\.dashboard\.getStats/u);
     const convexHome = home.slice(
       home.indexOf("const ConvexHome"),
       home.indexOf("const Home"),
