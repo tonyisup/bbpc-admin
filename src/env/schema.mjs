@@ -60,6 +60,14 @@ export const clientSchema = z.object({
   NEXT_PUBLIC_BBPC_BACKEND: z.enum(["sql", "convex"]).default("sql"),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional(),
   NEXT_PUBLIC_CONVEX_URL: z.string().url().optional(),
+  NEXT_PUBLIC_BBPC_RECORDING_URL: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z
+      .string()
+      .url()
+      .regex(/^https?:\/\//u, "Recording URL must use HTTP(S)")
+      .optional()
+  ),
   NEXT_PUBLIC_PUSHER_KEY: sqlRequiredString,
   NEXT_PUBLIC_PUSHER_CLUSTER: sqlRequiredString,
 });
@@ -77,6 +85,8 @@ export const clientEnv = {
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+  NEXT_PUBLIC_BBPC_RECORDING_URL:
+    process.env.NEXT_PUBLIC_BBPC_RECORDING_URL,
   NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
   NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
 };

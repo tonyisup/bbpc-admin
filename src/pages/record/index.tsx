@@ -3,18 +3,24 @@ import dynamic from "next/dynamic";
 
 import type { SqlRecordPageProps } from "@/components/Recording/SqlRecordPage";
 
-const SqlRecordPage = dynamic<SqlRecordPageProps>(
-  () => import("@/components/Recording/SqlRecordPage"),
-  { loading: () => null }
-);
+const convexBackendSelected =
+  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex";
+const SqlRecordPage = convexBackendSelected
+  ? null
+  : dynamic<SqlRecordPageProps>(
+      () => import("@/components/Recording/SqlRecordPage"),
+      { loading: () => null }
+    );
 
 export const getServerSideProps: GetServerSideProps<
   SqlRecordPageProps
 > = async (context) => {
-  if (process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex") {
+  if (convexBackendSelected) {
+    const recordingAppUrl =
+      process.env.NEXT_PUBLIC_BBPC_RECORDING_URL || undefined;
     return {
       redirect: {
-        destination: "/?unavailable=%2Frecord",
+        destination: recordingAppUrl ?? "/?unavailable=%2Frecord",
         permanent: false,
       },
     };
@@ -24,9 +30,14 @@ export const getServerSideProps: GetServerSideProps<
     .getSqlRecordServerSideProps(context);
 };
 
-const RecordPage: NextPage<SqlRecordPageProps> = (props) =>
-  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex" ? null : (
-    <SqlRecordPage {...props} />
-  );
+const RecordPage: NextPage<SqlRecordPageProps> = (props) => {
+  if (convexBackendSelected) {
+    return null;
+  }
+  if (SqlRecordPage === null) {
+    throw new Error("SQL mode requires the legacy recording studio.");
+  }
+  return <SqlRecordPage {...props} />;
+};
 
 export default RecordPage;

@@ -16,6 +16,7 @@ const convexReadyPages = new Set([
   "/movie",
   "/quotabunga",
   "/rating",
+  "/record",
   "/review",
   "/role",
   "/season",

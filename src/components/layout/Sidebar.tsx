@@ -37,6 +37,7 @@ export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
 	const { backend, signOut, user } = useBbpcAdminAuth()
 	const isAdmin = user?.isAdmin === true
+	const recordingAppUrl = process.env.NEXT_PUBLIC_BBPC_RECORDING_URL
 
 	const pathname = router.pathname
 
@@ -59,7 +60,7 @@ export function Sidebar({ className }: SidebarProps) {
 				{
 					label: "Up Next",
 					icon: Mic2,
-					href: "/record",
+					href: backend === "convex" && recordingAppUrl ? recordingAppUrl : "/record",
 					active: pathname === "/record",
 				},
 				{
@@ -225,7 +226,7 @@ export function Sidebar({ className }: SidebarProps) {
 			.map((section) => ({
 				...section,
 				routes: section.routes.filter((route) =>
-					convexReadyRoutes.has(route.href)
+					convexReadyRoutes.has(route.href) || route.href === recordingAppUrl
 				),
 			}))
 			.filter((section) => section.routes.length > 0)

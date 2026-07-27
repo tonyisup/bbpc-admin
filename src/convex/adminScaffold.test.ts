@@ -76,6 +76,9 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(envSchema).toMatch(
       /NEXT_PUBLIC_PUSHER_KEY: sqlRequiredString/u
     );
+    expect(envSchema).toMatch(
+      /NEXT_PUBLIC_BBPC_RECORDING_URL:[\s\S]*value === "" \? undefined[\s\S]*url\(\)[\s\S]*regex\(\/\^https\?:\\\/\\\//u
+    );
   });
 
   test("keeps unported Convex routes fail-closed", async () => {
@@ -98,6 +101,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
 
     expect(middleware).toMatch(/const convexReadyPages = new Set/u);
     expect(middleware).toMatch(/"\/role"/u);
+    expect(middleware).toMatch(/"\/record"/u);
     expect(middleware).toMatch(/"\/user"/u);
     expect(middleware).toMatch(/pathname\.startsWith\("\/api\/auth"\)/u);
     expect(middleware).toMatch(/pathname\.startsWith\("\/api\/trpc"\)/u);
@@ -127,6 +131,9 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     expect(dashboardComponent).not.toMatch(/trpc|@prisma/u);
     expect(sidebar).toMatch(/user\?\.isAdmin === true/u);
     expect(sidebar).toMatch(/backend === "convex"/u);
+    expect(sidebar).toMatch(
+      /NEXT_PUBLIC_BBPC_RECORDING_URL[\s\S]*route\.href === recordingAppUrl/u
+    );
     expect(sidebar).not.toMatch(/trpc\.auth\.isAdmin|useSession/u);
   });
 
@@ -201,7 +208,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
     ]);
 
     expect(route).toMatch(
-      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*unavailable=%2Frecord[\s\S]*import\("@\/server\/sql\/recordPage"\)/u
+      /NEXT_PUBLIC_BBPC_BACKEND === "convex"[\s\S]*NEXT_PUBLIC_BBPC_RECORDING_URL[\s\S]*recordingAppUrl \?\? "\/\?unavailable=%2Frecord"[\s\S]*import\("@\/server\/sql\/recordPage"\)/u
     );
     expect(route).not.toMatch(/next-auth|@prisma|trpc|server\/db/u);
     expect(sqlRecordingPage).toMatch(/trpc\.episode\.getRecordingData/u);
