@@ -1,9 +1,9 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
-import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 
 import { env } from "@/env/server.mjs";
+import { createSecureEmailProvider } from "@/server/auth/secureEmailProvider";
 import { prisma } from "@/server/db/client";
 
 export const authOptions: NextAuthOptions = {
@@ -28,10 +28,13 @@ export const authOptions: NextAuthOptions = {
   },
   adapter: PrismaAdapter(prisma),
   providers: [
-    EmailProvider({
+    createSecureEmailProvider({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
+        port:
+          process.env.EMAIL_SERVER_PORT === undefined
+            ? undefined
+            : Number(process.env.EMAIL_SERVER_PORT),
         auth: {
           user: process.env.EMAIL_SERVER_USER,
           pass: process.env.EMAIL_SERVER_PASSWORD,
