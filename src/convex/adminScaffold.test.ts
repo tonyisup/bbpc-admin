@@ -17,6 +17,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       sqlApp,
       identity,
       envSchema,
+      middleware,
     ] =
       await Promise.all([
         read("package.json"),
@@ -27,6 +28,7 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
         read("src/components/providers/SqlAdminApp.tsx"),
         read("src/convex/identity.ts"),
         read("src/env/schema.mjs"),
+        read("src/middleware.ts"),
       ]);
     const packageJson = JSON.parse(packageJsonText) as {
       dependencies: Record<string, string>;
@@ -69,6 +71,13 @@ describe("SQL-default Clerk and Convex admin scaffold", () => {
       /NEXT_PUBLIC_BBPC_BACKEND !== "convex"[\s\S]*z\.string\(\)\.min\(1\)[\s\S]*z\.string\(\)\.optional\(\)\.default\(""\)/u
     );
     expect(envSchema).toMatch(/DATABASE_URL: sqlRequiredString/u);
+    expect(middleware).toMatch(/const authorizedParties/u);
+    expect(middleware).toMatch(/https:\/\/admin\.badboyspodcast\.com/u);
+    expect(middleware).toMatch(/process\.env\.VERCEL_URL/u);
+    expect(middleware).toMatch(/http:\/\/localhost:3001/u);
+    expect(middleware).toMatch(
+      /clerkMiddleware\(\{ authorizedParties \}\)/u
+    );
     expect(envSchema).toMatch(/EMAIL_FROM: sqlRequiredEmail/u);
     expect(envSchema).toMatch(
       /AUDIO_CHAPTERIZER_WEBHOOK_URL: sqlRequiredUrl/u

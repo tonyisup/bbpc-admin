@@ -2,7 +2,14 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const handleClerkRequest = clerkMiddleware();
+const vercelDeploymentOrigin = process.env.VERCEL_URL
+  ? [`https://${process.env.VERCEL_URL}`]
+  : [];
+const authorizedParties =
+  process.env.NODE_ENV === "production"
+    ? ["https://admin.badboyspodcast.com", ...vercelDeploymentOrigin]
+    : ["http://localhost:3001"];
+const handleClerkRequest = clerkMiddleware({ authorizedParties });
 const convexReadyPages = new Set([
   "/",
   "/about",
