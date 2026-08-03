@@ -1,6 +1,5 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 
 const vercelDeploymentOrigin = process.env.VERCEL_URL
   ? [`https://${process.env.VERCEL_URL}`]
@@ -10,70 +9,15 @@ const authorizedParties =
     ? ["https://admin.badboyspodcast.com", ...vercelDeploymentOrigin]
     : ["http://localhost:3001"];
 const handleClerkRequest = clerkMiddleware({ authorizedParties });
-const convexReadyPages = new Set([
-  "/",
-  "/about",
-  "/admin/ranked-types",
-  "/admin/side-effects",
-  "/banger",
-  "/episode",
-  "/game",
-  "/gambling",
-  "/lists",
-  "/movie",
-  "/quotabunga",
-  "/rating",
-  "/record",
-  "/review",
-  "/role",
-  "/season",
-  "/syllabus",
-  "/show",
-  "/tag",
-  "/user",
-]);
-
 export default function middleware(
   request: NextRequest,
   event: NextFetchEvent
 ) {
-  if (process.env.NEXT_PUBLIC_BBPC_BACKEND !== "convex") {
-    return NextResponse.next();
-  }
   if (
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === undefined ||
     process.env.CLERK_SECRET_KEY === undefined
   ) {
-    throw new Error("Convex mode requires Clerk publishable and secret keys.");
-  }
-
-  const { pathname } = request.nextUrl;
-  if (
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/trpc")
-  ) {
-    return new NextResponse(null, {
-      status: 404,
-      headers: { "Cache-Control": "no-store" },
-    });
-  }
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.json(
-      { error: "This admin API route has not migrated to Convex." },
-      { status: 503 }
-    );
-  }
-  const isConvexReadyPage =
-    convexReadyPages.has(pathname) ||
-    /^\/lists\/[^/]+$/u.test(pathname) ||
-    /^\/assignment\/[^/]+$/u.test(pathname) ||
-    /^\/episode\/[^/]+$/u.test(pathname) ||
-    /^\/(?:movie|point|season|show|user)\/[^/]+$/u.test(pathname);
-  if (!isConvexReadyPage && !pathname.startsWith("/__clerk/")) {
-    const destination = request.nextUrl.clone();
-    destination.pathname = "/";
-    destination.searchParams.set("unavailable", pathname);
-    return NextResponse.redirect(destination);
+    throw new Error("BBPC Admin requires Clerk publishable and secret keys.");
   }
 
   return handleClerkRequest(request, event);

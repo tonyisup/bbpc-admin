@@ -6,7 +6,6 @@ import {
 	Mic2,
 	Users,
 	FileText,
-	Beaker,
 	LogOut,
 	Mic,
 	Sun,
@@ -17,7 +16,6 @@ import {
 	Tag as TagIcon,
 	BookOpen,
 	ShieldAlert,
-	Search,
 	Film,
 	List,
 	Quote,
@@ -31,11 +29,10 @@ import { Separator } from "../ui/separator"
 import { useBbpcAdminAuth } from "../auth/BbpcAdminAuthContext"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
-const convexReadyRoutes = new Set(["/", "/about", "/admin/ranked-types", "/admin/side-effects", "/banger", "/episode", "/game", "/lists", "/movie", "/quotabunga", "/rating", "/review", "/role", "/season", "/show", "/syllabus", "/tag", "/user"])
 
 export function Sidebar({ className }: SidebarProps) {
 	const router = useRouter()
-	const { backend, signOut, user } = useBbpcAdminAuth()
+	const { signOut, user } = useBbpcAdminAuth()
 	const isAdmin = user?.isAdmin === true
 	const recordingAppUrl = process.env.NEXT_PUBLIC_BBPC_RECORDING_URL
 
@@ -60,14 +57,8 @@ export function Sidebar({ className }: SidebarProps) {
 				{
 					label: "Up Next",
 					icon: Mic2,
-					href: backend === "convex" && recordingAppUrl ? recordingAppUrl : "/record",
+					href: recordingAppUrl ?? "/record",
 					active: pathname === "/record",
-				},
-				{
-					label: "Search",
-					icon: Search,
-					href: "/search",
-					active: pathname === "/search",
 				}
 			]
 		},
@@ -168,12 +159,12 @@ export function Sidebar({ className }: SidebarProps) {
 					href: "/admin/ranked-types",
 					active: pathname === "/admin/ranked-types",
 				},
-				...(backend === "convex" ? [{
+				{
 					label: "External Cleanup",
 					icon: RotateCcw,
 					href: "/admin/side-effects",
 					active: pathname === "/admin/side-effects",
-				}] : [])
+				}
 			]
 		},
 		{
@@ -184,18 +175,6 @@ export function Sidebar({ className }: SidebarProps) {
 					icon: FileText,
 					href: "/about",
 					active: pathname === "/about",
-				},
-				{
-					label: "Test Lab",
-					icon: Beaker,
-					href: "/test",
-					active: pathname === "/test"
-				},
-				{
-					label: "Test Audio",
-					icon: Beaker,
-					href: "/test-audio",
-					active: pathname === "/test-audio"
 				}
 			]
 		}
@@ -215,22 +194,13 @@ export function Sidebar({ className }: SidebarProps) {
 					{
 						label: "Recording Room",
 						icon: Mic2,
-						href: "/record?guest=true",
+						href: recordingAppUrl ?? "/record?guest=true",
 						active: pathname === "/record",
 					},
 				],
 			},
 		]
-	const visibleSections = backend === "convex"
-		? sections
-			.map((section) => ({
-				...section,
-				routes: section.routes.filter((route) =>
-					convexReadyRoutes.has(route.href) || route.href === recordingAppUrl
-				),
-			}))
-			.filter((section) => section.routes.length > 0)
-		: sections
+	const visibleSections = sections
 
 	useEffect(() => {
 		const isDark = localStorage.getItem("theme") === "dark" ||
