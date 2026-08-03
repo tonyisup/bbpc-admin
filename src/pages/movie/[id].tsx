@@ -1,48 +1,5 @@
-import type { GetServerSideProps, NextPage } from "next";
-import dynamic from "next/dynamic";
+import { ConvexMovieDetailPage } from "@/components/Media/ConvexMediaDetailPage";
 
-const ConvexMovieDetailPage = dynamic(
-  () =>
-    import("@/components/Media/ConvexMediaDetailPage").then(
-      (module) => module.ConvexMovieDetailPage
-    ),
-  { loading: () => null }
-);
-const SqlMovieDetailPage = dynamic(
-  () => import("@/components/Media/SqlMovieDetailPage"),
-  { loading: () => null }
-);
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  if (process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex") {
-    return { props: {} };
-  }
-
-  const [{ getServerSession }, { ssr }, { authOptions }] = await Promise.all([
-    import("next-auth"),
-    import("@/server/db/ssr"),
-    import("@/server/auth/sqlOptions"),
-  ]);
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const isAdmin = await ssr.isAdmin(session?.user?.id ?? "");
-
-  if (session === null || !isAdmin) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
-
-  return { props: { session } };
-};
-
-const MovieDetailPage: NextPage = () =>
-  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex" ? (
-    <ConvexMovieDetailPage />
-  ) : (
-    <SqlMovieDetailPage />
-  );
-
-export default MovieDetailPage;
+export default function MovieDetailPage() {
+  return <ConvexMovieDetailPage />;
+}

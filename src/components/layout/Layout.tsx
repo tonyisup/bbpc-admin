@@ -11,17 +11,14 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const { accountStatus, backend, status, user } = useBbpcAdminAuth();
+  const { accountStatus, status, user } = useBbpcAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (
-    status === "loading" ||
-    (backend === "convex" && accountStatus === "resolving")
-  ) {
+  if (status === "loading" || accountStatus === "resolving") {
     return null;
   }
 
-  if (user === null || (backend === "convex" && accountStatus !== "ready")) {
+  if (user === null || accountStatus !== "ready") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         {children}

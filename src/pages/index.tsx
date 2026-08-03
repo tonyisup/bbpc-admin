@@ -8,19 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { NextPage } from "next";
-import dynamic from "next/dynamic";
 import Head from "next/head";
 
-const convexBackendSelected =
-  process.env.NEXT_PUBLIC_BBPC_BACKEND === "convex";
-const SqlAdminHome = convexBackendSelected
-  ? null
-  : dynamic(() => import("@/components/Dashboard/SqlAdminHome"), {
-      loading: () => null,
-    });
-
-const ConvexHome: NextPage = () => {
+export default function Home() {
   const {
     accountIssue,
     accountStatus,
@@ -59,12 +49,12 @@ const ConvexHome: NextPage = () => {
       accountIssue === "account-disabled"
         ? "This account is disabled."
         : accountIssue === "identity-conflict"
-        ? "This sign-in is already linked to another BBPC account."
-        : accountIssue === "linking-disabled"
-        ? "Account linking is paused in this environment."
-        : accountIssue === "stale-client"
-        ? "This admin client is out of date."
-        : "The BBPC account could not be resolved.";
+          ? "This sign-in is already linked to another BBPC account."
+          : accountIssue === "linking-disabled"
+            ? "Account linking is paused in this environment."
+            : accountIssue === "stale-client"
+              ? "This admin client is out of date."
+              : "The BBPC account could not be resolved.";
     return (
       <Card className="w-[420px] max-w-[calc(100vw-2rem)] shadow-lg">
         <CardHeader>
@@ -110,16 +100,4 @@ const ConvexHome: NextPage = () => {
       <ConvexAdminDashboard userName={user.name} />
     </>
   );
-};
-
-const Home: NextPage = () => {
-  if (convexBackendSelected) {
-    return <ConvexHome />;
-  }
-  if (SqlAdminHome === null) {
-    throw new Error("SQL mode requires the legacy admin dashboard.");
-  }
-  return <SqlAdminHome />;
-};
-
-export default Home;
+}
