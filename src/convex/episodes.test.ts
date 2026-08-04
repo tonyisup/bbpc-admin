@@ -1,4 +1,5 @@
 import type { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
 import { describe, expect, test, vi } from "vitest";
 
 import { BBPC_CLIENT_API_VERSION } from "./identity";
@@ -44,6 +45,13 @@ describe("Convex admin episode catalog adapter", () => {
         numItems: ADMIN_EPISODES_PAGE_SIZE,
       },
     });
+    const listCall = query.mock.calls[0];
+    if (listCall === undefined) {
+      throw new Error("Expected the episode list query to run.");
+    }
+    expect(getFunctionName(listCall[0])).toBe(
+      "episodes/admin:listPage"
+    );
 
     await createConvexAdminEpisode(client, {
       number: episode.number,

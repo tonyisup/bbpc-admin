@@ -94,7 +94,7 @@ const listEpisodesReference = makeFunctionReference<
     };
   },
   unknown
->("episodes/public:listPage");
+>("episodes/admin:listPage");
 
 const searchEpisodesReference = makeFunctionReference<
   "query",
