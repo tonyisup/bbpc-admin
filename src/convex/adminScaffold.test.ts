@@ -100,6 +100,7 @@ describe("Convex-only admin scaffold", () => {
     ["src/pages/point/[id].tsx", "ConvexPointDetailPage"],
     ["src/pages/quotabunga/index.tsx", "ConvexQuotabungaPage"],
     ["src/pages/rating/index.tsx", "ConvexRatingsPage"],
+    ["src/pages/record/index.tsx", "ConvexRecordingManagementPage"],
     ["src/pages/review/index.tsx", "ConvexReviewsPage"],
     ["src/pages/role/index.tsx", "ConvexRolesPage"],
     ["src/pages/season/[id].tsx", "ConvexSeasonDetailPage"],
@@ -116,10 +117,29 @@ describe("Convex-only admin scaffold", () => {
     expect(route).not.toMatch(/Sql[A-Z]|BBPC_BACKEND|getServerSession|server\/db/u);
   });
 
-  it("hands recording off to the consolidated recording app", () => {
+  it("keeps recording management while handing audio to the recording app", () => {
     const route = read("src/pages/record/index.tsx");
-    expect(route).toMatch(/NEXT_PUBLIC_BBPC_RECORDING_URL/u);
-    expect(route).toMatch(/redirect/u);
-    expect(route).not.toMatch(/SqlRecordPage|server\/sql|next-auth/u);
+    const management = read(
+      "src/components/Recording/ConvexRecordingManagementPage.tsx"
+    );
+    const managementModel = read(
+      "src/components/Recording/recordingManagementModel.ts"
+    );
+    const sidebar = read("src/components/layout/Sidebar.tsx");
+
+    expect(route).toMatch(/ConvexRecordingManagementPage/u);
+    expect(route).not.toMatch(/redirect|GetServerSideProps/u);
+    expect(management).toMatch(/SeasonLeaderboard/u);
+    expect(management).toMatch(/EpisodePointsSummary/u);
+    expect(management).toMatch(/QuotabungaRecordingRound/u);
+    expect(management).toMatch(/NEXT_PUBLIC_BBPC_RECORDING_URL/u);
+    expect(management).toMatch(/isRecordingGuessRevealed/u);
+    expect(management).toMatch(/allHostsRated/u);
+    expect(managementModel).toMatch(/collectAllRecordingUsers/u);
+    expect(managementModel).toMatch(/chunkRecordingValues/u);
+    expect(management).not.toMatch(/exceeds the 100-user/u);
+    expect(sidebar).toMatch(/label: "Up Next"[\s\S]*href: "\/record"/u);
+    expect(sidebar).toMatch(/label: "Recording Room"/u);
+    expect(management).not.toMatch(/SqlRecordPage|server\/sql|next-auth|trpc/u);
   });
 });

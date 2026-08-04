@@ -9,6 +9,7 @@ import {
   deleteConvexAssignment,
   loadConvexAssignmentAudioPage,
   loadConvexAssignmentWorkbench,
+  loadConvexAssignmentWorkbenchById,
   removeConvexAssignmentAudio,
   removeConvexAssignmentGuess,
   updateConvexAssignmentReviewRating,
@@ -135,6 +136,17 @@ describe("Convex assignment detail adapter", () => {
     await expect(
       loadConvexAssignmentWorkbench(client, assignment.slug)
     ).resolves.toEqual(workbench);
+
+    const directQuery = vi.fn().mockResolvedValue(workbench);
+    const directClient = {
+      query: directQuery,
+    } as unknown as ConvexReactClient;
+    await expect(
+      loadConvexAssignmentWorkbenchById(directClient, assignment.id)
+    ).resolves.toEqual(workbench);
+    expect(directQuery).toHaveBeenCalledWith(expect.anything(), {
+      id: assignment.id,
+    });
   });
 
   test("sends exact assignment, review, guess, and wager snapshots", async () => {

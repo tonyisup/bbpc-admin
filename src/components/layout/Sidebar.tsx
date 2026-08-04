@@ -57,8 +57,14 @@ export function Sidebar({ className }: SidebarProps) {
 				{
 					label: "Up Next",
 					icon: Mic2,
-					href: recordingAppUrl ?? "/record",
+					href: "/record",
 					active: pathname === "/record",
+				},
+				{
+					label: "Recording Room",
+					icon: Mic,
+					href: recordingAppUrl ?? "/record",
+					active: false,
 				}
 			]
 		},

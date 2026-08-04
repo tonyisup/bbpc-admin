@@ -308,9 +308,10 @@ export async function loadConvexAssignmentWorkbench(
   if (route === null) {
     return null;
   }
-  const workbench = workbenchSchema
-    .nullable()
-    .parse(await client.query(getWorkbenchReference, { id: route.id }));
+  const workbench = await loadConvexAssignmentWorkbenchById(
+    client,
+    route.id
+  );
   if (
     workbench !== null &&
     workbench.assignment.slug !== route.slug
@@ -318,6 +319,15 @@ export async function loadConvexAssignmentWorkbench(
     throw new Error("Assignment slug changed while loading its workbench.");
   }
   return workbench;
+}
+
+export async function loadConvexAssignmentWorkbenchById(
+  client: ConvexReactClient,
+  id: string
+): Promise<ConvexAssignmentWorkbench | null> {
+  return workbenchSchema
+    .nullable()
+    .parse(await client.query(getWorkbenchReference, { id }));
 }
 
 export async function updateConvexAssignmentSlug(
