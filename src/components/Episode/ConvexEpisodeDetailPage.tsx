@@ -37,7 +37,6 @@ import {
 } from "@/convex/episodeDetails";
 import { getConvexDomainErrorCode } from "@/convex/identity";
 import { formatInstantLocal, formatPlainDate } from "@/lib/dates";
-import { getAdminAssignmentPath } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -70,6 +69,7 @@ import {
 } from "../ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Textarea } from "../ui/textarea";
+import { EpisodeRelationships } from "./EpisodeRelationships";
 
 function mutationMessage(error: unknown): string {
   switch (getConvexDomainErrorCode(error)) {
@@ -128,9 +128,7 @@ function EpisodeEditor({
 }) {
   const [number, setNumber] = useState(String(episode.number));
   const [title, setTitle] = useState(episode.title);
-  const [description, setDescription] = useState(
-    episode.description ?? ""
-  );
+  const [description, setDescription] = useState(episode.description ?? "");
   const [date, setDate] = useState(episode.date ?? "");
   const [recording, setRecording] = useState(episode.recording ?? "");
   const [status, setStatus] = useState(episode.status ?? "pending");
@@ -138,9 +136,7 @@ function EpisodeEditor({
   const [seoDescription, setSeoDescription] = useState(
     episode.seoDescription ?? ""
   );
-  const [seoKeywords, setSeoKeywords] = useState(
-    episode.seoKeywords ?? ""
-  );
+  const [seoKeywords, setSeoKeywords] = useState(episode.seoKeywords ?? "");
   const [slug, setSlug] = useState(episode.slug ?? "");
   const [showErrors, setShowErrors] = useState(false);
   const parsedNumber = Number(number);
@@ -255,8 +251,7 @@ function EpisodeEditor({
         </div>
         {showErrors && !isValid && (
           <p className="text-sm text-destructive md:col-span-2">
-            A title, valid episode number, and valid optional date are
-            required.
+            A title, valid episode number, and valid optional date are required.
           </p>
         )}
       </CardContent>
@@ -311,9 +306,7 @@ function AddLinkDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add episode link</DialogTitle>
-          <DialogDescription>
-            URLs must use HTTP or HTTPS.
-          </DialogDescription>
+          <DialogDescription>URLs must use HTTP or HTTPS.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -340,13 +333,9 @@ function AddLinkDialog({
           </Button>
           <Button
             disabled={
-              isSaving ||
-              text.trim().length === 0 ||
-              url.trim().length === 0
+              isSaving || text.trim().length === 0 || url.trim().length === 0
             }
-            onClick={() =>
-              onSave({ text: text.trim(), url: url.trim() })
-            }
+            onClick={() => onSave({ text: text.trim(), url: url.trim() })}
           >
             Add link
           </Button>
@@ -356,110 +345,10 @@ function AddLinkDialog({
   );
 }
 
-function Relationships({
-  episode,
-}: {
-  episode: ConvexAdminEpisodeDetail;
-}) {
-  return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Assignments ({episode.assignments.length})</CardTitle>
-          <CardDescription>
-            Relationship editing remains in the dedicated assignment
-            workbench; this bounded episode view is read-only.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          {episode.assignments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assignments.</p>
-          ) : (
-            episode.assignments.map((assignment) => (
-              <div
-                className="rounded-xl border bg-muted/20 p-4"
-                key={assignment.id}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="outline">{assignment.type}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {assignment.playable ? "Playable" : "Not playable"}
-                  </span>
-                </div>
-                {assignment.slug === null ? (
-                  <p className="mt-3 font-bold">
-                    {assignment.movie.title} ({assignment.movie.year})
-                  </p>
-                ) : (
-                  <Link
-                    className="mt-3 block font-bold hover:text-primary"
-                    href={getAdminAssignmentPath(assignment.slug)}
-                  >
-                    {assignment.movie.title} ({assignment.movie.year})
-                  </Link>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  {assignment.user.name ?? "Unnamed user"}
-                </p>
-                <Link
-                  className="mt-2 inline-block text-xs text-muted-foreground hover:text-primary"
-                  href={`/movie/${assignment.movie.id}`}
-                >
-                  View movie
-                </Link>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Extras ({episode.extras.length})</CardTitle>
-          <CardDescription>
-            Extra review changes remain protected by the review workbench’s
-            confirmed cascade tools.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          {episode.extras.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No extras.</p>
-          ) : (
-            episode.extras.map((extra) => {
-              const target = extra.review.movie ?? extra.review.show;
-              const kind = extra.review.movie === null ? "show" : "movie";
-              return (
-                <div
-                  className="rounded-xl border bg-muted/20 p-4"
-                  key={extra.id}
-                >
-                  <Badge variant="secondary">Extra</Badge>
-                  {target === null ? (
-                    <p className="mt-3 text-sm text-destructive">
-                      Missing media target
-                    </p>
-                  ) : (
-                    <Link
-                      className="mt-3 block font-bold hover:text-primary"
-                      href={`/${kind}/${target.id}`}
-                    >
-                      {target.title} ({target.year})
-                    </Link>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 export function ConvexEpisodeDetailPage() {
   const router = useRouter();
   const convex = useConvex();
-  const slug =
-    typeof router.query.slug === "string" ? router.query.slug : null;
+  const slug = typeof router.query.slug === "string" ? router.query.slug : null;
   const [episode, setEpisode] = useState<
     ConvexAdminEpisodeDetail | null | undefined
   >(undefined);
@@ -479,6 +368,7 @@ export function ConvexEpisodeDetailPage() {
   const [audioNotes, setAudioNotes] = useState("");
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
 
   useEffect(() => {
     if (slug === null) {
@@ -498,23 +388,14 @@ export function ConvexEpisodeDetailPage() {
           return;
         }
         const [audioPage, followingEpisode] = await Promise.all([
-          loadConvexAdminEpisodeAudioPage(
-            convex,
-            loadedEpisode.id,
-            null
-          ),
-          loadConvexAdminEpisodeByNumber(
-            convex,
-            loadedEpisode.number + 1
-          ),
+          loadConvexAdminEpisodeAudioPage(convex, loadedEpisode.id, null),
+          loadConvexAdminEpisodeByNumber(convex, loadedEpisode.number + 1),
         ]);
         if (active) {
           setEpisode(loadedEpisode);
           setNotes(loadedEpisode.notes ?? "");
           setAudioMessages(audioPage.messages);
-          setAudioCursor(
-            audioPage.isDone ? null : audioPage.continueCursor
-          );
+          setAudioCursor(audioPage.isDone ? null : audioPage.continueCursor);
           setAudioDone(audioPage.isDone);
           setNextEpisode(followingEpisode);
         }
@@ -535,7 +416,9 @@ export function ConvexEpisodeDetailPage() {
     }
     const assignmentLines = episode.assignments.map(
       (assignment) =>
-        `${assignment.type}: [${assignment.user.name ?? "Unnamed"}] ${assignment.movie.title} (${assignment.movie.year})`
+        `${assignment.type}: [${assignment.user.name ?? "Unnamed"}] ${
+          assignment.movie.title
+        } (${assignment.movie.year})`
     );
     const extraLines = episode.extras.map((extra) => {
       const target = extra.review.movie ?? extra.review.show;
@@ -552,22 +435,16 @@ export function ConvexEpisodeDetailPage() {
             ...nextEpisode.assignments
               .slice()
               .sort((left, right) =>
-                left.type === right.type
-                  ? 0
-                  : left.type === "HOMEWORK"
-                  ? -1
-                  : 1
+                left.type === right.type ? 0 : left.type === "HOMEWORK" ? -1 : 1
               )
               .map(
                 (assignment) =>
-                  `${assignment.type}: [${
-                    assignment.user.name ?? "Unnamed"
-                  }] ${assignment.movie.title} (${assignment.movie.year})`
+                  `${assignment.type}: [${assignment.user.name ?? "Unnamed"}] ${
+                    assignment.movie.title
+                  } (${assignment.movie.year})`
               ),
           ];
-    return [...assignmentLines, "", ...extraLines, ...nextLines].join(
-      "\n"
-    );
+    return [...assignmentLines, "", ...extraLines, ...nextLines].join("\n");
   }, [episode, nextEpisode]);
 
   const refresh = () => setRevision((value) => value + 1);
@@ -643,9 +520,7 @@ export function ConvexEpisodeDetailPage() {
                 setLinkDialogOpen(false);
                 refresh();
               })
-              .catch((error: unknown) =>
-                toast.error(mutationMessage(error))
-              )
+              .catch((error: unknown) => toast.error(mutationMessage(error)))
               .finally(() => setIsSaving(false));
           }}
         />
@@ -701,7 +576,7 @@ export function ConvexEpisodeDetailPage() {
           </div>
         </section>
 
-        <Tabs defaultValue="general">
+        <Tabs onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-4">
             <TabsTrigger className="gap-2" value="general">
               <Settings2 className="h-4 w-4" />
@@ -731,7 +606,7 @@ export function ConvexEpisodeDetailPage() {
           </TabsContent>
 
           <TabsContent className="pt-6" value="relationships">
-            <Relationships episode={episode} />
+            <EpisodeRelationships episode={episode} onRefresh={refresh} />
           </TabsContent>
 
           <TabsContent className="space-y-8 pt-6" value="media">
@@ -812,8 +687,8 @@ export function ConvexEpisodeDetailPage() {
                 <CardDescription>
                   The legacy upload endpoint remains disabled because it does
                   not authenticate users. Add an HTTPS audio URL instead.
-                  Externally keyed files are read-only until provider cleanup
-                  is integrated.
+                  Externally keyed files are read-only until provider cleanup is
+                  integrated.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -829,9 +704,7 @@ export function ConvexEpisodeDetailPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="convex-audio-notes">
-                      Notes (optional)
-                    </Label>
+                    <Label htmlFor="convex-audio-notes">Notes (optional)</Label>
                     <Textarea
                       id="convex-audio-notes"
                       onChange={(event) => setAudioNotes(event.target.value)}
@@ -843,14 +716,10 @@ export function ConvexEpisodeDetailPage() {
                     disabled={isSaving || audioUrl.trim().length === 0}
                     onClick={() => {
                       setIsSaving(true);
-                      void addConvexAdminEpisodeAudio(
-                        convex,
-                        episode.id,
-                        {
-                          url: audioUrl.trim(),
-                          notes: nullableText(audioNotes),
-                        }
-                      )
+                      void addConvexAdminEpisodeAudio(convex, episode.id, {
+                        url: audioUrl.trim(),
+                        notes: nullableText(audioNotes),
+                      })
                         .then(() => {
                           toast.success("Audio metadata added.");
                           setAudioUrl("");
@@ -876,10 +745,7 @@ export function ConvexEpisodeDetailPage() {
                   </p>
                 ) : (
                   audioMessages.map((message) => (
-                    <div
-                      className="rounded-xl border p-4"
-                      key={message.id}
-                    >
+                    <div className="rounded-xl border p-4" key={message.id}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-center gap-3">
                           <Avatar className="h-9 w-9">
@@ -895,13 +761,10 @@ export function ConvexEpisodeDetailPage() {
                                 "Unnamed user"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {formatInstantLocal(
-                                new Date(message.createdAt),
-                                {
-                                  dateStyle: "medium",
-                                  timeStyle: "short",
-                                }
-                              )}
+                              {formatInstantLocal(new Date(message.createdAt), {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
                             </p>
                           </div>
                         </div>
@@ -913,10 +776,7 @@ export function ConvexEpisodeDetailPage() {
                               return;
                             }
                             setIsSaving(true);
-                            void removeConvexAdminEpisodeAudio(
-                              convex,
-                              message
-                            )
+                            void removeConvexAdminEpisodeAudio(convex, message)
                               .then(() => {
                                 toast.success("Audio metadata deleted.");
                                 refresh();
@@ -1023,9 +883,7 @@ export function ConvexEpisodeDetailPage() {
                 </div>
                 <Button
                   className="gap-2"
-                  disabled={
-                    isSaving || notes === (episode.notes ?? "")
-                  }
+                  disabled={isSaving || notes === (episode.notes ?? "")}
                   onClick={() =>
                     saveEpisode({
                       number: episode.number,

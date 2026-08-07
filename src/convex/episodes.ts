@@ -29,7 +29,7 @@ const episodeUserSchema = z.object({
 
 const episodeAssignmentSchema = z.object({
   id: z.string().min(1),
-  type: z.string(),
+  type: z.enum(["HOMEWORK", "EXTRA_CREDIT", "BONUS"]),
   playable: z.boolean(),
   slug: z.string().nullable(),
   user: episodeUserSchema,
@@ -114,9 +114,7 @@ const createEpisodeReference = makeFunctionReference<
 
 export const ADMIN_EPISODES_PAGE_SIZE = 20;
 
-export type ConvexAdminEpisode = z.infer<
-  typeof adminEpisodeSummarySchema
->;
+export type ConvexAdminEpisode = z.infer<typeof adminEpisodeSummarySchema>;
 
 export interface ConvexAdminEpisodesPage {
   episodes: ConvexAdminEpisode[];

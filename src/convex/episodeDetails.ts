@@ -142,16 +142,60 @@ const removeAudioReference = makeFunctionReference<
   unknown
 >("episodes/admin:removeAudioMessage");
 
+const createAssignmentReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    userId: string;
+    movieId: string;
+    episodeId: string;
+    type: ConvexAdminEpisodeAssignmentType;
+  },
+  unknown
+>("assignments/admin:create");
+
+const removeAssignmentReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    id: string;
+    expected: {
+      type: ConvexAdminEpisodeAssignmentType;
+      slug: string | null;
+      userId: string;
+      movieId: string;
+      episodeId: string;
+    };
+  },
+  unknown
+>("assignments/admin:removeIfUnreferenced");
+
+const createExtraReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    userId: string;
+    movieId?: string;
+    showId?: string;
+    episodeId: string;
+  },
+  unknown
+>("reviews/admin:createExtra");
+
 export const ADMIN_EPISODE_AUDIO_PAGE_SIZE = 30;
 
-export type ConvexAdminEpisodeDetail = z.infer<
-  typeof episodeDetailSchema
->;
-export type ConvexAdminEpisodeAudioMessage = z.infer<
-  typeof audioMessageSchema
->;
-export type ConvexAdminEpisodeLink =
-  ConvexAdminEpisodeDetail["links"][number];
+export type ConvexAdminEpisodeDetail = z.infer<typeof episodeDetailSchema>;
+export type ConvexAdminEpisodeAudioMessage = z.infer<typeof audioMessageSchema>;
+export type ConvexAdminEpisodeLink = ConvexAdminEpisodeDetail["links"][number];
+export type ConvexAdminEpisodeAssignment =
+  ConvexAdminEpisodeDetail["assignments"][number];
+export type ConvexAdminEpisodeAssignmentType =
+  ConvexAdminEpisodeAssignment["type"];
+export type ConvexAdminEpisodeExtra =
+  ConvexAdminEpisodeDetail["extras"][number];
+export type ConvexAdminEpisodeExtraInput = {
+  userId: string;
+} & ({ kind: "movie"; mediaId: string } | { kind: "show"; mediaId: string });
 
 export type ConvexAdminEpisodeEditableSnapshot = Pick<
   ConvexAdminEpisodeDetail,
@@ -210,15 +254,15 @@ export async function loadConvexAdminEpisodeBySlug(
   client: ConvexReactClient,
   slug: string
 ): Promise<ConvexAdminEpisodeDetail | null> {
-  const summary = adminEpisodeSummarySchema.nullable().parse(
-    await client.query(getBySlugReference, { slug })
-  );
+  const summary = adminEpisodeSummarySchema
+    .nullable()
+    .parse(await client.query(getBySlugReference, { slug }));
   if (summary === null) {
     return null;
   }
-  const detail = episodeDetailSchema.nullable().parse(
-    await client.query(getByIdReference, { id: summary.id })
-  );
+  const detail = episodeDetailSchema
+    .nullable()
+    .parse(await client.query(getByIdReference, { id: summary.id }));
   if (detail !== null && detail.slug !== summary.slug) {
     throw new Error("Episode slug changed while loading its detail.");
   }
@@ -229,9 +273,9 @@ export async function loadConvexAdminEpisodeByNumber(
   client: ConvexReactClient,
   number: number
 ): Promise<ConvexAdminEpisodeDetail | null> {
-  return episodeDetailSchema.nullable().parse(
-    await client.query(getByNumberReference, { number })
-  );
+  return episodeDetailSchema
+    .nullable()
+    .parse(await client.query(getByNumberReference, { number }));
 }
 
 export async function updateConvexAdminEpisode(
@@ -338,6 +382,61 @@ export async function removeConvexAdminEpisodeAudio(
         fileKey: message.fileKey,
         createdAt: message.createdAt,
       },
+    })
+  );
+}
+
+export async function addConvexAdminEpisodeAssignment(
+  client: ConvexReactClient,
+  episodeId: string,
+  input: {
+    userId: string;
+    movieId: string;
+    type: ConvexAdminEpisodeAssignmentType;
+  }
+): Promise<void> {
+  idResultSchema.parse(
+    await client.mutation(createAssignmentReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId,
+      ...input,
+    })
+  );
+}
+
+export async function removeConvexAdminEpisodeAssignment(
+  client: ConvexReactClient,
+  episodeId: string,
+  assignment: ConvexAdminEpisodeAssignment
+): Promise<void> {
+  idResultSchema.parse(
+    await client.mutation(removeAssignmentReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      expected: {
+        type: assignment.type,
+        slug: assignment.slug,
+        userId: assignment.user.id,
+        movieId: assignment.movie.id,
+        episodeId,
+      },
+    })
+  );
+}
+
+export async function addConvexAdminEpisodeExtra(
+  client: ConvexReactClient,
+  episodeId: string,
+  input: ConvexAdminEpisodeExtraInput
+): Promise<void> {
+  idResultSchema.parse(
+    await client.mutation(createExtraReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId,
+      userId: input.userId,
+      ...(input.kind === "movie"
+        ? { movieId: input.mediaId }
+        : { showId: input.mediaId }),
     })
   );
 }

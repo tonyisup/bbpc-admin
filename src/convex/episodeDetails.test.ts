@@ -1,15 +1,19 @@
 import type { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
 import { describe, expect, test, vi } from "vitest";
 
 import { BBPC_CLIENT_API_VERSION } from "./identity";
 import {
   ADMIN_EPISODE_AUDIO_PAGE_SIZE,
+  addConvexAdminEpisodeAssignment,
   addConvexAdminEpisodeAudio,
+  addConvexAdminEpisodeExtra,
   addConvexAdminEpisodeLink,
   loadConvexAdminEpisodeAudioPage,
   loadConvexAdminEpisodeByNumber,
   loadConvexAdminEpisodeBySlug,
   removeConvexAdminEpisodeAudio,
+  removeConvexAdminEpisodeAssignment,
   removeConvexAdminEpisodeLink,
   updateConvexAdminEpisode,
 } from "./episodeDetails";
@@ -147,6 +151,91 @@ describe("Convex episode detail adapter", () => {
         createdAt: audioMessage.createdAt,
       },
     });
+  });
+
+  test("creates and safely removes episode assignments and extras", async () => {
+    const assignment = {
+      id: "assignment-1",
+      type: "HOMEWORK" as const,
+      playable: false,
+      slug: "episode-12-example-user-movie",
+      user: {
+        id: "user-1",
+        name: "Example User",
+        image: null,
+      },
+      movie: {
+        id: "movie-1",
+        title: "Movie",
+        year: 2026,
+        poster: null,
+        url: "https://example.test/movie",
+        tmdbId: 123,
+      },
+    };
+    const mutation = vi
+      .fn()
+      .mockResolvedValueOnce({ id: assignment.id })
+      .mockResolvedValueOnce({ id: assignment.id })
+      .mockResolvedValueOnce({ id: "extra-movie" })
+      .mockResolvedValueOnce({ id: "extra-show" });
+    const client = { mutation } as unknown as ConvexReactClient;
+
+    await addConvexAdminEpisodeAssignment(client, episode.id, {
+      userId: assignment.user.id,
+      movieId: assignment.movie.id,
+      type: assignment.type,
+    });
+    await removeConvexAdminEpisodeAssignment(client, episode.id, assignment);
+    await addConvexAdminEpisodeExtra(client, episode.id, {
+      userId: assignment.user.id,
+      kind: "movie",
+      mediaId: assignment.movie.id,
+    });
+    await addConvexAdminEpisodeExtra(client, episode.id, {
+      userId: assignment.user.id,
+      kind: "show",
+      mediaId: "show-1",
+    });
+
+    expect(mutation).toHaveBeenNthCalledWith(1, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId: episode.id,
+      userId: assignment.user.id,
+      movieId: assignment.movie.id,
+      type: assignment.type,
+    });
+    expect(mutation).toHaveBeenNthCalledWith(2, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      expected: {
+        type: assignment.type,
+        slug: assignment.slug,
+        userId: assignment.user.id,
+        movieId: assignment.movie.id,
+        episodeId: episode.id,
+      },
+    });
+    expect(mutation).toHaveBeenNthCalledWith(3, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId: episode.id,
+      userId: assignment.user.id,
+      movieId: assignment.movie.id,
+    });
+    expect(mutation).toHaveBeenNthCalledWith(4, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId: episode.id,
+      userId: assignment.user.id,
+      showId: "show-1",
+    });
+    expect(
+      mutation.mock.calls.map((call) => getFunctionName(call[0]))
+    ).toEqual([
+      "assignments/admin:create",
+      "assignments/admin:removeIfUnreferenced",
+      "reviews/admin:createExtra",
+      "reviews/admin:createExtra",
+    ]);
   });
 
   test("rejects slug drift and cross-episode audio", async () => {
