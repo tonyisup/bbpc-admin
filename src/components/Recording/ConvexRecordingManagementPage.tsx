@@ -85,6 +85,7 @@ import {
   collectAllRecordingUsers,
   getAssignmentRecordingDisclosure,
   isRecordingGuessRevealed,
+  selectRecordingManagementEpisode,
   summarizeEpisodePoints,
 } from "./recordingManagementModel";
 
@@ -203,14 +204,7 @@ async function loadRecordingManagementData(
     loadConvexAdminSeasonsPage(client, null),
     loadAllSupportedUsers(client),
   ]);
-  const episodeCandidate =
-    quoteEpisodes.find(
-      (candidate) => candidate.status?.toLowerCase() === "recording"
-    ) ??
-    quoteEpisodes.find(
-      (candidate) => candidate.status?.toLowerCase() === "next"
-    ) ??
-    null;
+  const episodeCandidate = selectRecordingManagementEpisode(quoteEpisodes);
   const episode =
     episodeCandidate === null
       ? null

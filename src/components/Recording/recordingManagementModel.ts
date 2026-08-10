@@ -30,6 +30,21 @@ interface RecordingUserPage {
   continueCursor: string;
 }
 
+export function selectRecordingManagementEpisode<
+  T extends { status: string | null },
+>(episodes: readonly T[]): T | null {
+  return (
+    episodes.find(
+      (episode) => episode.status?.toLowerCase() === "next"
+    ) ??
+    episodes.find(
+      (episode) => episode.status?.toLowerCase() === "recording"
+    ) ??
+    episodes[0] ??
+    null
+  );
+}
+
 export async function collectAllRecordingUsers(
   loadPage: (cursor: string | null) => Promise<RecordingUserPage>
 ): Promise<ConvexAdminUser[]> {
