@@ -12,7 +12,9 @@ import {
   loadConvexAssignmentWorkbenchById,
   removeConvexAssignmentAudio,
   removeConvexAssignmentGuess,
+  updateConvexAssignmentIdentity,
   updateConvexAssignmentReviewRating,
+  updateConvexAssignmentPlayable,
   updateConvexAssignmentSlug,
   updateConvexAssignmentWagerStatus,
 } from "./assignmentDetails";
@@ -153,6 +155,7 @@ describe("Convex assignment detail adapter", () => {
     const mutation = vi
       .fn()
       .mockResolvedValueOnce(assignment)
+      .mockResolvedValueOnce({ ...assignment, playable: true })
       .mockResolvedValue({ id: "result-1" });
     const client = { mutation } as unknown as ConvexReactClient;
 
@@ -162,6 +165,14 @@ describe("Convex assignment detail adapter", () => {
       id: assignment.id,
       slug: "new-slug",
       expectedSlug: assignment.slug,
+    });
+
+    await updateConvexAssignmentPlayable(client, assignment, true);
+    expect(mutation).toHaveBeenLastCalledWith(expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      playable: true,
+      expectedPlayable: assignment.playable,
     });
 
     await deleteConvexAssignment(client, assignment);
@@ -212,6 +223,39 @@ describe("Convex assignment detail adapter", () => {
         expectedStatus: "pending",
       })
     );
+  });
+
+  test("updates assignment identity atomically with the loaded snapshot", async () => {
+    const updated = {
+      ...assignment,
+      type: "BONUS" as const,
+      playable: true,
+      slug: "new-slug",
+    };
+    const mutation = vi.fn().mockResolvedValue(updated);
+    const client = { mutation } as unknown as ConvexReactClient;
+
+    await expect(
+      updateConvexAssignmentIdentity(client, {
+        assignment,
+        type: "BONUS",
+        playable: true,
+        slug: "new-slug",
+      })
+    ).resolves.toEqual(updated);
+    expect(mutation).toHaveBeenCalledOnce();
+    expect(mutation).toHaveBeenCalledWith(expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      type: "BONUS",
+      playable: true,
+      slug: "new-slug",
+      expected: {
+        type: assignment.type,
+        playable: assignment.playable,
+        slug: assignment.slug,
+      },
+    });
   });
 
   test("versions relationship creation and bounded audio metadata", async () => {

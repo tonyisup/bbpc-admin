@@ -36,7 +36,7 @@ This feature allows admins to manage all aspects of podcast episodes.
         - Air Date
         - Recording URL
     - **Associated Data Management**: This page also includes components for managing data related to the episode:
-        - `EpisodeAssignments`: Manages homework, extra credit, and bonus assignments for the episode.
+        - `EpisodeAssignments`: Manages homework, extra credit, and bonus assignments for the episode. New assignments default to playable; admins can clear that setting during creation or change it later from the assignment detail page.
         - `EpisodeExtras`: Manages additional content or notes for the episode.
         - `EpisodeLinks`: Manages relevant links for the episode.
         - `EpisodeAudioMessages`: Manages audio messages associated with the episode.

@@ -27,6 +27,7 @@ import { getAdminAssignmentPath } from "@/lib/routes";
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import {
   Card,
   CardContent,
@@ -285,12 +286,14 @@ function AddAssignmentDialog({
     userId: string;
     movieId: string;
     type: ConvexAdminEpisodeAssignmentType;
+    playable: boolean;
   }) => void;
 }) {
   const [user, setUser] = useState<ConvexAdminUser | null>(null);
   const [movie, setMovie] = useState<CatalogSelection | null>(null);
   const [type, setType] =
     useState<ConvexAdminEpisodeAssignmentType>("HOMEWORK");
+  const [playable, setPlayable] = useState(true);
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
@@ -321,6 +324,19 @@ function AddAssignmentDialog({
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-start gap-3 rounded-md border p-3">
+            <Checkbox
+              checked={playable}
+              id="episode-assignment-playable"
+              onCheckedChange={(checked) => setPlayable(checked === true)}
+            />
+            <div className="grid gap-1">
+              <Label htmlFor="episode-assignment-playable">Playable</Label>
+              <p className="text-xs text-muted-foreground">
+                Make this assignment available for gameplay.
+              </p>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button
@@ -335,7 +351,12 @@ function AddAssignmentDialog({
             disabled={saving || user === null || movie === null}
             onClick={() => {
               if (user !== null && movie !== null) {
-                onSave({ userId: user.id, movieId: movie.id, type });
+                onSave({
+                  userId: user.id,
+                  movieId: movie.id,
+                  type,
+                  playable,
+                });
               }
             }}
             type="button"

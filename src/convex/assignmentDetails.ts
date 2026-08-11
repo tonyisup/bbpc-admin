@@ -148,6 +148,34 @@ const setTypeReference = makeFunctionReference<
   unknown
 >("assignments/admin:setType");
 
+const setPlayableReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    id: string;
+    playable: boolean;
+    expectedPlayable: boolean;
+  },
+  unknown
+>("assignments/admin:setPlayable");
+
+const updateIdentityReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    id: string;
+    type: ConvexAssignmentType;
+    playable: boolean;
+    slug: string;
+    expected: {
+      type: ConvexAssignmentType;
+      playable: boolean;
+      slug: string | null;
+    };
+  },
+  unknown
+>("assignments/admin:updateIdentity");
+
 const removeAssignmentReference = makeFunctionReference<
   "mutation",
   {
@@ -356,6 +384,46 @@ export async function updateConvexAssignmentType(
       id: assignment.id,
       type,
       expectedType: assignment.type,
+    })
+  );
+}
+
+export async function updateConvexAssignmentPlayable(
+  client: ConvexReactClient,
+  assignment: ConvexAssignmentWorkbench["assignment"],
+  playable: boolean
+): Promise<ConvexAssignmentWorkbench["assignment"]> {
+  return assignmentSchema.parse(
+    await client.mutation(setPlayableReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      playable,
+      expectedPlayable: assignment.playable,
+    })
+  );
+}
+
+export async function updateConvexAssignmentIdentity(
+  client: ConvexReactClient,
+  input: {
+    assignment: ConvexAssignmentWorkbench["assignment"];
+    slug: string;
+    type: ConvexAssignmentType;
+    playable: boolean;
+  }
+): Promise<ConvexAssignmentWorkbench["assignment"]> {
+  return assignmentSchema.parse(
+    await client.mutation(updateIdentityReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: input.assignment.id,
+      type: input.type,
+      playable: input.playable,
+      slug: input.slug,
+      expected: {
+        type: input.assignment.type,
+        playable: input.assignment.playable,
+        slug: input.assignment.slug,
+      },
     })
   );
 }
