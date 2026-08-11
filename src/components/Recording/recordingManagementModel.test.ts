@@ -10,6 +10,7 @@ import {
   collectAllRecordingUsers,
   getAssignmentRecordingDisclosure,
   isRecordingGuessRevealed,
+  selectRecordingManagementEpisode,
   summarizeEpisodePoints,
 } from "./recordingManagementModel";
 
@@ -147,6 +148,56 @@ function wager(userId: string, total: number): ConvexAdminSeasonGamblingEntry {
 }
 
 describe("recording management model", () => {
+  it("selects the same upcoming episode as Quotabunga when an older episode is still recording", () => {
+    const recordingEpisode = {
+      id: "episode-11",
+      number: 11,
+      status: "recording",
+    };
+    const nextEpisode = {
+      id: "episode-12",
+      number: 12,
+      status: "next",
+    };
+
+    expect(
+      selectRecordingManagementEpisode([nextEpisode, recordingEpisode])
+    ).toBe(nextEpisode);
+  });
+
+  it("falls back to the recording episode when no next episode exists", () => {
+    const recordingEpisode = {
+      id: "episode-11",
+      number: 11,
+      status: "recording",
+    };
+
+    expect(selectRecordingManagementEpisode([recordingEpisode])).toBe(
+      recordingEpisode
+    );
+  });
+
+  it("falls back to the newest available episode like Quotabunga", () => {
+    const latestEpisode = {
+      id: "episode-12",
+      number: 12,
+      status: "pending",
+    };
+    const olderEpisode = {
+      id: "episode-11",
+      number: 11,
+      status: "published",
+    };
+
+    expect(
+      selectRecordingManagementEpisode([latestEpisode, olderEpisode])
+    ).toBe(latestEpisode);
+  });
+
+  it("returns null when the episode catalog is empty", () => {
+    expect(selectRecordingManagementEpisode([])).toBeNull();
+  });
+
   it("loads every user page instead of failing after 100 users", async () => {
     const users = Array.from({ length: 125 }, (_, index) =>
       adminUser(`user-${String(index)}`)
