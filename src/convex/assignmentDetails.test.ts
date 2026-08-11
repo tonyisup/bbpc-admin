@@ -225,48 +225,37 @@ describe("Convex assignment detail adapter", () => {
     );
   });
 
-  test("updates changed assignment identity fields in stale-safe sequence", async () => {
-    const typeUpdated = { ...assignment, type: "BONUS" as const };
-    const playableUpdated = { ...typeUpdated, playable: true };
-    const slugUpdated = { ...playableUpdated, slug: "new-slug" };
-    const mutation = vi
-      .fn()
-      .mockResolvedValueOnce(typeUpdated)
-      .mockResolvedValueOnce(playableUpdated)
-      .mockResolvedValueOnce(slugUpdated);
+  test("updates assignment identity atomically with the loaded snapshot", async () => {
+    const updated = {
+      ...assignment,
+      type: "BONUS" as const,
+      playable: true,
+      slug: "new-slug",
+    };
+    const mutation = vi.fn().mockResolvedValue(updated);
     const client = { mutation } as unknown as ConvexReactClient;
 
     await expect(
-      updateConvexAssignmentIdentity(client, assignment, {
+      updateConvexAssignmentIdentity(client, {
+        assignment,
         type: "BONUS",
         playable: true,
         slug: "new-slug",
       })
-    ).resolves.toEqual(slugUpdated);
-    expect(mutation.mock.calls.map((call) => call[1])).toEqual([
-      expect.objectContaining({
-        type: "BONUS",
-        expectedType: assignment.type,
-      }),
-      expect.objectContaining({
-        playable: true,
-        expectedPlayable: typeUpdated.playable,
-      }),
-      expect.objectContaining({
-        slug: "new-slug",
-        expectedSlug: playableUpdated.slug,
-      }),
-    ]);
-
-    mutation.mockClear();
-    await expect(
-      updateConvexAssignmentIdentity(client, assignment, {
+    ).resolves.toEqual(updated);
+    expect(mutation).toHaveBeenCalledOnce();
+    expect(mutation).toHaveBeenCalledWith(expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: assignment.id,
+      type: "BONUS",
+      playable: true,
+      slug: "new-slug",
+      expected: {
         type: assignment.type,
         playable: assignment.playable,
         slug: assignment.slug,
-      })
-    ).resolves.toEqual(assignment);
-    expect(mutation).not.toHaveBeenCalled();
+      },
+    });
   });
 
   test("versions relationship creation and bounded audio metadata", async () => {

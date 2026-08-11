@@ -159,6 +159,23 @@ const setPlayableReference = makeFunctionReference<
   unknown
 >("assignments/admin:setPlayable");
 
+const updateIdentityReference = makeFunctionReference<
+  "mutation",
+  {
+    clientApiVersion: string;
+    id: string;
+    type: ConvexAssignmentType;
+    playable: boolean;
+    slug: string;
+    expected: {
+      type: ConvexAssignmentType;
+      playable: boolean;
+      slug: string | null;
+    };
+  },
+  unknown
+>("assignments/admin:updateIdentity");
+
 const removeAssignmentReference = makeFunctionReference<
   "mutation",
   {
@@ -388,28 +405,27 @@ export async function updateConvexAssignmentPlayable(
 
 export async function updateConvexAssignmentIdentity(
   client: ConvexReactClient,
-  assignment: ConvexAssignmentWorkbench["assignment"],
   input: {
+    assignment: ConvexAssignmentWorkbench["assignment"];
     slug: string;
     type: ConvexAssignmentType;
     playable: boolean;
   }
 ): Promise<ConvexAssignmentWorkbench["assignment"]> {
-  let current = assignment;
-  if (input.type !== current.type) {
-    current = await updateConvexAssignmentType(client, current, input.type);
-  }
-  if (input.playable !== current.playable) {
-    current = await updateConvexAssignmentPlayable(
-      client,
-      current,
-      input.playable
-    );
-  }
-  if (input.slug !== (current.slug ?? "")) {
-    current = await updateConvexAssignmentSlug(client, current, input.slug);
-  }
-  return current;
+  return assignmentSchema.parse(
+    await client.mutation(updateIdentityReference, {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      id: input.assignment.id,
+      type: input.type,
+      playable: input.playable,
+      slug: input.slug,
+      expected: {
+        type: input.assignment.type,
+        playable: input.assignment.playable,
+        slug: input.assignment.slug,
+      },
+    })
+  );
 }
 
 export async function deleteConvexAssignment(

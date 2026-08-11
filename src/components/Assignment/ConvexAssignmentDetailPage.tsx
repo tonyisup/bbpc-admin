@@ -745,8 +745,8 @@ export function ConvexAssignmentDetailPage() {
                     async () => {
                       const updated = await updateConvexAssignmentIdentity(
                         client,
-                        assignment,
                         {
+                          assignment,
                           slug: slugDraft,
                           type: typeDraft,
                           playable: playableDraft,
