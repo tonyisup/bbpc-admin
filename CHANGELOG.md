@@ -6,4 +6,4 @@ All notable changes to BBPC Admin are documented in this file.
 
 ### Fixed
 
-- The `/record` page now selects the same newest episode as `/quotabunga`, so the latest Quotabunga entries remain visible when an older episode is still marked as recording.
+- The `/record` page now matches `/quotabunga` by choosing the `next` episode first, then a `recording` episode, then the newest available episode, so the latest Quotabunga entries remain visible when an older episode is still marked as recording.
