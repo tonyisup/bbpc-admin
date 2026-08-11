@@ -41,9 +41,8 @@ import {
   removeConvexAssignmentGuess,
   removeConvexAssignmentReview,
   updateConvexAssignmentGuessRating,
+  updateConvexAssignmentIdentity,
   updateConvexAssignmentReviewRating,
-  updateConvexAssignmentSlug,
-  updateConvexAssignmentType,
   updateConvexAssignmentWagerStatus,
 } from "@/convex/assignmentDetails";
 import { getConvexDomainErrorCode } from "@/convex/identity";
@@ -69,6 +68,7 @@ import { cn } from "@/lib/utils";
 import RatingIcon from "../Review/RatingIcon";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import {
   Card,
   CardContent,
@@ -406,6 +406,7 @@ export function ConvexAssignmentDetailPage() {
   const [slugDraft, setSlugDraft] = useState("");
   const [typeDraft, setTypeDraft] =
     useState<ConvexAssignmentType>("HOMEWORK");
+  const [playableDraft, setPlayableDraft] = useState(true);
   const [reviewUserId, setReviewUserId] = useState("");
   const [reviewRatingId, setReviewRatingId] = useState("none");
   const [guessReviewId, setGuessReviewId] = useState("");
@@ -463,6 +464,7 @@ export function ConvexAssignmentDetailPage() {
     }
     setSlugDraft(workbench.assignment.slug ?? "");
     setTypeDraft(workbench.assignment.type);
+    setPlayableDraft(workbench.assignment.playable);
     setGuessReviewId(workbench.reviews[0]?.id ?? "");
   }, [workbench]);
 
@@ -658,7 +660,7 @@ export function ConvexAssignmentDetailPage() {
           <CardHeader>
             <CardTitle>Assignment identity</CardTitle>
             <CardDescription>
-              Slug and type writes include the exact loaded value so
+              Slug, type, and playable writes include the exact loaded value so
               concurrent changes fail closed.
             </CardDescription>
           </CardHeader>
@@ -688,6 +690,21 @@ export function ConvexAssignmentDetailPage() {
                 <option value="EXTRA_CREDIT">Extra credit</option>
                 <option value="BONUS">Bonus</option>
               </select>
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3 md:col-span-2">
+              <Checkbox
+                checked={playableDraft}
+                id="assignment-playable"
+                onCheckedChange={(checked) =>
+                  setPlayableDraft(checked === true)
+                }
+              />
+              <div className="grid gap-1">
+                <Label htmlFor="assignment-playable">Playable</Label>
+                <p className="text-xs text-muted-foreground">
+                  Make this assignment available for gameplay.
+                </p>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-wrap justify-between gap-3">
@@ -719,31 +736,29 @@ export function ConvexAssignmentDetailPage() {
                 disabled={
                   busy !== null ||
                   (slugDraft === (assignment.slug ?? "") &&
-                    typeDraft === assignment.type)
+                    typeDraft === assignment.type &&
+                    playableDraft === assignment.playable)
                 }
                 onClick={() => {
                   void runMutation(
                     "save",
                     async () => {
-                      let current = assignment;
-                      if (typeDraft !== current.type) {
-                        current = await updateConvexAssignmentType(
-                          client,
-                          current,
-                          typeDraft
-                        );
-                      }
-                      if (slugDraft !== (current.slug ?? "")) {
-                        const updated = await updateConvexAssignmentSlug(
-                          client,
-                          current,
-                          slugDraft
-                        );
-                        if (updated.slug !== null) {
-                          await router.replace(
-                            getAdminAssignmentPath(updated.slug)
-                          );
+                      const updated = await updateConvexAssignmentIdentity(
+                        client,
+                        assignment,
+                        {
+                          slug: slugDraft,
+                          type: typeDraft,
+                          playable: playableDraft,
                         }
+                      );
+                      if (
+                        updated.slug !== assignment.slug &&
+                        updated.slug !== null
+                      ) {
+                        await router.replace(
+                          getAdminAssignmentPath(updated.slug)
+                        );
                       }
                     },
                     "Assignment updated"

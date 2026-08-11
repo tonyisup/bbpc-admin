@@ -177,6 +177,7 @@ describe("Convex episode detail adapter", () => {
       .fn()
       .mockResolvedValueOnce({ id: assignment.id })
       .mockResolvedValueOnce({ id: assignment.id })
+      .mockResolvedValueOnce({ id: assignment.id })
       .mockResolvedValueOnce({ id: "extra-movie" })
       .mockResolvedValueOnce({ id: "extra-show" });
     const client = { mutation } as unknown as ConvexReactClient;
@@ -185,6 +186,12 @@ describe("Convex episode detail adapter", () => {
       userId: assignment.user.id,
       movieId: assignment.movie.id,
       type: assignment.type,
+    });
+    await addConvexAdminEpisodeAssignment(client, episode.id, {
+      userId: assignment.user.id,
+      movieId: assignment.movie.id,
+      type: assignment.type,
+      playable: false,
     });
     await removeConvexAdminEpisodeAssignment(client, episode.id, assignment);
     await addConvexAdminEpisodeExtra(client, episode.id, {
@@ -204,8 +211,17 @@ describe("Convex episode detail adapter", () => {
       userId: assignment.user.id,
       movieId: assignment.movie.id,
       type: assignment.type,
+      playable: true,
     });
     expect(mutation).toHaveBeenNthCalledWith(2, expect.anything(), {
+      clientApiVersion: BBPC_CLIENT_API_VERSION,
+      episodeId: episode.id,
+      userId: assignment.user.id,
+      movieId: assignment.movie.id,
+      type: assignment.type,
+      playable: false,
+    });
+    expect(mutation).toHaveBeenNthCalledWith(3, expect.anything(), {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       id: assignment.id,
       expected: {
@@ -216,13 +232,13 @@ describe("Convex episode detail adapter", () => {
         episodeId: episode.id,
       },
     });
-    expect(mutation).toHaveBeenNthCalledWith(3, expect.anything(), {
+    expect(mutation).toHaveBeenNthCalledWith(4, expect.anything(), {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       episodeId: episode.id,
       userId: assignment.user.id,
       movieId: assignment.movie.id,
     });
-    expect(mutation).toHaveBeenNthCalledWith(4, expect.anything(), {
+    expect(mutation).toHaveBeenNthCalledWith(5, expect.anything(), {
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       episodeId: episode.id,
       userId: assignment.user.id,
@@ -231,6 +247,7 @@ describe("Convex episode detail adapter", () => {
     expect(
       mutation.mock.calls.map((call) => getFunctionName(call[0]))
     ).toEqual([
+      "assignments/admin:create",
       "assignments/admin:create",
       "assignments/admin:removeIfUnreferenced",
       "reviews/admin:createExtra",

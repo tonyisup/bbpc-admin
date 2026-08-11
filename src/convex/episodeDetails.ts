@@ -150,6 +150,7 @@ const createAssignmentReference = makeFunctionReference<
     movieId: string;
     episodeId: string;
     type: ConvexAdminEpisodeAssignmentType;
+    playable?: boolean;
   },
   unknown
 >("assignments/admin:create");
@@ -393,6 +394,7 @@ export async function addConvexAdminEpisodeAssignment(
     userId: string;
     movieId: string;
     type: ConvexAdminEpisodeAssignmentType;
+    playable?: boolean;
   }
 ): Promise<void> {
   idResultSchema.parse(
@@ -400,6 +402,7 @@ export async function addConvexAdminEpisodeAssignment(
       clientApiVersion: BBPC_CLIENT_API_VERSION,
       episodeId,
       ...input,
+      playable: input.playable ?? true,
     })
   );
 }
